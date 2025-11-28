@@ -1,18 +1,7 @@
-name: Web CI
+name: Web
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/web/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/web/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
+  workflow_call:
 
 jobs:
   typecheck-lint:

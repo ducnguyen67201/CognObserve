@@ -1,0 +1,16 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  web:
+    name: Web
+    uses: ./.github/workflows/web.yml
+
+  ingest:
+    name: Ingest
+    uses: ./.github/workflows/ingest.yml

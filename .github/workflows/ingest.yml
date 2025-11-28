@@ -1,14 +1,7 @@
-name: Ingest CI
+name: Ingest
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/ingest/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/ingest/**'
+  workflow_call:
 
 jobs:
   vet-lint:
@@ -47,7 +40,7 @@ jobs:
       - name: Run staticcheck
         run: staticcheck ./...
 
-      - name: Install golangci-lint
+      - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
