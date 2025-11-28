@@ -14,27 +14,27 @@ import (
 // IngestTraceRequest represents the incoming trace request
 // This mirrors the proto definition but uses JSON-friendly types
 type IngestTraceRequest struct {
-	TraceID  *string            `json:"trace_id,omitempty"`
-	Name     string             `json:"name"`
-	Metadata map[string]any     `json:"metadata,omitempty"`
-	Spans    []IngestSpanInput  `json:"spans"`
+	TraceID  *string           `json:"trace_id,omitempty"`
+	Name     string            `json:"name"`
+	Metadata map[string]any    `json:"metadata,omitempty"`
+	Spans    []IngestSpanInput `json:"spans"`
 }
 
 // IngestSpanInput represents a span in the request
 type IngestSpanInput struct {
-	SpanID          *string        `json:"span_id,omitempty"`
-	ParentSpanID    *string        `json:"parent_span_id,omitempty"`
-	Name            string         `json:"name"`
-	StartTime       time.Time      `json:"start_time"`
-	EndTime         *time.Time     `json:"end_time,omitempty"`
-	Input           map[string]any `json:"input,omitempty"`
-	Output          map[string]any `json:"output,omitempty"`
-	Metadata        map[string]any `json:"metadata,omitempty"`
-	Model           *string        `json:"model,omitempty"`
-	ModelParameters map[string]any `json:"model_parameters,omitempty"`
+	SpanID          *string          `json:"span_id,omitempty"`
+	ParentSpanID    *string          `json:"parent_span_id,omitempty"`
+	Name            string           `json:"name"`
+	StartTime       time.Time        `json:"start_time"`
+	EndTime         *time.Time       `json:"end_time,omitempty"`
+	Input           map[string]any   `json:"input,omitempty"`
+	Output          map[string]any   `json:"output,omitempty"`
+	Metadata        map[string]any   `json:"metadata,omitempty"`
+	Model           *string          `json:"model,omitempty"`
+	ModelParameters map[string]any   `json:"model_parameters,omitempty"`
 	Usage           *TokenUsageInput `json:"usage,omitempty"`
-	Level           string         `json:"level,omitempty"`
-	StatusMessage   *string        `json:"status_message,omitempty"`
+	Level           string           `json:"level,omitempty"`
+	StatusMessage   *string          `json:"status_message,omitempty"`
 }
 
 // TokenUsageInput represents token usage in the request

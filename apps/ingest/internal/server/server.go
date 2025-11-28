@@ -17,10 +17,10 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	cfg      *config.Config
-	handler  *handler.Handler
-	router   chi.Router
-	server   *http.Server
+	cfg     *config.Config
+	handler *handler.Handler
+	router  chi.Router
+	server  *http.Server
 }
 
 // New creates a new server
