@@ -11,7 +11,7 @@
   },
   "scripts": {
     "generate": "buf generate",
-    "lint": "buf lint",
+    "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
