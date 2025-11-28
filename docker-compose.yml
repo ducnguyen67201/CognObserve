@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cognobserve-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cognobserve
+      POSTGRES_PASSWORD: cognobserve
+      POSTGRES_DB: cognobserve
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cognobserve"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cognobserve-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Ingest service (optional - for full local setup)
+  # Uncomment to run ingest in Docker instead of locally
+  # ingest:
+  #   build:
+  #     context: ./apps/ingest
+  #     dockerfile: Dockerfile
+  #   container_name: cognobserve-ingest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     PORT: "8080"
+  #     REDIS_URL: "redis://redis:6379"
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

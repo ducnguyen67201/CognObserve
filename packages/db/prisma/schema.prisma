@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeys ApiKey[]
+  traces  Trace[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hashedKey  String    @unique
+  displayKey String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  @@index([projectId])
+  @@index([hashedKey])
+}
+
+model Trace {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  timestamp DateTime @default(now())
+  metadata  Json?
+
+  spans Span[]
+
+  @@index([projectId])
+  @@index([timestamp])
+}
+
+model Span {
+  id              String    @id @default(cuid())
+  traceId         String
+  trace           Trace     @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  parentSpanId    String?
+  name            String
+  startTime       DateTime
+  endTime         DateTime?
+  input           Json?
+  output          Json?
+  metadata        Json?
+  model           String?
+  modelParameters Json?
+  promptTokens    Int?
+  completionTokens Int?
+  totalTokens     Int?
+  level           SpanLevel @default(DEFAULT)
+  statusMessage   String?
+
+  @@index([traceId])
+  @@index([parentSpanId])
+  @@index([startTime])
+}
+
+enum SpanLevel {
+  DEBUG
+  DEFAULT
+  WARNING
+  ERROR
+}
