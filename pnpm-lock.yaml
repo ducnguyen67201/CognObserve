@@ -39,6 +39,9 @@ importers:
       '@cognobserve/config-typescript':
         specifier: workspace:*
         version: link:../../packages/config-typescript
+      '@eslint/eslintrc':
+        specifier: ^3.2.0
+        version: 3.3.1
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.1
