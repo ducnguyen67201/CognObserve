@@ -12,6 +12,7 @@ import (
 
 	"github.com/cognobserve/ingest/internal/config"
 	"github.com/cognobserve/ingest/internal/handler"
+	authmw "github.com/cognobserve/ingest/internal/middleware"
 	"github.com/cognobserve/ingest/internal/queue"
 )
 
@@ -63,10 +64,14 @@ func (s *Server) setupRoutes() {
 
 	// API routes
 	r.Route("/v1", func(r chi.Router) {
-		// TODO: Add auth middleware here
-		// r.Use(authMiddleware)
+		// JWT authentication middleware
+		r.Use(authmw.JWTAuth)
 
-		r.Post("/traces", s.handler.IngestTrace)
+		// Trace endpoints (require project access)
+		r.Route("/traces", func(r chi.Router) {
+			r.Use(authmw.RequireProjectAccess("X-Project-ID"))
+			r.Post("/", s.handler.IngestTrace)
+		})
 	})
 }
 
