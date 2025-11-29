@@ -89,14 +89,13 @@ export const authOptions: NextAuthOptions = {
       if (isNewUser && user.id) {
         const MAX_RETRIES = 3;
         const baseSlug = `user-${user.id.slice(-8)}`;
-        let workspace = null;
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
           const slug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
 
           try {
             // Create personal workspace with default project for new users
-            workspace = await prisma.workspace.create({
+            await prisma.workspace.create({
               data: {
                 name: user.name ? `${user.name}'s Workspace` : "Personal",
                 slug,
