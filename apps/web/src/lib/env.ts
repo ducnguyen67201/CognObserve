@@ -23,6 +23,19 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
+
+    // Internal API Communication (Go ingest -> Web API)
+    INTERNAL_API_SECRET: z
+      .string()
+      .min(32, "INTERNAL_API_SECRET must be at least 32 characters"),
+
+    // API Key Configuration
+    API_KEY_PREFIX: z.string().min(1).default("co_sk_"),
+    API_KEY_RANDOM_BYTES_LENGTH: z.coerce.number().min(16).max(64).default(32),
+    API_KEY_BASE62_CHARSET: z
+      .string()
+      .length(62)
+      .default("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
   },
 
   /**
@@ -47,6 +60,10 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     AUTH_GITHUB_ID: process.env.AUTH_GITHUB_ID,
     AUTH_GITHUB_SECRET: process.env.AUTH_GITHUB_SECRET,
+    INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET,
+    API_KEY_PREFIX: process.env.API_KEY_PREFIX,
+    API_KEY_RANDOM_BYTES_LENGTH: process.env.API_KEY_RANDOM_BYTES_LENGTH,
+    API_KEY_BASE62_CHARSET: process.env.API_KEY_BASE62_CHARSET,
   },
 
   /**
