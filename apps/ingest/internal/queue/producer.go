@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 
@@ -12,6 +13,11 @@ import (
 
 const (
 	TraceQueueKey = "cognobserve:traces"
+
+	// Connection timeouts
+	RedisConnectTimeout = 10 * time.Second
+	RedisReadTimeout    = 5 * time.Second
+	RedisWriteTimeout   = 5 * time.Second
 )
 
 // Producer interface for queue operations
@@ -32,12 +38,20 @@ func NewRedisProducer(redisURL string) (*RedisProducer, error) {
 		return nil, fmt.Errorf("failed to parse redis url: %w", err)
 	}
 
+	// Set connection timeouts to prevent indefinite hangs
+	opts.DialTimeout = RedisConnectTimeout
+	opts.ReadTimeout = RedisReadTimeout
+	opts.WriteTimeout = RedisWriteTimeout
+
 	client := redis.NewClient(opts)
 
-	// Test connection
-	ctx := context.Background()
+	// Test connection with timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), RedisConnectTimeout)
+	defer cancel()
+
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to connect to redis: %w", err)
+		client.Close()
+		return nil, fmt.Errorf("failed to connect to redis (timeout: %v): %w", RedisConnectTimeout, err)
 	}
 
 	return &RedisProducer{client: client}, nil

@@ -53,7 +53,7 @@ func (s *Server) setupRoutes() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Project-ID"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Project-ID", "X-API-Key"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300,
@@ -64,8 +64,13 @@ func (s *Server) setupRoutes() {
 
 	// API routes
 	r.Route("/v1", func(r chi.Router) {
-		// JWT authentication middleware
-		r.Use(authmw.JWTAuth)
+		// Authentication middleware chain:
+		// 1. API key auth (if X-API-Key header present)
+		// 2. Optional JWT auth (if Authorization header present)
+		// 3. Require at least one auth method
+		r.Use(authmw.APIKeyAuth(s.cfg))
+		r.Use(authmw.OptionalJWTAuth)
+		r.Use(authmw.RequireAuth)
 
 		// Trace endpoints (require project access)
 		r.Route("/traces", func(r chi.Router) {

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { env } from "./lib/env";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { nextUrl } = req;
 
   // Get the token from the request
@@ -21,10 +21,16 @@ export async function middleware(req: NextRequest) {
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
+  const isApiInternalRoute = nextUrl.pathname.startsWith("/api/internal");
   const isApiRoute = nextUrl.pathname.startsWith("/api");
 
   // Allow auth API routes
   if (isApiAuthRoute) {
+    return NextResponse.next();
+  }
+
+  // Allow internal API routes (they use X-Internal-Secret header instead of JWT)
+  if (isApiInternalRoute) {
     return NextResponse.next();
   }
 
