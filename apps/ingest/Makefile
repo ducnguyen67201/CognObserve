@@ -8,13 +8,14 @@ GO=go
 build:
 	$(GO) build -o bin/$(BINARY_NAME) ./cmd/ingest
 
-# Run the service
+# Run the service (loads .env from root)
 run:
-	$(GO) run ./cmd/ingest
+	@set -a && source ../../.env && set +a && $(GO) run ./cmd/ingest
 
 # Run with hot reload (requires air: go install github.com/air-verse/air@latest)
+# Loads environment variables from root .env
 dev:
-	air
+	@set -a && source ../../.env && set +a && air
 
 # Run tests
 test:

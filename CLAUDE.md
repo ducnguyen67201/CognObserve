@@ -187,6 +187,34 @@ export const ERROR_MESSAGES = {
 } as const;
 ```
 
+### Zod Schemas as Source of Truth
+- **Define types as Zod schemas first** - Infer TypeScript types from schemas
+- **Store schemas in `packages/api/src/schemas/`** - Centralized location for shared types
+- **Never hardcode constants for enums/unions** - Define as Zod schema, derive constants from it
+- **Export both schema and inferred type** - `export const MySchema = z.enum([...]); export type My = z.infer<typeof MySchema>;`
+
+```typescript
+// BAD - Hardcoded constants without schema
+export const ADMIN_ROLES = ["OWNER", "ADMIN"] as const;
+export const ALL_ROLES = ["OWNER", "ADMIN", "MEMBER", "VIEWER"] as const;
+
+// GOOD - Zod schema as source of truth
+// packages/api/src/schemas/roles.ts
+import { z } from "zod";
+
+export const ProjectRoleSchema = z.enum(["OWNER", "ADMIN", "MEMBER", "VIEWER"]);
+export type ProjectRole = z.infer<typeof ProjectRoleSchema>;
+
+// Derive constants from schema
+export const ADMIN_ROLES: readonly ProjectRole[] = ["OWNER", "ADMIN"];
+export const ALL_ROLES: readonly ProjectRole[] = ProjectRoleSchema.options;
+
+// Validation helper
+export const isValidRole = (role: string): role is ProjectRole => {
+  return ProjectRoleSchema.safeParse(role).success;
+};
+```
+
 ### Custom Hooks
 - **Extract reusable logic into custom hooks** in `src/hooks/`
 - Use hooks for: data fetching, form handling, subscriptions, complex state
@@ -208,6 +236,46 @@ function ProjectsPage() {
   if (isLoading) return <Skeleton />;
   return <ProjectList projects={projects} />;
 }
+```
+
+### Prevent Race Conditions
+- **Never use check-then-act patterns** - Separate find/check + action calls create race conditions
+- **Use atomic operations** - Single database call for conditional mutations
+- **Use transactions** when multiple operations must succeed or fail together
+- **Handle conflicts gracefully** - Catch `RecordNotFound` errors instead of pre-checking
+
+```typescript
+// BAD - Race condition between findFirst and delete
+const record = await prisma.apiKey.findFirst({ where: { id, projectId } });
+if (!record) throw new Error("Not found");
+await prisma.apiKey.delete({ where: { id } });
+
+// GOOD - Single atomic operation
+try {
+  await prisma.apiKey.delete({ where: { id, projectId } });
+} catch (e) {
+  if (e.code === "P2025") throw new TRPCError({ code: "NOT_FOUND" });
+  throw e;
+}
+
+// GOOD - Transaction for multiple dependent operations
+await prisma.$transaction(async (tx) => {
+  const key = await tx.apiKey.findUniqueOrThrow({ where: { id } });
+  await tx.auditLog.create({ data: { action: "delete", targetId: key.id } });
+  await tx.apiKey.delete({ where: { id } });
+});
+```
+
+**Go service patterns:**
+```go
+// BAD - Check then act
+exists, _ := repo.Exists(ctx, id)
+if !exists { return ErrNotFound }
+repo.Delete(ctx, id)  // Another request could delete between check and delete
+
+// GOOD - Atomic with row count check
+result, err := repo.Delete(ctx, id)
+if result.RowsAffected == 0 { return ErrNotFound }
 ```
 
 ## UI Components (shadcn/ui)

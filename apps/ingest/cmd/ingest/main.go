@@ -11,6 +11,7 @@ import (
 	"github.com/cognobserve/ingest/internal/config"
 	"github.com/cognobserve/ingest/internal/queue"
 	"github.com/cognobserve/ingest/internal/server"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -19,6 +20,10 @@ func main() {
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
+
+	// Load .env file from root directory (development only)
+	// In production, env vars are injected directly
+	_ = godotenv.Load("../../.env")
 
 	// Load configuration
 	cfg, err := config.Load()
