@@ -9,7 +9,6 @@ interface UseWorkspaceReturn {
   isLoading: boolean;
   error: Error | null;
   createWorkspace: (input: CreateWorkspaceInput) => Promise<WorkspaceListItem>;
-  checkSlugAvailable: (slug: string) => Promise<boolean>;
   switchWorkspace: (slug: string) => void;
   refetch: () => void;
 }
@@ -44,15 +43,6 @@ export function useWorkspace(): UseWorkspaceReturn {
     return createMutation.mutateAsync(input);
   };
 
-  const checkSlugAvailable = async (slug: string): Promise<boolean> => {
-    try {
-      const result = await utils.workspaces.checkSlug.fetch({ slug });
-      return result.available;
-    } catch {
-      return false;
-    }
-  };
-
   const switchWorkspace = (slug: string): void => {
     router.push(`/workspace/${slug}`);
   };
@@ -62,7 +52,6 @@ export function useWorkspace(): UseWorkspaceReturn {
     isLoading,
     error: error as Error | null,
     createWorkspace,
-    checkSlugAvailable,
     switchWorkspace,
     refetch,
   };

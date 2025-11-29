@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { trpc } from "@/lib/trpc/client";
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -41,9 +41,14 @@ export function CreateWorkspaceDialog({
   onOpenChange,
 }: CreateWorkspaceDialogProps) {
   const router = useRouter();
-  const { createWorkspace, checkSlugAvailable } = useWorkspace();
+  const utils = trpc.useUtils();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+
+  const createMutation = trpc.workspaces.create.useMutation({
+    onSuccess: () => {
+      utils.workspaces.listWithDetails.invalidate();
+    },
+  });
 
   const form = useForm<CreateWorkspaceInput>({
     resolver: zodResolver(CreateWorkspaceSchema),
@@ -70,7 +75,6 @@ export function CreateWorkspaceDialog({
       // Auto-generate slug from name
       const slug = generateSlug(name);
       form.setValue("slug", slug);
-      setSlugAvailable(null);
     },
     [form, generateSlug]
   );
@@ -80,71 +84,63 @@ export function CreateWorkspaceDialog({
       const value = e.target.value.toLowerCase();
       if (SLUG_CHAR_REGEX.test(value)) {
         form.setValue("slug", value);
-        setSlugAvailable(null);
       }
     },
     [form]
   );
 
-  const handleSlugBlur = useCallback(async () => {
+  const handleSlugBlur = useCallback(() => {
     // Strip leading/trailing hyphens on blur to match WorkspaceSlugSchema
     const rawSlug = form.getValues("slug");
     const slug = rawSlug.replace(/^-+|-+$/g, "");
     if (slug !== rawSlug) {
       form.setValue("slug", slug);
     }
-    if (slug.length >= 3) {
-      const available = await checkSlugAvailable(slug);
-      setSlugAvailable(available);
-    }
-  }, [form, checkSlugAvailable]);
+  }, [form]);
 
   const handleSubmit = useCallback(
     async (data: CreateWorkspaceInput) => {
       setIsSubmitting(true);
       try {
-        const workspace = await createWorkspace(data);
+        const workspace = await createMutation.mutateAsync(data);
         toast.success("Workspace created", {
           description: `${workspace.name} has been created successfully.`,
         });
         onOpenChange(false);
         form.reset();
-        setSlugAvailable(null);
         // Navigate to the new workspace
         router.push(`/workspace/${workspace.slug}`);
       } catch (error) {
+        // Handle slug conflict (P2002 unique constraint)
         const message =
           error instanceof Error ? error.message : "Failed to create workspace";
-        toast.error("Error", { description: message });
+        if (message.includes("slug is already taken")) {
+          toast.error("Slug unavailable", {
+            description: "This workspace URL is already taken. Please try a different one.",
+          });
+        } else {
+          toast.error("Error", { description: message });
+        }
       } finally {
         setIsSubmitting(false);
       }
     },
-    [createWorkspace, onOpenChange, form, router]
+    [createMutation, onOpenChange, form, router]
   );
 
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       if (!newOpen) {
         form.reset();
-        setSlugAvailable(null);
       }
       onOpenChange(newOpen);
     },
     [form, onOpenChange]
   );
 
-  const renderSlugStatus = () => {
-    if (slugAvailable === null) return null;
-    if (slugAvailable) {
-      return (
-        <span className="text-xs text-green-600">Slug is available</span>
-      );
-    }
-    return (
-      <span className="text-xs text-destructive">Slug is already taken</span>
-    );
-  };
+  const handleCancel = useCallback(() => {
+    handleOpenChange(false);
+  }, [handleOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -198,7 +194,6 @@ export function CreateWorkspaceDialog({
                   </FormControl>
                   <FormDescription>
                     Used in URLs: /workspace/{form.watch("slug") || "slug"}
-                    {renderSlugStatus()}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -209,14 +204,14 @@ export function CreateWorkspaceDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleOpenChange(false)}
+                onClick={handleCancel}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || slugAvailable === false}
+                disabled={isSubmitting}
               >
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

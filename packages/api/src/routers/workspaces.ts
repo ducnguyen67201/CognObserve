@@ -194,20 +194,6 @@ export const workspacesRouter = createRouter({
     }),
 
   /**
-   * Check if a slug is available.
-   */
-  checkSlug: protectedProcedure
-    .input(z.object({ slug: WorkspaceSlugSchema }))
-    .query(async ({ input }): Promise<{ available: boolean }> => {
-      const existing = await prisma.workspace.findUnique({
-        where: { slug: input.slug },
-        select: { id: true },
-      });
-
-      return { available: !existing };
-    }),
-
-  /**
    * List workspace members (admin only).
    */
   listMembers: protectedProcedure

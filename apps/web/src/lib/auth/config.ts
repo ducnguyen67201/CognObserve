@@ -87,38 +87,50 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signIn({ user, isNewUser }) {
       if (isNewUser && user.id) {
-        // Generate workspace slug from user ID
-        const workspaceSlug = `user-${user.id.slice(-8)}`;
+        const MAX_RETRIES = 3;
+        const baseSlug = `user-${user.id.slice(-8)}`;
+        let workspace = null;
 
-        // Create personal workspace with default project for new users
-        const workspace = await prisma.workspace.create({
-          data: {
-            name: user.name ? `${user.name}'s Workspace` : "Personal",
-            slug: workspaceSlug,
-            isPersonal: true,
-            members: {
-              create: {
-                userId: user.id,
-                role: "OWNER",
-              },
-            },
-            projects: {
-              create: {
-                name: "My First Project",
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          const slug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+
+          try {
+            // Create personal workspace with default project for new users
+            workspace = await prisma.workspace.create({
+              data: {
+                name: user.name ? `${user.name}'s Workspace` : "Personal",
+                slug,
+                isPersonal: true,
                 members: {
                   create: {
                     userId: user.id,
                     role: "OWNER",
                   },
                 },
+                projects: {
+                  create: {
+                    name: "My First Project",
+                    members: {
+                      create: {
+                        userId: user.id,
+                        role: "OWNER",
+                      },
+                    },
+                  },
+                },
               },
-            },
-          },
-        });
+            });
+            break; // Success, exit loop
+          } catch (error) {
+            // P2002 = unique constraint violation (slug taken)
+            const isPrismaError = error instanceof Error && "code" in error;
+            if (isPrismaError && (error as { code: string }).code === "P2002" && attempt < MAX_RETRIES - 1) {
+              continue; // Retry with random suffix
+            }
+            throw error; // Rethrow other errors or final attempt failure
+          }
+        }
 
-        console.log(
-          `Created personal workspace ${workspace.id} with default project for user ${user.id}`
-        );
       }
     },
   },
