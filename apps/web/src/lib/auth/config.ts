@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
 import { prisma } from "@cognobserve/db";
 import { providers } from "./providers";
+import { env } from "../env";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -78,5 +79,5 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
-  debug: process.env.NODE_ENV === "development",
+  debug: env.NODE_ENV === "development",
 };

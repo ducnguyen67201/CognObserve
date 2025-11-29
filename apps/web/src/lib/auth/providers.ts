@@ -4,6 +4,7 @@ import GitHubProvider from "next-auth/providers/github";
 import { compare } from "bcryptjs";
 import { prisma } from "@cognobserve/db";
 import { z } from "zod";
+import { env } from "../env";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -48,12 +49,12 @@ export const providers = [
   }),
 
   GoogleProvider({
-    clientId: process.env.AUTH_GOOGLE_ID ?? "",
-    clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
+    clientId: env.AUTH_GOOGLE_ID ?? "",
+    clientSecret: env.AUTH_GOOGLE_SECRET ?? "",
   }),
 
   GitHubProvider({
-    clientId: process.env.AUTH_GITHUB_ID ?? "",
-    clientSecret: process.env.AUTH_GITHUB_SECRET ?? "",
+    clientId: env.AUTH_GITHUB_ID ?? "",
+    clientSecret: env.AUTH_GITHUB_SECRET ?? "",
   }),
 ];
