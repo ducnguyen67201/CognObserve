@@ -4,8 +4,8 @@ on:
   workflow_call:
 
 jobs:
-  typecheck-lint:
-    name: Type Check & Lint
+  ci:
+    name: Type Check → Test → Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,9 @@ jobs:
 
       - name: Type check
         run: pnpm --filter @cognobserve/web typecheck
+
+      - name: Test
+        run: pnpm --filter @cognobserve/web test
 
       - name: Lint
         run: pnpm --filter @cognobserve/web lint
