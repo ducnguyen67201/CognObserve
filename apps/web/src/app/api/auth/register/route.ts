@@ -29,22 +29,12 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hash(password, 12);
 
-    // Create user with default project
+    // Create user (workspace + default project created on first sign-in via auth events)
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        projects: {
-          create: {
-            role: "OWNER",
-            project: {
-              create: {
-                name: "My First Project",
-              },
-            },
-          },
-        },
       },
       select: {
         id: true,
