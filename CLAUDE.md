@@ -144,6 +144,72 @@ Core models in `packages/db/prisma/schema.prisma`:
 - Run `pnpm lint` before committing
 - Database changes go through `packages/db`
 
+## Code Style Rules
+
+### No Inline Functions
+- **Never use inline arrow functions in JSX** - Extract to named functions or handlers
+- Define event handlers outside JSX: `const handleClick = () => {}` not `onClick={() => {}}`
+- Extract callbacks passed to hooks: `const fetchData = useCallback(...)` not inline in deps
+
+```tsx
+// BAD
+<Button onClick={() => setOpen(true)}>Open</Button>
+{items.map((item) => <Item key={item.id} {...item} />)}
+
+// GOOD
+const handleOpen = () => setOpen(true);
+const renderItem = (item: Item) => <Item key={item.id} {...item} />;
+
+<Button onClick={handleOpen}>Open</Button>
+{items.map(renderItem)}
+```
+
+### Constants
+- **Use UPPER_SNAKE_CASE for constants**
+- Define constants at module level, not inside components
+- For complex/shared constants, create a dedicated `constants.ts` file
+- Group related constants in objects when appropriate
+
+```tsx
+// Simple constants - top of file
+const MAX_ITEMS = 10;
+const API_TIMEOUT = 5000;
+
+// Complex constants - separate file (e.g., src/lib/constants.ts)
+export const NAV_ITEMS = [
+  { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Projects", href: "/projects", icon: FolderKanban },
+] as const;
+
+export const ERROR_MESSAGES = {
+  UNAUTHORIZED: "You must be logged in",
+  NOT_FOUND: "Resource not found",
+} as const;
+```
+
+### Custom Hooks
+- **Extract reusable logic into custom hooks** in `src/hooks/`
+- Use hooks for: data fetching, form handling, subscriptions, complex state
+- Name hooks with `use` prefix: `useProjects`, `useAuth`, `useDebounce`
+- Keep components thin - business logic belongs in hooks
+
+```tsx
+// src/hooks/use-projects.ts
+export function useProjects() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  // ... fetch logic
+  return { projects, isLoading, refetch };
+}
+
+// Component stays simple
+function ProjectsPage() {
+  const { projects, isLoading } = useProjects();
+  if (isLoading) return <Skeleton />;
+  return <ProjectList projects={projects} />;
+}
+```
+
 ## UI Components (shadcn/ui)
 
 ### Setup
