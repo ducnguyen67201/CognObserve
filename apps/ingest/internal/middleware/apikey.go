@@ -127,7 +127,9 @@ func delayAndRespond(w http.ResponseWriter, startTime time.Time, status int, mes
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	if err := json.NewEncoder(w).Encode(map[string]string{"error": message}); err != nil {
+		slog.Error("failed to encode error response", "error", err)
+	}
 }
 
 // validateKeyViaAPI calls the internal validation endpoint
