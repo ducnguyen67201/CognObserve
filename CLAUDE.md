@@ -5,7 +5,7 @@ CognObserve is an AI Platform Monitoring & Observability system, similar to Lang
 
 ## Tech Stack
 - **Monorepo**: pnpm 9.15 workspaces + Turborepo 2.5
-- **Web**: Next.js 16, React 19, TypeScript 5.7, Tailwind CSS 3.4
+- **Web**: Next.js 16, React 19, TypeScript 5.7, Tailwind CSS 3.4, shadcn/ui (yellow theme)
 - **Ingest**: Go 1.23 (high-performance ingestion service)
 - **Worker**: Node.js 24+ with TypeScript 5.7
 - **Database**: PostgreSQL with Prisma 7 (Rust-free, ESM)
@@ -144,6 +144,48 @@ Core models in `packages/db/prisma/schema.prisma`:
 - Run `pnpm lint` before committing
 - Database changes go through `packages/db`
 
+## UI Components (shadcn/ui)
+
+### Setup
+- **Theme**: Yellow (defined in `apps/web/src/app/globals.css`)
+- **Style**: new-york
+- **Components**: `apps/web/src/components/ui/`
+- **Config**: `apps/web/components.json`
+
+### Best Practices
+- **ALWAYS use shadcn/ui components** - Never create custom CSS for buttons, inputs, cards, dialogs, etc.
+- **Add components via CLI**: `pnpm dlx shadcn@latest add <component>` from `apps/web/`
+- **Use semantic color variables** - Use `primary`, `secondary`, `muted`, `accent`, `destructive` instead of hardcoded colors
+- **Extend, don't override** - If customizing, use the `cn()` utility to merge classes
+- **Available components**: button, card, input, label, form, sonner, dialog, dropdown-menu, table, tabs, avatar, badge, separator, skeleton
+
+### Usage Examples
+```tsx
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+
+// Use semantic variants
+<Button variant="default">Primary Action</Button>  // Yellow theme
+<Button variant="secondary">Secondary</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="outline">Outlined</Button>
+<Button variant="ghost">Ghost</Button>
+
+// Cards
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+  </CardHeader>
+  <CardContent>Content</CardContent>
+</Card>
+```
+
+### Environment Variables
+- Centralized in `apps/web/src/lib/env.ts` using `@t3-oss/env-nextjs`
+- Always use `env.VAR_NAME` instead of `process.env.VAR_NAME`
+- Validation runs at build/startup time
+
 ## API Endpoints
 
 ### Ingest Service (Go)
@@ -159,3 +201,6 @@ Core models in `packages/db/prisma/schema.prisma`:
 - Database schema in `packages/db/prisma/schema.prisma`
 - Proto definitions in `proto/cognobserve/v1/`
 - Full documentation in `/docs` folder
+- **UI**: ALWAYS use shadcn/ui components from `@/components/ui/`. Never write custom CSS for standard UI elements.
+- **Env vars**: Use `env` from `@/lib/env` instead of `process.env`
+- **Adding shadcn components**: Run `pnpm dlx shadcn@latest add <component>` from `apps/web/`
