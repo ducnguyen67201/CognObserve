@@ -6,22 +6,25 @@ import {
   hashApiKey,
   maskApiKey,
 } from "@cognobserve/shared";
-import { createRouter, protectedProcedure, projectAdminMiddleware } from "../trpc";
+import { createRouter, protectedProcedure, workspaceMiddleware } from "../trpc";
 
 /**
  * Input schemas
  */
 const createApiKeyInput = z.object({
+  workspaceSlug: z.string().min(1, "Workspace slug is required"),
   projectId: z.string().min(1, "Project ID is required"),
   name: z.string().min(1, "Name is required").max(100, "Name too long").trim(),
   expiresAt: z.string().datetime().optional(),
 });
 
 const listApiKeysInput = z.object({
+  workspaceSlug: z.string().min(1, "Workspace slug is required"),
   projectId: z.string().min(1, "Project ID is required"),
 });
 
 const deleteApiKeyInput = z.object({
+  workspaceSlug: z.string().min(1, "Workspace slug is required"),
   projectId: z.string().min(1, "Project ID is required"),
   keyId: z.string().min(1, "Key ID is required"),
 });
@@ -48,10 +51,30 @@ export interface CreatedApiKey {
 }
 
 /**
+ * Helper to verify project belongs to workspace.
+ */
+async function verifyProjectInWorkspace(
+  projectId: string,
+  workspaceId: string
+): Promise<void> {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, workspaceId },
+    select: { id: true },
+  });
+
+  if (!project) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Project not found in this workspace",
+    });
+  }
+}
+
+/**
  * API Keys Router
  *
- * All mutations require OWNER or ADMIN role.
- * Uses projectAdminMiddleware for authorization.
+ * Uses workspace membership for authorization.
+ * Projects must belong to the workspace.
  */
 export const apiKeysRouter = createRouter({
   /**
@@ -59,9 +82,12 @@ export const apiKeysRouter = createRouter({
    */
   list: protectedProcedure
     .input(listApiKeysInput)
-    .use(projectAdminMiddleware)
-    .query(async ({ input }): Promise<ApiKeyListItem[]> => {
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }): Promise<ApiKeyListItem[]> => {
       const { projectId } = input;
+
+      // Verify project belongs to workspace
+      await verifyProjectInWorkspace(projectId, ctx.workspace.id);
 
       // Fetch API keys
       const apiKeys = await prisma.apiKey.findMany({
@@ -109,9 +135,12 @@ export const apiKeysRouter = createRouter({
    */
   create: protectedProcedure
     .input(createApiKeyInput)
-    .use(projectAdminMiddleware)
+    .use(workspaceMiddleware)
     .mutation(async ({ ctx, input }): Promise<CreatedApiKey> => {
       const { projectId, name, expiresAt } = input;
+
+      // Verify project belongs to workspace
+      await verifyProjectInWorkspace(projectId, ctx.workspace.id);
 
       // Validate expiration date if provided
       if (expiresAt) {
@@ -171,9 +200,12 @@ export const apiKeysRouter = createRouter({
    */
   delete: protectedProcedure
     .input(deleteApiKeyInput)
-    .use(projectAdminMiddleware)
+    .use(workspaceMiddleware)
     .mutation(async ({ ctx, input }): Promise<{ success: boolean }> => {
       const { projectId, keyId } = input;
+
+      // Verify project belongs to workspace
+      await verifyProjectInWorkspace(projectId, ctx.workspace.id);
 
       // Atomic delete with conditions - avoids race condition between check and delete
       // deleteMany returns count of deleted records, 0 if key didn't exist or didn't match project

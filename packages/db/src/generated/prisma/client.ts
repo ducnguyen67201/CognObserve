@@ -60,6 +60,16 @@ export type Session = Prisma.SessionModel
  */
 export type VerificationToken = Prisma.VerificationTokenModel
 /**
+ * Model Workspace
+ * 
+ */
+export type Workspace = Prisma.WorkspaceModel
+/**
+ * Model WorkspaceMember
+ * 
+ */
+export type WorkspaceMember = Prisma.WorkspaceMemberModel
+/**
  * Model Project
  * 
  */

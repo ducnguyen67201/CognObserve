@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     signOut: "/login",
     error: "/login",
-    newUser: "/projects",
+    newUser: "/", // Redirect to home, which will redirect to default workspace
   },
 
   callbacks: {
@@ -30,13 +30,33 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
       }
 
-      // Add project access to token (for API authorization)
+      // Add workspace and project access to token (for API authorization)
       if (token.id) {
-        const memberships = await prisma.projectMember.findMany({
+        // Fetch workspace memberships
+        const workspaceMemberships = await prisma.workspaceMember.findMany({
+          where: { userId: token.id as string },
+          include: {
+            workspace: {
+              select: { id: true, name: true, slug: true, isPersonal: true },
+            },
+          },
+        });
+
+        token.workspaces = workspaceMemberships.map((m) => ({
+          id: m.workspace.id,
+          name: m.workspace.name,
+          slug: m.workspace.slug,
+          role: m.role,
+          isPersonal: m.workspace.isPersonal,
+        }));
+
+        // Fetch project memberships
+        const projectMemberships = await prisma.projectMember.findMany({
           where: { userId: token.id as string },
           select: { projectId: true, role: true },
         });
-        token.projects = memberships.map((m) => ({
+
+        token.projects = projectMemberships.map((m) => ({
           id: m.projectId,
           role: m.role,
         }));
@@ -48,6 +68,13 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        session.user.workspaces = token.workspaces as Array<{
+          id: string;
+          name: string;
+          slug: string;
+          role: string;
+          isPersonal: boolean;
+        }>;
         session.user.projects = token.projects as Array<{
           id: string;
           role: string;
@@ -60,20 +87,37 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signIn({ user, isNewUser }) {
       if (isNewUser && user.id) {
-        // Create default project for new users
-        const project = await prisma.project.create({
+        // Generate workspace slug from user ID
+        const workspaceSlug = `user-${user.id.slice(-8)}`;
+
+        // Create personal workspace with default project for new users
+        const workspace = await prisma.workspace.create({
           data: {
-            name: "My First Project",
+            name: user.name ? `${user.name}'s Workspace` : "Personal",
+            slug: workspaceSlug,
+            isPersonal: true,
             members: {
               create: {
                 userId: user.id,
                 role: "OWNER",
               },
             },
+            projects: {
+              create: {
+                name: "My First Project",
+                members: {
+                  create: {
+                    userId: user.id,
+                    role: "OWNER",
+                  },
+                },
+              },
+            },
           },
         });
+
         console.log(
-          `Created default project ${project.id} for user ${user.id}`
+          `Created personal workspace ${workspace.id} with default project for user ${user.id}`
         );
       }
     },

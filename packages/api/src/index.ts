@@ -59,6 +59,11 @@ export type { Context, SessionWithProjects, ProjectAccess } from "./context";
 
 // Re-export types from routers
 export type { ApiKeyListItem, CreatedApiKey } from "./routers/apiKeys";
+export type {
+  WorkspaceListItem,
+  WorkspaceDetail,
+  WorkspaceMemberItem,
+} from "./routers/workspaces";
 
 // ============================================================
 // Auth Middleware Utilities
@@ -83,4 +88,14 @@ export {
   ProjectRoleSchema,
   type ProjectRole,
   isValidRole,
+  // Workspace schemas
+  WorkspaceRoleSchema,
+  type WorkspaceRole,
+  CreateWorkspaceSchema,
+  type CreateWorkspaceInput,
+  WorkspaceSlugSchema,
+  WORKSPACE_ADMIN_ROLES,
+  WORKSPACE_MEMBER_ROLES,
+  ALL_WORKSPACE_ROLES,
+  isValidWorkspaceRole,
 } from "./schemas";

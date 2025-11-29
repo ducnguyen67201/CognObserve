@@ -4,3 +4,4 @@
  * with TypeScript types inferred from them.
  */
 export * from "./roles";
+export * from "./workspace";

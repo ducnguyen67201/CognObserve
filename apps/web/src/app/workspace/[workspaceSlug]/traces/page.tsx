@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export default function TracesPage() {
+export default function WorkspaceTracesPage() {
   return (
     <div className="space-y-4">
       <div>
@@ -14,7 +20,8 @@ export default function TracesPage() {
         <CardHeader>
           <CardTitle>No traces yet</CardTitle>
           <CardDescription>
-            Traces will appear here once you start sending data from your AI applications.
+            Traces will appear here once you start sending data from your AI
+            applications.
           </CardDescription>
         </CardHeader>
         <CardContent>

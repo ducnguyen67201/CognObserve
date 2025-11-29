@@ -55,6 +55,8 @@ export const ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
+  Workspace: 'Workspace',
+  WorkspaceMember: 'WorkspaceMember',
   Project: 'Project',
   ProjectMember: 'ProjectMember',
   ApiKey: 'ApiKey',
@@ -129,9 +131,34 @@ export const VerificationTokenScalarFieldEnum = {
 export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFieldEnum)[keyof typeof VerificationTokenScalarFieldEnum]
 
 
+export const WorkspaceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  isPersonal: 'isPersonal',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof typeof WorkspaceScalarFieldEnum]
+
+
+export const WorkspaceMemberScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  workspaceId: 'workspaceId',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceMemberScalarFieldEnum = (typeof WorkspaceMemberScalarFieldEnum)[keyof typeof WorkspaceMemberScalarFieldEnum]
+
+
 export const ProjectScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  workspaceId: 'workspaceId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

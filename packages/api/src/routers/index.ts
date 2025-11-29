@@ -17,8 +17,9 @@ import { createRouter } from "../trpc";
 
 // Import all route modules
 import { apiKeysRouter } from "./apiKeys";
-// import { projectsRouter } from "./projects";
-// import { tracesRouter } from "./traces";
+import { workspacesRouter } from "./workspaces";
+import { projectsRouter } from "./projects";
+import { tracesRouter } from "./traces";
 // import { usersRouter } from "./users";
 
 /**
@@ -42,10 +43,42 @@ export const appRouter = createRouter({
   apiKeys: apiKeysRouter,
 
   /**
+   * Workspaces management
+   * @see ./workspaces.ts
+   *
+   * - workspaces.list           - List user's workspaces
+   * - workspaces.listWithDetails - List with full details
+   * - workspaces.getBySlug      - Get workspace by slug
+   * - workspaces.create         - Create a new workspace
+   * - workspaces.checkSlug      - Check if slug is available
+   * - workspaces.listMembers    - List workspace members
+   * - workspaces.inviteMember   - Invite a member
+   * - workspaces.removeMember   - Remove a member
+   */
+  workspaces: workspacesRouter,
+
+  /**
+   * Projects management
+   * @see ./projects.ts
+   *
+   * - projects.list   - List projects in a workspace
+   * - projects.get    - Get a single project
+   * - projects.create - Create a new project
+   */
+  projects: projectsRouter,
+
+  /**
+   * Traces management
+   * @see ./traces.ts
+   *
+   * - traces.list - List traces for a project
+   * - traces.get  - Get a single trace with spans
+   */
+  traces: tracesRouter,
+
+  /**
    * Future modules:
    *
-   * projects: projectsRouter,  // Project CRUD
-   * traces: tracesRouter,      // Trace queries
    * users: usersRouter,        // User management
    * billing: billingRouter,    // Billing & subscriptions
    */
@@ -60,4 +93,4 @@ export type AppRouter = typeof appRouter;
 /**
  * Re-export individual routers for direct imports if needed.
  */
-export { apiKeysRouter };
+export { apiKeysRouter, workspacesRouter, projectsRouter, tracesRouter };
