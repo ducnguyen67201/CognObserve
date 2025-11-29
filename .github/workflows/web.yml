@@ -8,6 +8,24 @@ jobs:
     name: Type Check → Test → Lint
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cognobserve_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cognobserve_test
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +44,13 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm db:generate
+
+      - name: Run migrations
+        run: pnpm --filter @cognobserve/db prisma migrate deploy
+
+      - name: Validate schema is in sync
+        run: pnpm --filter @cognobserve/db prisma migrate diff --from-migrations ./prisma/migrations --to-schema-datamodel ./prisma/schema.prisma --exit-code
+        continue-on-error: false
 
       - name: Type check
         run: pnpm --filter @cognobserve/web typecheck

@@ -1,7 +1,12 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import type { Context, SessionWithProjects } from "./context";
+import type { Context, SessionWithProjects, SessionWithWorkspaces } from "./context";
 import { requireAuth, requireProjectRole, ADMIN_ROLES } from "./middleware/auth";
+import {
+  requireWorkspaceAccess,
+  requireWorkspaceRole,
+  WORKSPACE_ADMIN_ROLES,
+} from "./middleware/workspace";
 
 /**
  * Initialize tRPC with context type and superjson transformer.
@@ -138,6 +143,104 @@ export const projectAdminMiddleware = middleware(async ({ ctx, next, getRawInput
 export const projectAdminProcedure = t.procedure
   .use(loggerMiddleware)
   .use(projectAdminMiddleware);
+
+/**
+ * Workspace middleware - validates workspace access from workspaceId or workspaceSlug.
+ * Extracts workspace info from input and adds to context.
+ *
+ * Usage:
+ * ```ts
+ * .input(z.object({ workspaceId: z.string() }))
+ * .use(workspaceMiddleware)
+ * .query(({ ctx }) => { ctx.workspace... })
+ * ```
+ */
+export const workspaceMiddleware = middleware(async ({ ctx, next, getRawInput }) => {
+  // Ensure auth first
+  requireAuth(ctx);
+
+  // Extract workspaceId or workspaceSlug from input
+  const rawInput = await getRawInput();
+  const input = rawInput as { workspaceId?: string; workspaceSlug?: string };
+  const identifier = input?.workspaceId || input?.workspaceSlug;
+  const bySlug = !!input?.workspaceSlug;
+
+  if (!identifier) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "workspaceId or workspaceSlug is required",
+    });
+  }
+
+  // Check workspace access
+  const workspace = requireWorkspaceAccess(
+    ctx as Context & { session: SessionWithWorkspaces },
+    identifier,
+    bySlug
+  );
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session as SessionWithWorkspaces,
+      workspace: {
+        id: workspace.id,
+        slug: workspace.slug,
+        role: workspace.role,
+      },
+    },
+  });
+});
+
+/**
+ * Workspace procedure - requires workspace access.
+ * Use for procedures that read workspace data.
+ */
+export const workspaceProcedure = t.procedure
+  .use(loggerMiddleware)
+  .use(workspaceMiddleware);
+
+/**
+ * Workspace admin middleware - requires OWNER or ADMIN role.
+ * Use for procedures that modify workspace settings, members, etc.
+ */
+export const workspaceAdminMiddleware = middleware(async ({ ctx, next, getRawInput }) => {
+  // Ensure auth first
+  requireAuth(ctx);
+
+  // Extract workspaceId from input
+  const rawInput = await getRawInput();
+  const input = rawInput as { workspaceId?: string };
+  if (!input?.workspaceId) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "workspaceId is required",
+    });
+  }
+
+  // Check admin role
+  requireWorkspaceRole(
+    ctx as Context & { session: SessionWithWorkspaces },
+    input.workspaceId,
+    [...WORKSPACE_ADMIN_ROLES]
+  );
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session as SessionWithWorkspaces,
+      workspaceId: input.workspaceId,
+    },
+  });
+});
+
+/**
+ * Workspace admin procedure - requires OWNER or ADMIN role.
+ * Convenience procedure that includes auth + admin check.
+ */
+export const workspaceAdminProcedure = t.procedure
+  .use(loggerMiddleware)
+  .use(workspaceAdminMiddleware);
 
 /**
  * Create caller for server-side usage.

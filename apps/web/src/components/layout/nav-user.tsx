@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Settings, LogOut, ChevronsUpDown } from "lucide-react";
+import { LogOut, ChevronsUpDown } from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -12,7 +11,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,17 +30,12 @@ export function NavUser() {
     session.user.email?.[0]?.toUpperCase() ||
     "U";
 
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/login" });
+  };
+
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild tooltip="Settings">
-          <Link href="/settings">
-            <Settings />
-            <span>Settings</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -71,14 +64,7 @@ export function NavUser() {
             align="start"
             sideOffset={4}
           >
-            <DropdownMenuItem asChild>
-              <Link href="/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+            <DropdownMenuItem onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </DropdownMenuItem>

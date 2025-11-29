@@ -17,15 +17,19 @@ import { ApiKeyEmptyState } from "./api-key-empty-state";
 import { CreateApiKeyDialog } from "./create-api-key-dialog";
 import { ApiKeyCreatedDialog } from "./api-key-created-dialog";
 import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
-import type { ApiKeyListItem, CreatedApiKey } from "@cognobserve/api";
+import type { ApiKeyListItem, CreatedApiKey } from "@cognobserve/api/client";
 import { toast } from "sonner";
 
 interface ApiKeyListProps {
+  workspaceSlug: string;
   projectId: string;
 }
 
-export function ApiKeyList({ projectId }: ApiKeyListProps) {
-  const { apiKeys, isLoading, error, createApiKey, deleteApiKey } = useApiKeys(projectId);
+export function ApiKeyList({ workspaceSlug, projectId }: ApiKeyListProps) {
+  const { apiKeys, isLoading, error, createApiKey, deleteApiKey } = useApiKeys(
+    workspaceSlug,
+    projectId
+  );
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

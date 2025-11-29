@@ -1,7 +1,7 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/client";
-import type { ApiKeyListItem, CreatedApiKey } from "@cognobserve/api";
+import type { ApiKeyListItem, CreatedApiKey } from "@cognobserve/api/client";
 
 interface CreateApiKeyInput {
   name: string;
@@ -21,7 +21,10 @@ interface UseApiKeysReturn {
  * Hook for managing API keys using tRPC.
  * Provides type-safe queries and mutations.
  */
-export function useApiKeys(projectId: string): UseApiKeysReturn {
+export function useApiKeys(
+  workspaceSlug: string,
+  projectId: string
+): UseApiKeysReturn {
   const utils = trpc.useUtils();
 
   // Query: List API keys
@@ -31,9 +34,9 @@ export function useApiKeys(projectId: string): UseApiKeysReturn {
     error,
     refetch,
   } = trpc.apiKeys.list.useQuery(
-    { projectId },
+    { workspaceSlug, projectId },
     {
-      enabled: !!projectId,
+      enabled: !!workspaceSlug && !!projectId,
     }
   );
 
@@ -41,7 +44,7 @@ export function useApiKeys(projectId: string): UseApiKeysReturn {
   const createMutation = trpc.apiKeys.create.useMutation({
     onSuccess: () => {
       // Invalidate the list query to refetch
-      utils.apiKeys.list.invalidate({ projectId });
+      utils.apiKeys.list.invalidate({ workspaceSlug, projectId });
     },
   });
 
@@ -49,12 +52,15 @@ export function useApiKeys(projectId: string): UseApiKeysReturn {
   const deleteMutation = trpc.apiKeys.delete.useMutation({
     onSuccess: () => {
       // Invalidate the list query to refetch
-      utils.apiKeys.list.invalidate({ projectId });
+      utils.apiKeys.list.invalidate({ workspaceSlug, projectId });
     },
   });
 
-  const createApiKey = async (input: CreateApiKeyInput): Promise<CreatedApiKey> => {
+  const createApiKey = async (
+    input: CreateApiKeyInput
+  ): Promise<CreatedApiKey> => {
     return createMutation.mutateAsync({
+      workspaceSlug,
       projectId,
       name: input.name,
       expiresAt: input.expiresAt,
@@ -63,6 +69,7 @@ export function useApiKeys(projectId: string): UseApiKeysReturn {
 
   const deleteApiKey = async (keyId: string): Promise<void> => {
     await deleteMutation.mutateAsync({
+      workspaceSlug,
       projectId,
       keyId,
     });

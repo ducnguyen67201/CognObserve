@@ -3,12 +3,15 @@ import { ApiKeyList } from "@/components/api-keys";
 
 interface ProjectSettingsPageProps {
   params: Promise<{
+    workspaceSlug: string;
     projectId: string;
   }>;
 }
 
-export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {
-  const { projectId } = await params;
+export default async function ProjectSettingsPage({
+  params,
+}: ProjectSettingsPageProps) {
+  const { workspaceSlug, projectId } = await params;
 
   return (
     <div className="space-y-6">
@@ -20,7 +23,7 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
       </div>
       <Separator />
 
-      <ApiKeyList projectId={projectId} />
+      <ApiKeyList workspaceSlug={workspaceSlug} projectId={projectId} />
     </div>
   );
 }

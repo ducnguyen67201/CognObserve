@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Activity } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Activity, Settings } from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,36 +10,46 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { useWorkspaceUrl } from "@/hooks/use-workspace-url";
 
-const navItems = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboard },
-  { title: "Projects", href: "/projects", icon: FolderKanban },
-  { title: "Traces", href: "/traces", icon: Activity },
+interface NavItem {
+  title: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { title: "Dashboard", path: "", icon: LayoutDashboard },
+  { title: "Projects", path: "/projects", icon: FolderKanban },
+  { title: "Traces", path: "/traces", icon: Activity },
+  { title: "Settings", path: "/settings", icon: Settings },
 ];
 
 export function NavMain() {
-  const pathname = usePathname();
+  const { workspaceUrl, isActive } = useWorkspaceUrl();
+
+  const renderNavItem = (item: NavItem) => {
+    const href = workspaceUrl(item.path);
+    const Icon = item.icon;
+    const active = isActive(item.path, item.path === "");
+
+    return (
+      <SidebarMenuItem key={item.path || "dashboard"}>
+        <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+          <Link href={href}>
+            <Icon />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Navigation</SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                tooltip={item.title}
-              >
-                <Link href={item.href}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+        <SidebarMenu>{NAV_ITEMS.map(renderNavItem)}</SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
   );
