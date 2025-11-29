@@ -1,7 +1,7 @@
 # CognObserve - Claude Code Context
 
 ## Project Overview
-CognObserve is an AI Platform Monitoring & Observability system, similar to Langfuse. It provides tracing, monitoring, and analytics for AI/LLM applications.
+CognObserve is an AI Platform Monitoring & Observability system. It provides tracing, monitoring, and analytics for AI/LLM applications.
 
 ## Tech Stack
 - **Monorepo**: pnpm 9.15 workspaces + Turborepo 2.5

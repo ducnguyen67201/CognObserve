@@ -105,7 +105,7 @@
 - 10-100x faster for analytics queries
 - Excellent compression (lower storage costs)
 - Built for time-series data
-- Used by: Langfuse, PostHog, Cloudflare
+- Used by: PostHog, Cloudflare
 
 ---
 
@@ -125,7 +125,6 @@
 
 | Platform | Queue | Database | Scale |
 |----------|-------|----------|-------|
-| **Langfuse** | Redis | ClickHouse | Medium |
 | **Jaeger** | Kafka | Cassandra/ES | Large |
 | **Tempo** | Kafka | Object Storage | Large |
 | **Datadog** | Kafka | Custom | Massive |
