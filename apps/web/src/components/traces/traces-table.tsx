@@ -1,7 +1,24 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { AlertCircle, AlertTriangle, Activity, RefreshCw } from "lucide-react";
+import * as React from "react";
+import { useCallback, useMemo, useState } from "react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Activity,
+  RefreshCw,
+  Sparkles,
+  FileText,
+  Wrench,
+  Globe,
+  Database,
+  Box,
+  ChevronRight,
+  ChevronDown,
+  ExternalLink,
+  MessageSquare,
+  Bot,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Table,
@@ -15,9 +32,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTraces } from "@/hooks/traces/use-traces";
+import { useTraceFilters } from "@/hooks/traces/use-trace-filters";
 import { TraceDetailPanel } from "./trace-detail-panel";
+import { TracesFilterBar } from "./traces-filter-bar";
 import { formatDuration, formatTokens } from "@/lib/format";
-import type { TraceListItem } from "@cognobserve/api/client";
+import type { TraceListItem, SpanType } from "@cognobserve/api/client";
+import { cn } from "@/lib/utils";
+
+/**
+ * Type badge configuration for visual display
+ */
+const TYPE_CONFIG: Record<SpanType, { icon: React.ElementType; label: string; className: string }> = {
+  LLM: { icon: Sparkles, label: "LLM", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
+  LOG: { icon: FileText, label: "Log", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
+  FUNCTION: { icon: Wrench, label: "Function", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  HTTP: { icon: Globe, label: "HTTP", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  DB: { icon: Database, label: "DB", className: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
+  CUSTOM: { icon: Box, label: "Custom", className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" },
+};
 
 interface TracesTableProps {
   workspaceSlug: string;
@@ -26,94 +58,101 @@ interface TracesTableProps {
 
 export function TracesTable({ workspaceSlug, projectId }: TracesTableProps) {
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const { filters } = useTraceFilters();
   const { traces, isLoading, error, hasMore, loadMore, isLoadingMore, refetch } = useTraces({
     workspaceSlug,
     projectId,
+    filters,
   });
 
-  const handleTableClick = useCallback((event: React.MouseEvent<HTMLTableSectionElement>) => {
-    const row = (event.target as HTMLElement).closest("tr[data-trace-id]");
-    if (row) {
-      const traceId = row.getAttribute("data-trace-id");
-      if (traceId) {
-        setSelectedTraceId(traceId);
+  // Collect available models from traces for the filter dropdown
+  const availableModels = useMemo(() => {
+    const models = new Set<string>();
+    for (const trace of traces) {
+      if (trace.primaryModel) {
+        models.add(trace.primaryModel);
       }
     }
+    return Array.from(models).sort();
+  }, [traces]);
+
+  const toggleRowExpansion = useCallback((traceId: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(traceId)) {
+        next.delete(traceId);
+      } else {
+        next.add(traceId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleOpenDetail = useCallback((traceId: string) => {
+    setSelectedTraceId(traceId);
   }, []);
 
   const handleClosePanel = useCallback(() => {
     setSelectedTraceId(null);
   }, []);
 
-  const renderTraceRow = useCallback((trace: TraceListItem) => (
-    <TableRow
-      key={trace.id}
-      data-trace-id={trace.id}
-      className="cursor-pointer hover:bg-muted/50"
-    >
-      <TableCell className="font-medium">
-        <div className="flex items-center gap-2">
-          {trace.name}
-          {trace.primaryModel && (
-            <Badge variant="outline" className="text-xs">
-              {trace.primaryModel}
-            </Badge>
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {formatDistanceToNow(new Date(trace.timestamp), { addSuffix: true })}
-      </TableCell>
-      <TableCell className="text-center">{trace.spanCount}</TableCell>
-      <TableCell className="text-right font-mono">
-        {formatDuration(trace.duration)}
-      </TableCell>
-      <TableCell className="text-right font-mono">
-        {formatTokens(trace.totalTokens)}
-      </TableCell>
-      <TableCell className="text-center">
-        <div className="flex items-center justify-center gap-1">
-          {trace.hasErrors && (
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          )}
-          {trace.hasWarnings && !trace.hasErrors && (
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          )}
-          {!trace.hasErrors && !trace.hasWarnings && (
-            <span className="h-2 w-2 rounded-full bg-green-500" />
-          )}
-        </div>
-      </TableCell>
-    </TableRow>
-  ), []);
-
   if (isLoading) {
-    return <TracesTableSkeleton />;
+    return (
+      <>
+        <TracesFilterBar availableModels={[]} />
+        <TracesTableSkeleton />
+      </>
+    );
   }
 
   if (error) {
-    return <TracesErrorState error={error} onRetry={refetch} />;
+    return (
+      <>
+        <TracesFilterBar availableModels={availableModels} />
+        <TracesErrorState error={error} onRetry={refetch} />
+      </>
+    );
   }
 
   if (traces.length === 0) {
-    return <TracesEmptyState />;
+    return (
+      <>
+        <TracesFilterBar availableModels={availableModels} />
+        <TracesEmptyState />
+      </>
+    );
   }
 
   return (
     <>
+      <TracesFilterBar availableModels={availableModels} />
       <div className="space-y-4">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[300px]">Name</TableHead>
+              <TableHead className="w-[40px]"></TableHead>
+              <TableHead className="w-[180px]">Name</TableHead>
+              <TableHead className="w-[90px]">Type</TableHead>
+              <TableHead className="w-[200px]">Input</TableHead>
+              <TableHead className="w-[200px]">Output</TableHead>
               <TableHead>Time</TableHead>
-              <TableHead className="text-center">Spans</TableHead>
               <TableHead className="text-right">Duration</TableHead>
               <TableHead className="text-right">Tokens</TableHead>
-              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="w-[80px] text-center">Status</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody onClick={handleTableClick}>{traces.map(renderTraceRow)}</TableBody>
+          <TableBody>
+            {traces.map((trace) => (
+              <TraceRowWithExpansion
+                key={trace.id}
+                trace={trace}
+                isExpanded={expandedRows.has(trace.id)}
+                onToggleExpand={toggleRowExpansion}
+                onOpenDetail={handleOpenDetail}
+              />
+            ))}
+          </TableBody>
         </Table>
 
         {hasMore && (
@@ -135,26 +174,194 @@ export function TracesTable({ workspaceSlug, projectId }: TracesTableProps) {
   );
 }
 
+/**
+ * Individual trace row with expansion capability
+ */
+interface TraceRowWithExpansionProps {
+  trace: TraceListItem;
+  isExpanded: boolean;
+  onToggleExpand: (traceId: string) => void;
+  onOpenDetail: (traceId: string) => void;
+}
+
+function TraceRowWithExpansion({ trace, isExpanded, onToggleExpand, onOpenDetail }: TraceRowWithExpansionProps) {
+  const typeConfig = TYPE_CONFIG[trace.primaryType];
+  const TypeIcon = typeConfig.icon;
+
+  const handleRowClick = useCallback(() => {
+    onToggleExpand(trace.id);
+  }, [trace.id, onToggleExpand]);
+
+  const handleDetailClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenDetail(trace.id);
+  }, [trace.id, onOpenDetail]);
+
+  return (
+    <>
+      {/* Main row */}
+      <TableRow
+        className={cn(
+          "cursor-pointer transition-colors",
+          isExpanded ? "bg-muted/50" : "hover:bg-muted/30"
+        )}
+        onClick={handleRowClick}
+      >
+        <TableCell className="py-2">
+          <div className="flex items-center justify-center">
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="py-2 font-medium">
+          <div className="flex items-center gap-2">
+            <span className="truncate">{trace.name}</span>
+            {trace.primaryModel && (
+              <Badge variant="outline" className="shrink-0 text-xs">
+                {trace.primaryModel}
+              </Badge>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="py-2">
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${typeConfig.className}`}>
+            <TypeIcon className="h-3 w-3" />
+            {typeConfig.label}
+          </div>
+        </TableCell>
+        <TableCell className="max-w-[200px] truncate py-2 text-sm text-muted-foreground" title={trace.inputPreview ?? undefined}>
+          {trace.inputPreview ?? <span className="text-muted-foreground/50">-</span>}
+        </TableCell>
+        <TableCell className="max-w-[200px] truncate py-2 text-sm text-muted-foreground" title={trace.outputPreview ?? undefined}>
+          {trace.outputPreview ?? <span className="text-muted-foreground/50">-</span>}
+        </TableCell>
+        <TableCell className="py-2 text-muted-foreground">
+          {formatDistanceToNow(new Date(trace.timestamp), { addSuffix: true })}
+        </TableCell>
+        <TableCell className="py-2 text-right font-mono">
+          {formatDuration(trace.duration)}
+        </TableCell>
+        <TableCell className="py-2 text-right font-mono">
+          {formatTokens(trace.totalTokens)}
+        </TableCell>
+        <TableCell className="py-2">
+          <div className="flex items-center justify-center gap-2">
+            {trace.hasErrors && (
+              <AlertCircle className="h-4 w-4 text-destructive" />
+            )}
+            {trace.hasWarnings && !trace.hasErrors && (
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            )}
+            {!trace.hasErrors && !trace.hasWarnings && (
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleDetailClick}
+              title="View full trace details"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {/* Expanded content row */}
+      {isExpanded && (
+        <TableRow className="bg-muted/30 hover:bg-muted/30">
+          <TableCell colSpan={9} className="p-4">
+            <ExpandedTraceContent trace={trace} onOpenDetail={handleDetailClick} />
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
+
+/**
+ * Expanded trace content showing full input/output
+ */
+interface ExpandedTraceContentProps {
+  trace: TraceListItem;
+  onOpenDetail: (e: React.MouseEvent) => void;
+}
+
+function ExpandedTraceContent({ trace, onOpenDetail }: ExpandedTraceContentProps) {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Input */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <MessageSquare className="h-4 w-4 text-blue-500" />
+            Input
+          </div>
+          <div className="rounded-lg border bg-background p-3">
+            <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {trace.inputPreview || <span className="italic text-muted-foreground/50">No input data</span>}
+            </pre>
+          </div>
+        </div>
+
+        {/* Output */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Bot className="h-4 w-4 text-green-500" />
+            Output
+          </div>
+          <div className="rounded-lg border bg-background p-3">
+            <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {trace.outputPreview || <span className="italic text-muted-foreground/50">No output data</span>}
+            </pre>
+          </div>
+        </div>
+      </div>
+
+      {/* Action button */}
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={onOpenDetail}>
+          <ExternalLink className="mr-2 h-3.5 w-3.5" />
+          View Full Trace Details
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function TracesTableSkeleton() {
   const renderSkeletonRow = (index: number) => (
     <TableRow key={index}>
-      <TableCell>
-        <Skeleton className="h-4 w-48" />
+      <TableCell className="py-2">
+        <Skeleton className="h-4 w-4" />
       </TableCell>
-      <TableCell>
+      <TableCell className="py-2">
+        <Skeleton className="h-4 w-32" />
+      </TableCell>
+      <TableCell className="py-2">
+        <Skeleton className="h-5 w-16 rounded-full" />
+      </TableCell>
+      <TableCell className="py-2">
+        <Skeleton className="h-4 w-40" />
+      </TableCell>
+      <TableCell className="py-2">
+        <Skeleton className="h-4 w-40" />
+      </TableCell>
+      <TableCell className="py-2">
         <Skeleton className="h-4 w-24" />
       </TableCell>
-      <TableCell className="text-center">
-        <Skeleton className="mx-auto h-4 w-8" />
-      </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="py-2 text-right">
         <Skeleton className="ml-auto h-4 w-16" />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="py-2 text-right">
         <Skeleton className="ml-auto h-4 w-12" />
       </TableCell>
-      <TableCell className="text-center">
-        <Skeleton className="mx-auto h-4 w-4" />
+      <TableCell className="py-2 text-center">
+        <Skeleton className="mx-auto h-4 w-12" />
       </TableCell>
     </TableRow>
   );
@@ -163,12 +370,15 @@ function TracesTableSkeleton() {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[300px]">Name</TableHead>
+          <TableHead className="w-[40px]"></TableHead>
+          <TableHead className="w-[180px]">Name</TableHead>
+          <TableHead className="w-[90px]">Type</TableHead>
+          <TableHead className="w-[200px]">Input</TableHead>
+          <TableHead className="w-[200px]">Output</TableHead>
           <TableHead>Time</TableHead>
-          <TableHead className="text-center">Spans</TableHead>
           <TableHead className="text-right">Duration</TableHead>
           <TableHead className="text-right">Tokens</TableHead>
-          <TableHead className="text-center">Status</TableHead>
+          <TableHead className="w-[80px] text-center">Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{[0, 1, 2, 3, 4].map(renderSkeletonRow)}</TableBody>

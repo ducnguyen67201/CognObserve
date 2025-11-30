@@ -1,15 +1,20 @@
-import type { SpanItem } from "@cognobserve/api/client";
+import type { SpanItem, SpanType as SpanTypeImport, SpanLevel, TraceFilters, QuickToggle } from "@cognobserve/api/client";
 
-/**
- * Span types for visual differentiation in waterfall view.
- * Inferred from span data since DB doesn't have a type column.
- */
-export type SpanType = "LLM" | "LOG" | "FUNCTION" | "HTTP" | "DB" | "CUSTOM";
+// Re-export from schema (source of truth)
+export type { SpanLevel, TraceFilters, QuickToggle };
+export type SpanType = SpanTypeImport;
 
-/**
- * Span severity levels from the database.
- */
-export type SpanLevel = "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
+export {
+  SpanTypeSchema,
+  SpanLevelSchema,
+  TraceFiltersSchema,
+  ALL_SPAN_TYPES,
+  ALL_SPAN_LEVELS,
+  FILTER_PARAM_KEYS,
+  QUICK_TOGGLES,
+  hasActiveFilters,
+  countActiveFilters,
+} from "@cognobserve/api/client";
 
 /**
  * Extended span with computed waterfall properties.

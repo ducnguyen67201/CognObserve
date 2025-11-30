@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import {
-  ArrowLeft,
-  Activity,
-  Clock,
-  Zap,
-  Settings,
-} from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -21,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc/client";
 import { useWorkspaceUrl } from "@/hooks/use-workspace-url";
 import { TracesTable } from "@/components/traces/traces-table";
-import { formatTimestamp } from "@/lib/format";
+import { ProjectAnalyticsDashboard } from "@/components/analytics/project-analytics-dashboard";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ workspaceSlug: string; projectId: string }>();
@@ -34,14 +28,6 @@ export default function ProjectDetailPage() {
       { enabled: !!workspaceSlug && !!projectId }
     );
 
-  // Fetch just the first trace for Last Activity stat
-  const { data: tracesData } = trpc.traces.list.useQuery(
-    { workspaceSlug: workspaceSlug ?? "", projectId, limit: 1 },
-    { enabled: !!workspaceSlug && !!projectId }
-  );
-
-  const firstTrace = tracesData?.items?.[0];
-
   if (isLoadingProject) {
     return (
       <div className="space-y-6">
@@ -52,10 +38,22 @@ export default function ProjectDetailPage() {
             <Skeleton className="mt-1 h-4 w-32" />
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+            <Skeleton className="h-9 w-36" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-[280px]" />
+            <Skeleton className="h-[280px]" />
+            <Skeleton className="h-[280px]" />
+            <Skeleton className="h-[280px]" />
+          </div>
         </div>
         <Skeleton className="h-64" />
       </div>
@@ -109,43 +107,16 @@ export default function ProjectDetailPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Traces</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{project.traceCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">API Keys</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{project.apiKeyCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last Activity</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {firstTrace ? formatTimestamp(firstTrace.timestamp) : "-"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Analytics Dashboard */}
+      <ProjectAnalyticsDashboard
+        workspaceSlug={workspaceSlug ?? ""}
+        projectId={projectId}
+      />
 
       {/* Traces Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Traces</CardTitle>
+          <CardTitle>Recent Traces</CardTitle>
           <CardDescription>
             Recent traces from your AI application.
           </CardDescription>
