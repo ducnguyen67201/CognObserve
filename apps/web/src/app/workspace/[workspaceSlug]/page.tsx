@@ -1,6 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { WorkspaceAnalyticsDashboard } from "@/components/analytics/workspace-analytics-dashboard";
 
-export default function WorkspaceDashboardPage() {
+interface WorkspaceDashboardPageProps {
+  params: Promise<{ workspaceSlug: string }>;
+}
+
+export default async function WorkspaceDashboardPage({
+  params,
+}: WorkspaceDashboardPageProps) {
+  const { workspaceSlug } = await params;
+
   return (
     <div className="space-y-4">
       <div>
@@ -10,55 +18,7 @@ export default function WorkspaceDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Traces</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              No traces recorded yet
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Projects
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Create your first project
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tokens</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Token usage this month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Latency</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">No data available</p>
-          </CardContent>
-        </Card>
-      </div>
+      <WorkspaceAnalyticsDashboard workspaceSlug={workspaceSlug} />
     </div>
   );
 }

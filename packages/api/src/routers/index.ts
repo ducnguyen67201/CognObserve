@@ -81,7 +81,8 @@ export const appRouter = createRouter({
    * Analytics
    * @see ./analytics.ts
    *
-   * - analytics.getProjectAnalytics - Get project dashboard data
+   * - analytics.getProjectAnalytics   - Get project dashboard data
+   * - analytics.getWorkspaceAnalytics - Get workspace-wide dashboard data
    */
   analytics: analyticsRouter,
 

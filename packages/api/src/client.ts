@@ -63,6 +63,8 @@ export type { ProjectListItem, ProjectDetail } from "./routers/projects";
 export type { TraceListItem, TraceDetail, SpanItem, SpanDetail } from "./routers/traces";
 export type {
   ProjectAnalytics,
+  WorkspaceAnalytics,
+  ProjectSummary,
   TraceVolumePoint,
   LatencyPoint,
   TokenUsagePoint,
