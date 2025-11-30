@@ -212,6 +212,117 @@ Imports:
 └── github.com/cognobserve/ingest/internal/proto/cognobservev1  (generated)
 ```
 
+## UI Filtering Flow (Read Path)
+
+The UI reads data directly from PostgreSQL via tRPC, bypassing the Worker entirely.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         UI FILTERING FLOW                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                 │
+│   │  Filter Bar  │───▶│  URL Params  │───▶│   Context    │                 │
+│   │   (React)    │    │              │    │              │                 │
+│   └──────────────┘    └──────────────┘    └──────────────┘                 │
+│                                                  │                          │
+│                                                  ▼                          │
+│   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                 │
+│   │  UI Renders  │◀───│  tRPC API    │◀───│  React Hook  │                 │
+│   │              │    │   (Server)   │    │              │                 │
+│   └──────────────┘    └──────────────┘    └──────────────┘                 │
+│                              │                                              │
+│                              ▼                                              │
+│                       ┌──────────────┐                                      │
+│                       │  PostgreSQL  │                                      │
+│                       └──────────────┘                                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Step-by-Step Flow
+
+| Step | Location | Description |
+|------|----------|-------------|
+| 1 | Filter Bar (`traces-filter-bar.tsx`) | User selects filters (time range, model, search) |
+| 2 | URL Params | Filter state persisted to URL (`?timeRange=7d&models=gpt-4o`) |
+| 3 | Context (`cost-context.tsx`) | Parses URL params → `TraceFilters` object |
+| 4 | React Hook (`use-traces.ts`) | Calls tRPC with filters |
+| 5 | tRPC API (`costs.ts`, `traces.ts`) | Builds Prisma WHERE clause from filters |
+| 6 | PostgreSQL | Executes filtered query |
+
+### Key Files
+
+```
+apps/web/src/
+├── components/
+│   ├── traces/
+│   │   └── traces-filter-bar.tsx     # Filter UI components
+│   └── costs/
+│       ├── cost-context.tsx          # URL ↔ Filter state sync
+│       └── cost-sidebar-panel.tsx    # Cost display (calls tRPC)
+├── hooks/
+│   └── traces/
+│       └── use-traces.ts             # tRPC hook for traces
+
+packages/api/src/
+├── routers/
+│   ├── traces.ts                     # traces.list, traces.get
+│   └── costs.ts                      # costs.getOverview, costs.getByModel
+└── schemas/
+    └── traces.ts                     # TraceFilters schema
+```
+
+### Filter State Management
+
+Filters are stored in URL params for shareability:
+
+```typescript
+// URL: /projects/xxx?timeRange=7d&models=gpt-4o,claude-3-5-sonnet&search=hello
+
+// Parsed to TraceFilters:
+{
+  timeRange: "7d",
+  models: ["gpt-4o", "claude-3-5-sonnet"],
+  search: "hello",
+  types: undefined,
+  levels: undefined,
+}
+```
+
+### Server-Side Query Building
+
+```typescript
+// packages/api/src/routers/costs.ts
+const buildSpanFilters = (input, dateRange): Prisma.SpanWhereInput => {
+  const conditions = {
+    trace: {
+      projectId: input.projectId,
+      timestamp: { gte: dateRange.start, lte: dateRange.end },
+    },
+  };
+
+  if (input.search) {
+    conditions.trace.name = { contains: input.search, mode: "insensitive" };
+  }
+
+  if (input.models?.length) {
+    conditions.model = { in: input.models };
+  }
+
+  return conditions;
+};
+```
+
+### Write vs Read Path Comparison
+
+| Aspect | Write Path | Read Path |
+|--------|------------|-----------|
+| Entry | SDK | UI Filter Bar |
+| Flow | SDK → Ingest → Redis → Worker → DB | UI → tRPC → DB |
+| Worker | Required | Not involved |
+| Purpose | Persist traces, calculate costs | Query & display data |
+
 ## Type Conversion Flow
 
 The worker handles conversion between Proto types (API) and Prisma types (Database):

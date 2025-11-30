@@ -245,7 +245,8 @@ export function ProjectFilterProvider({ children }: { children: ReactNode }) {
 
   // Exclude timeRange from active filter checks
   const filtersWithoutTime = useMemo(() => {
-    const { timeRange: _, ...rest } = filters;
+    const { timeRange: _timeRange, ...rest } = filters;
+    void _timeRange; // Intentionally unused
     return rest;
   }, [filters]);
 
