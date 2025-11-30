@@ -390,6 +390,7 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   Workspace: 'Workspace',
   WorkspaceMember: 'WorkspaceMember',
+  AllowedDomain: 'AllowedDomain',
   Project: 'Project',
   ProjectMember: 'ProjectMember',
   ApiKey: 'ApiKey',
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "project" | "projectMember" | "apiKey" | "trace" | "span"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -855,6 +856,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WorkspaceMemberCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WorkspaceMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    AllowedDomain: {
+      payload: Prisma.$AllowedDomainPayload<ExtArgs>
+      fields: Prisma.AllowedDomainFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AllowedDomainFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AllowedDomainFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>
+        }
+        findFirst: {
+          args: Prisma.AllowedDomainFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AllowedDomainFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>
+        }
+        findMany: {
+          args: Prisma.AllowedDomainFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>[]
+        }
+        create: {
+          args: Prisma.AllowedDomainCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>
+        }
+        createMany: {
+          args: Prisma.AllowedDomainCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AllowedDomainCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>[]
+        }
+        delete: {
+          args: Prisma.AllowedDomainDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>
+        }
+        update: {
+          args: Prisma.AllowedDomainUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>
+        }
+        deleteMany: {
+          args: Prisma.AllowedDomainDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AllowedDomainUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AllowedDomainUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>[]
+        }
+        upsert: {
+          args: Prisma.AllowedDomainUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AllowedDomainPayload>
+        }
+        aggregate: {
+          args: Prisma.AllowedDomainAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAllowedDomain>
+        }
+        groupBy: {
+          args: Prisma.AllowedDomainGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AllowedDomainGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AllowedDomainCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AllowedDomainCountAggregateOutputType> | number
         }
       }
     }
@@ -1342,6 +1417,19 @@ export const WorkspaceMemberScalarFieldEnum = {
 export type WorkspaceMemberScalarFieldEnum = (typeof WorkspaceMemberScalarFieldEnum)[keyof typeof WorkspaceMemberScalarFieldEnum]
 
 
+export const AllowedDomainScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  domain: 'domain',
+  role: 'role',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AllowedDomainScalarFieldEnum = (typeof AllowedDomainScalarFieldEnum)[keyof typeof AllowedDomainScalarFieldEnum]
+
+
 export const ProjectScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1663,6 +1751,7 @@ export type GlobalOmitConfig = {
   verificationToken?: Prisma.VerificationTokenOmit
   workspace?: Prisma.WorkspaceOmit
   workspaceMember?: Prisma.WorkspaceMemberOmit
+  allowedDomain?: Prisma.AllowedDomainOmit
   project?: Prisma.ProjectOmit
   projectMember?: Prisma.ProjectMemberOmit
   apiKey?: Prisma.ApiKeyOmit

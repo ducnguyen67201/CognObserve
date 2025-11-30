@@ -36,7 +36,7 @@ export async function proxy(req: NextRequest) {
 
   // Redirect logged-in users away from auth pages
   if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL("/projects", nextUrl));
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
 
   // Allow public routes

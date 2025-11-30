@@ -11,6 +11,7 @@ import {
   CreateWorkspaceSchema,
   InviteMemberSchema,
 } from "../schemas";
+import { createAppError } from "../errors";
 import type { SessionWithWorkspaces } from "../context";
 
 /**
@@ -240,10 +241,7 @@ export const workspacesRouter = createRouter({
       });
 
       if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User with this email not found",
-        });
+        throw createAppError("USER_NOT_SIGNED_UP");
       }
 
       try {
@@ -276,10 +274,7 @@ export const workspacesRouter = createRouter({
           "code" in error &&
           error.code === "P2002"
         ) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "User is already a member of this workspace",
-          });
+          throw createAppError("USER_ALREADY_MEMBER");
         }
         throw error;
       }

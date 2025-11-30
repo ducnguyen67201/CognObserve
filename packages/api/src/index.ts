@@ -99,3 +99,31 @@ export {
   ALL_WORKSPACE_ROLES,
   isValidWorkspaceRole,
 } from "./schemas";
+
+// ============================================================
+// Error Handling
+// ============================================================
+
+export {
+  // Error codes
+  AppErrorCodeSchema,
+  type AppErrorCode,
+  ERROR_MESSAGES,
+  TRPC_TO_APP_CODE,
+  // Error utilities
+  createAppError,
+  isAppErrorData,
+  type AppErrorData,
+} from "./errors";
+
+// ============================================================
+// Domain Matcher Utilities
+// ============================================================
+
+export {
+  DomainSchema,
+  extractDomainFromEmail,
+  emailMatchesDomain,
+  validateDomain,
+  isValidDomainFormat,
+} from "./lib/domain-matcher";

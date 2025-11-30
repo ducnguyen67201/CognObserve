@@ -57,6 +57,7 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   Workspace: 'Workspace',
   WorkspaceMember: 'WorkspaceMember',
+  AllowedDomain: 'AllowedDomain',
   Project: 'Project',
   ProjectMember: 'ProjectMember',
   ApiKey: 'ApiKey',
@@ -153,6 +154,19 @@ export const WorkspaceMemberScalarFieldEnum = {
 } as const
 
 export type WorkspaceMemberScalarFieldEnum = (typeof WorkspaceMemberScalarFieldEnum)[keyof typeof WorkspaceMemberScalarFieldEnum]
+
+
+export const AllowedDomainScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  domain: 'domain',
+  role: 'role',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AllowedDomainScalarFieldEnum = (typeof AllowedDomainScalarFieldEnum)[keyof typeof AllowedDomainScalarFieldEnum]
 
 
 export const ProjectScalarFieldEnum = {

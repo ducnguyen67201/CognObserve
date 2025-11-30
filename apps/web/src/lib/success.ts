@@ -1,0 +1,155 @@
+import { toast } from "sonner";
+
+// ============================================================
+// Generic Success Toasts
+// ============================================================
+
+/**
+ * Show a success toast.
+ *
+ * @example
+ * ```tsx
+ * showSuccess("Settings saved");
+ * showSuccess("Changes applied", "Your preferences have been updated.");
+ * ```
+ */
+export function showSuccess(title: string, message?: string): void {
+  toast.success(title, { description: message });
+}
+
+/**
+ * Show a success toast for a created resource.
+ */
+export function showCreated(resourceName: string, details?: string): void {
+  toast.success(`${resourceName} created`, { description: details });
+}
+
+/**
+ * Show a success toast for an updated resource.
+ */
+export function showUpdated(resourceName: string, details?: string): void {
+  toast.success(`${resourceName} updated`, { description: details });
+}
+
+/**
+ * Show a success toast for a deleted/removed resource.
+ */
+export function showDeleted(resourceName: string, details?: string): void {
+  toast.success(`${resourceName} removed`, { description: details });
+}
+
+/**
+ * Show an info toast (not success, not error).
+ */
+export function showInfo(title: string, message?: string): void {
+  toast.info(title, { description: message });
+}
+
+/**
+ * Show a warning toast.
+ */
+export function showWarning(title: string, message?: string): void {
+  toast.warning(title, { description: message });
+}
+
+// ============================================================
+// Workspace Toasts
+// ============================================================
+
+export const workspaceToast = {
+  created: (name: string) =>
+    toast.success("Workspace created", { description: `"${name}" is ready to use.` }),
+
+  updated: (name: string) =>
+    toast.success("Workspace updated", { description: `"${name}" has been updated.` }),
+
+  deleted: (name: string) =>
+    toast.success("Workspace deleted", { description: `"${name}" has been removed.` }),
+} as const;
+
+// ============================================================
+// Member Toasts
+// ============================================================
+
+export const memberToast = {
+  added: (email: string) =>
+    toast.success("Member added", { description: `${email} has been added to the workspace.` }),
+
+  removed: (email: string) =>
+    toast.success("Member removed", { description: `${email} has been removed from the workspace.` }),
+
+  roleUpdated: (email: string, role: string) =>
+    toast.success("Role updated", { description: `${email} is now a ${role.toLowerCase()}.` }),
+
+  inviteSent: (email: string) =>
+    toast.success("Invite sent", { description: `An invitation has been sent to ${email}.` }),
+} as const;
+
+// ============================================================
+// Domain Matcher Toasts
+// ============================================================
+
+export const domainToast = {
+  added: (domain: string) =>
+    toast.success("Domain added", { description: `Users with @${domain} emails will be auto-added.` }),
+
+  removed: (domain: string) =>
+    toast.success("Domain removed", { description: `@${domain} is no longer an allowed domain.` }),
+} as const;
+
+// ============================================================
+// Project Toasts
+// ============================================================
+
+export const projectToast = {
+  created: (name: string) =>
+    toast.success("Project created", { description: `"${name}" is ready to use.` }),
+
+  updated: (name: string) =>
+    toast.success("Project updated", { description: `"${name}" has been updated.` }),
+
+  deleted: (name: string) =>
+    toast.success("Project deleted", { description: `"${name}" has been removed.` }),
+} as const;
+
+// ============================================================
+// API Key Toasts
+// ============================================================
+
+export const apiKeyToast = {
+  created: (name: string) =>
+    toast.success("API key created", { description: `"${name}" is ready to use. Copy it now - it won't be shown again.` }),
+
+  revoked: (name: string) =>
+    toast.success("API key revoked", { description: `"${name}" has been permanently revoked.` }),
+
+  copied: () =>
+    toast.success("Copied", { description: "API key copied to clipboard." }),
+} as const;
+
+// ============================================================
+// Auth Toasts
+// ============================================================
+
+export const authToast = {
+  signedIn: () =>
+    toast.success("Welcome back", { description: "You have been signed in." }),
+
+  signedOut: () =>
+    toast.success("Signed out", { description: "You have been signed out." }),
+
+  passwordChanged: () =>
+    toast.success("Password changed", { description: "Your password has been updated." }),
+} as const;
+
+// ============================================================
+// Clipboard Toasts
+// ============================================================
+
+export const clipboardToast = {
+  copied: (what?: string) =>
+    toast.success("Copied", { description: what ? `${what} copied to clipboard.` : "Copied to clipboard." }),
+
+  copyFailed: () =>
+    toast.error("Copy failed", { description: "Could not copy to clipboard." }),
+} as const;

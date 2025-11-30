@@ -192,6 +192,7 @@ export const ERROR_MESSAGES = {
 - **Store schemas in `packages/api/src/schemas/`** - Centralized location for shared types
 - **Never hardcode constants for enums/unions** - Define as Zod schema, derive constants from it
 - **Export both schema and inferred type** - `export const MySchema = z.enum([...]); export type My = z.infer<typeof MySchema>;`
+- **Client components**: Import from `@cognobserve/api/schemas` (NOT `@cognobserve/api`) to avoid server-side deps
 
 ```typescript
 // BAD - Hardcoded constants without schema
@@ -213,6 +214,9 @@ export const ALL_ROLES: readonly ProjectRole[] = ProjectRoleSchema.options;
 export const isValidRole = (role: string): role is ProjectRole => {
   return ProjectRoleSchema.safeParse(role).success;
 };
+
+// Client component usage (avoids server-side deps)
+import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
 ```
 
 ### Custom Hooks
@@ -326,6 +330,64 @@ import { Input } from "@/components/ui/input"
 - `GET /health` - Health check
 - `POST /v1/traces` - Ingest a trace with spans
 
+## Toast & Error Handling
+
+### Source of Truth
+- **Errors**: `apps/web/src/lib/errors.ts` - All error toasts and messages
+- **Success**: `apps/web/src/lib/success.ts` - All success/info/warning toasts
+
+### NEVER use `toast()` directly
+Always use the centralized toast utilities. This ensures consistent messaging across the app.
+
+```tsx
+// BAD - Direct toast usage
+import { toast } from "sonner";
+toast.error("Something went wrong");
+toast.success("Member added");
+
+// GOOD - Use centralized utilities
+import { showError, memberError } from "@/lib/errors";
+import { memberToast, showSuccess } from "@/lib/success";
+
+// Generic error handling (auto-extracts message from any error)
+try {
+  await mutation.mutateAsync(data);
+} catch (error) {
+  showError(error);  // Automatically shows appropriate toast
+}
+
+// Domain-specific toasts
+memberToast.added("user@example.com");
+memberError.notFound("user@example.com");
+domainToast.added("example.com");
+apiKeyToast.created("Production Key");
+```
+
+### Available Toast Objects
+
+**Success toasts** (`@/lib/success`):
+- `workspaceToast` - created, updated, deleted
+- `memberToast` - added, removed, roleUpdated, inviteSent
+- `domainToast` - added, removed
+- `projectToast` - created, updated, deleted
+- `apiKeyToast` - created, revoked, copied
+- `authToast` - signedIn, signedOut, passwordChanged
+- `clipboardToast` - copied, copyFailed
+
+**Error toasts** (`@/lib/errors`):
+- `memberError` - notFound, alreadyMember, cannotRemoveSelf, cannotRemoveOwner
+- `domainError` - alreadyExists, invalidFormat
+- `workspaceError` - notFound, noAccess, slugTaken
+- `projectError` - notFound, noAccess
+- `apiKeyError` - notFound, expired
+- `authError` - unauthorized, sessionExpired, invalidCredentials
+- `formError` - validation, required
+
+### Adding New Toast Messages
+1. Add to appropriate section in `errors.ts` or `success.ts`
+2. Group by domain/model (workspace, member, project, etc.)
+3. Use consistent naming: `{domain}Toast` for success, `{domain}Error` for errors
+
 ## Notes for Claude
 - Proto files are source of truth for types
 - After editing `.proto`, run `make proto`
@@ -338,3 +400,4 @@ import { Input } from "@/components/ui/input"
 - **UI**: ALWAYS use shadcn/ui components from `@/components/ui/`. Never write custom CSS for standard UI elements.
 - **Env vars**: Use `env` from `@/lib/env` instead of `process.env`
 - **Adding shadcn components**: Run `pnpm dlx shadcn@latest add <component>` from `apps/web/`
+- **Toasts**: ALWAYS use utilities from `@/lib/errors` and `@/lib/success`. Never use `toast()` directly.

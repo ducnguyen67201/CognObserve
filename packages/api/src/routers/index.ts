@@ -21,6 +21,7 @@ import { workspacesRouter } from "./workspaces";
 import { projectsRouter } from "./projects";
 import { tracesRouter } from "./traces";
 import { analyticsRouter } from "./analytics";
+import { domainsRouter } from "./domains";
 // import { usersRouter } from "./users";
 
 /**
@@ -87,6 +88,16 @@ export const appRouter = createRouter({
   analytics: analyticsRouter,
 
   /**
+   * Allowed Domains (Domain Matcher)
+   * @see ./domains.ts
+   *
+   * - domains.list   - List allowed domains for a workspace
+   * - domains.create - Add a domain for auto-join
+   * - domains.delete - Remove an allowed domain
+   */
+  domains: domainsRouter,
+
+  /**
    * Future modules:
    *
    * users: usersRouter,        // User management
@@ -103,4 +114,4 @@ export type AppRouter = typeof appRouter;
 /**
  * Re-export individual routers for direct imports if needed.
  */
-export { apiKeysRouter, workspacesRouter, projectsRouter, tracesRouter, analyticsRouter };
+export { apiKeysRouter, workspacesRouter, projectsRouter, tracesRouter, analyticsRouter, domainsRouter };

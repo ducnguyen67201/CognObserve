@@ -3,15 +3,25 @@
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function LogoutButton() {
+interface LogoutButtonProps {
+  className?: string;
+}
+
+export function LogoutButton({ className }: LogoutButtonProps) {
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/login" });
+  };
+
   return (
     <Button
       variant="outline"
-      onClick={() => signOut({ callbackUrl: "/login" })}
+      onClick={handleSignOut}
+      className={cn(className)}
     >
       <LogOut className="mr-2 h-4 w-4" />
-      Sign out
+      Sign Out
     </Button>
   );
 }

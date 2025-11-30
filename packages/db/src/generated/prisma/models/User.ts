@@ -210,6 +210,7 @@ export type UserWhereInput = {
   sessions?: Prisma.SessionListRelationFilter
   projects?: Prisma.ProjectMemberListRelationFilter
   workspaces?: Prisma.WorkspaceMemberListRelationFilter
+  domainsCreated?: Prisma.AllowedDomainListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -225,6 +226,7 @@ export type UserOrderByWithRelationInput = {
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   projects?: Prisma.ProjectMemberOrderByRelationAggregateInput
   workspaces?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
+  domainsCreated?: Prisma.AllowedDomainOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -243,6 +245,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sessions?: Prisma.SessionListRelationFilter
   projects?: Prisma.ProjectMemberListRelationFilter
   workspaces?: Prisma.WorkspaceMemberListRelationFilter
+  domainsCreated?: Prisma.AllowedDomainListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -286,6 +289,7 @@ export type UserCreateInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -301,6 +305,7 @@ export type UserUncheckedCreateInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUpdateInput = {
@@ -316,6 +321,7 @@ export type UserUpdateInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -331,6 +337,7 @@ export type UserUncheckedUpdateInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -462,6 +469,20 @@ export type UserUpdateOneRequiredWithoutWorkspacesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWorkspacesInput, Prisma.UserUpdateWithoutWorkspacesInput>, Prisma.UserUncheckedUpdateWithoutWorkspacesInput>
 }
 
+export type UserCreateNestedOneWithoutDomainsCreatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDomainsCreatedInput, Prisma.UserUncheckedCreateWithoutDomainsCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDomainsCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutDomainsCreatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDomainsCreatedInput, Prisma.UserUncheckedCreateWithoutDomainsCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDomainsCreatedInput
+  upsert?: Prisma.UserUpsertWithoutDomainsCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDomainsCreatedInput, Prisma.UserUpdateWithoutDomainsCreatedInput>, Prisma.UserUncheckedUpdateWithoutDomainsCreatedInput>
+}
+
 export type UserCreateNestedOneWithoutProjectsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutProjectsInput, Prisma.UserUncheckedCreateWithoutProjectsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutProjectsInput
@@ -488,6 +509,7 @@ export type UserCreateWithoutAccountsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -502,6 +524,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -532,6 +555,7 @@ export type UserUpdateWithoutAccountsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -546,6 +570,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -560,6 +585,7 @@ export type UserCreateWithoutSessionsInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -574,6 +600,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -604,6 +631,7 @@ export type UserUpdateWithoutSessionsInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -618,6 +646,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutWorkspacesInput = {
@@ -632,6 +661,7 @@ export type UserCreateWithoutWorkspacesInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutWorkspacesInput = {
@@ -646,6 +676,7 @@ export type UserUncheckedCreateWithoutWorkspacesInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutWorkspacesInput = {
@@ -676,6 +707,7 @@ export type UserUpdateWithoutWorkspacesInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWorkspacesInput = {
@@ -690,6 +722,83 @@ export type UserUncheckedUpdateWithoutWorkspacesInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserCreateWithoutDomainsCreatedInput = {
+  id?: string
+  name?: string | null
+  email: string
+  emailVerified?: Date | string | null
+  password?: string | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDomainsCreatedInput = {
+  id?: string
+  name?: string | null
+  email: string
+  emailVerified?: Date | string | null
+  password?: string | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDomainsCreatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDomainsCreatedInput, Prisma.UserUncheckedCreateWithoutDomainsCreatedInput>
+}
+
+export type UserUpsertWithoutDomainsCreatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDomainsCreatedInput, Prisma.UserUncheckedUpdateWithoutDomainsCreatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDomainsCreatedInput, Prisma.UserUncheckedCreateWithoutDomainsCreatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDomainsCreatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDomainsCreatedInput, Prisma.UserUncheckedUpdateWithoutDomainsCreatedInput>
+}
+
+export type UserUpdateWithoutDomainsCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDomainsCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutProjectsInput = {
@@ -704,6 +813,7 @@ export type UserCreateWithoutProjectsInput = {
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutProjectsInput = {
@@ -718,6 +828,7 @@ export type UserUncheckedCreateWithoutProjectsInput = {
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutProjectsInput = {
@@ -748,6 +859,7 @@ export type UserUpdateWithoutProjectsInput = {
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProjectsInput = {
@@ -762,6 +874,7 @@ export type UserUncheckedUpdateWithoutProjectsInput = {
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
+  domainsCreated?: Prisma.AllowedDomainUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 
@@ -774,6 +887,7 @@ export type UserCountOutputType = {
   sessions: number
   projects: number
   workspaces: number
+  domainsCreated: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -781,6 +895,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   projects?: boolean | UserCountOutputTypeCountProjectsArgs
   workspaces?: boolean | UserCountOutputTypeCountWorkspacesArgs
+  domainsCreated?: boolean | UserCountOutputTypeCountDomainsCreatedArgs
 }
 
 /**
@@ -821,6 +936,13 @@ export type UserCountOutputTypeCountWorkspacesArgs<ExtArgs extends runtime.Types
   where?: Prisma.WorkspaceMemberWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDomainsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AllowedDomainWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -835,6 +957,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   projects?: boolean | Prisma.User$projectsArgs<ExtArgs>
   workspaces?: boolean | Prisma.User$workspacesArgs<ExtArgs>
+  domainsCreated?: boolean | Prisma.User$domainsCreatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -877,6 +1000,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   projects?: boolean | Prisma.User$projectsArgs<ExtArgs>
   workspaces?: boolean | Prisma.User$workspacesArgs<ExtArgs>
+  domainsCreated?: boolean | Prisma.User$domainsCreatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -889,6 +1013,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     projects: Prisma.$ProjectMemberPayload<ExtArgs>[]
     workspaces: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
+    domainsCreated: Prisma.$AllowedDomainPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1297,6 +1422,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   projects<T extends Prisma.User$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workspaces<T extends Prisma.User$workspacesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$workspacesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  domainsCreated<T extends Prisma.User$domainsCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$domainsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AllowedDomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1815,6 +1941,30 @@ export type User$workspacesArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.WorkspaceMemberScalarFieldEnum | Prisma.WorkspaceMemberScalarFieldEnum[]
+}
+
+/**
+ * User.domainsCreated
+ */
+export type User$domainsCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AllowedDomain
+   */
+  select?: Prisma.AllowedDomainSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AllowedDomain
+   */
+  omit?: Prisma.AllowedDomainOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AllowedDomainInclude<ExtArgs> | null
+  where?: Prisma.AllowedDomainWhereInput
+  orderBy?: Prisma.AllowedDomainOrderByWithRelationInput | Prisma.AllowedDomainOrderByWithRelationInput[]
+  cursor?: Prisma.AllowedDomainWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AllowedDomainScalarFieldEnum | Prisma.AllowedDomainScalarFieldEnum[]
 }
 
 /**
