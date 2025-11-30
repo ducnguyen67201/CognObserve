@@ -33,11 +33,12 @@ import { useTraceFilters } from "@/hooks/traces/use-trace-filters";
 import {
   type SpanType,
   type SpanLevel,
+  type QuickToggle,
   ALL_SPAN_TYPES,
   ALL_SPAN_LEVELS,
   QUICK_TOGGLES,
 } from "@/lib/traces/types";
-import { SPAN_TYPE_CONFIG, SPAN_LEVEL_COLORS } from "./span-type-config";
+import { getSpanTypeConfig, getSpanLevelColor } from "./span-type-config";
 import { cn } from "@/lib/utils";
 
 interface TracesFilterBarProps {
@@ -107,7 +108,7 @@ export function TracesFilterBar({
   // Quick toggle handlers
   const handleQuickToggle = useCallback(
     (id: string) => {
-      const toggle = QUICK_TOGGLES.find((t) => t.id === id);
+      const toggle = QUICK_TOGGLES.find((t: QuickToggle) => t.id === id);
       if (toggle) {
         applyQuickToggle(toggle.filter);
       }
@@ -118,7 +119,7 @@ export function TracesFilterBar({
   // Check if a quick toggle is active
   const isQuickToggleActive = useCallback(
     (id: string) => {
-      const toggle = QUICK_TOGGLES.find((t) => t.id === id);
+      const toggle = QUICK_TOGGLES.find((t: QuickToggle) => t.id === id);
       return toggle ? toggle.isActive(filters) : false;
     },
     [filters]
@@ -127,7 +128,7 @@ export function TracesFilterBar({
   // Render type filter item with icon and color
   const renderTypeFilterItem = useCallback(
     (type: SpanType) => {
-      const config = SPAN_TYPE_CONFIG[type];
+      const config = getSpanTypeConfig(type);
       const Icon = config.icon;
       const isChecked = filters.types?.includes(type) ?? false;
 
@@ -150,7 +151,7 @@ export function TracesFilterBar({
   // Render level filter item with color indicator
   const renderLevelFilterItem = useCallback(
     (level: SpanLevel) => {
-      const colorClass = SPAN_LEVEL_COLORS[level];
+      const colorClass = getSpanLevelColor(level);
       const isChecked = filters.levels?.includes(level) ?? false;
 
       return (
@@ -453,8 +454,8 @@ export function TracesFilterBar({
           )}
 
           {/* Type chips */}
-          {filters.types?.map((type) => {
-            const config = SPAN_TYPE_CONFIG[type];
+          {filters.types?.map((type: SpanType) => {
+            const config = getSpanTypeConfig(type);
             const Icon = config.icon;
             return (
               <Badge key={type} variant="secondary" className="gap-1">
@@ -468,8 +469,8 @@ export function TracesFilterBar({
           })}
 
           {/* Level chips */}
-          {filters.levels?.map((level) => {
-            const colorClass = SPAN_LEVEL_COLORS[level];
+          {filters.levels?.map((level: SpanLevel) => {
+            const colorClass = getSpanLevelColor(level);
             return (
               <Badge key={level} variant="secondary" className="gap-1">
                 <span className={cn("h-2 w-2 rounded-full", colorClass)} />
@@ -482,7 +483,7 @@ export function TracesFilterBar({
           })}
 
           {/* Model chips */}
-          {filters.models?.map((model) => (
+          {filters.models?.map((model: string) => (
             <Badge key={model} variant="secondary" className="gap-1">
               {model}
               <button onClick={() => handleRemoveModelFilter(model)} className="ml-1">

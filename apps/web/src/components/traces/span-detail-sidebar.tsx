@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SpanJsonViewer } from "./span-json-viewer";
-import { SPAN_TYPE_CONFIG, SPAN_LEVEL_COLORS } from "./span-type-config";
+import { getSpanTypeConfig, getSpanLevelColor } from "./span-type-config";
 import { inferSpanType } from "@/lib/traces/infer-span-type";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/format";
@@ -71,7 +71,7 @@ export function SpanDetailSidebar({
   }
 
   const spanType = inferSpanType(span);
-  const typeConfig = SPAN_TYPE_CONFIG[spanType];
+  const typeConfig = getSpanTypeConfig(spanType);
   const TypeIcon = typeConfig.icon;
   const level = span.level as SpanLevel;
 
@@ -95,7 +95,7 @@ export function SpanDetailSidebar({
         <div className="p-4 space-y-6">
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
-            <Badge className={cn(SPAN_LEVEL_COLORS[level], "text-white")}>
+            <Badge className={cn(getSpanLevelColor(level), "text-white")}>
               {level}
             </Badge>
             <Badge variant="outline" className={typeConfig.bgColor}>

@@ -77,3 +77,24 @@ export const SPAN_LEVEL_BORDER: Record<SpanLevel, string> = {
   WARNING: "border-l-yellow-600",
   ERROR: "border-l-red-600",
 };
+
+/**
+ * Safely get span type config with fallback to CUSTOM.
+ */
+export const getSpanTypeConfig = (type: SpanType): SpanTypeConfig => {
+  return SPAN_TYPE_CONFIG[type] ?? SPAN_TYPE_CONFIG.CUSTOM;
+};
+
+/**
+ * Safely get span level color with fallback to DEFAULT.
+ */
+export const getSpanLevelColor = (level: SpanLevel): string => {
+  return SPAN_LEVEL_COLORS[level] ?? SPAN_LEVEL_COLORS.DEFAULT;
+};
+
+/**
+ * Safely get span level border with fallback to DEFAULT.
+ */
+export const getSpanLevelBorder = (level: SpanLevel): string => {
+  return SPAN_LEVEL_BORDER[level] ?? SPAN_LEVEL_BORDER.DEFAULT;
+};

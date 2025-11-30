@@ -51,6 +51,8 @@ const TYPE_CONFIG: Record<SpanType, { icon: React.ElementType; label: string; cl
   CUSTOM: { icon: Box, label: "Custom", className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" },
 };
 
+const getTypeConfig = (type: SpanType) => TYPE_CONFIG[type] ?? TYPE_CONFIG.CUSTOM;
+
 interface TracesTableProps {
   workspaceSlug: string;
   projectId: string;
@@ -185,7 +187,7 @@ interface TraceRowWithExpansionProps {
 }
 
 function TraceRowWithExpansion({ trace, isExpanded, onToggleExpand, onOpenDetail }: TraceRowWithExpansionProps) {
-  const typeConfig = TYPE_CONFIG[trace.primaryType];
+  const typeConfig = getTypeConfig(trace.primaryType);
   const TypeIcon = typeConfig.icon;
 
   const handleRowClick = useCallback(() => {
