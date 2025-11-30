@@ -115,3 +115,15 @@ export {
   isAppErrorData,
   type AppErrorData,
 } from "./errors";
+
+// ============================================================
+// Domain Matcher Utilities
+// ============================================================
+
+export {
+  DomainSchema,
+  extractDomainFromEmail,
+  emailMatchesDomain,
+  validateDomain,
+  isValidDomainFormat,
+} from "./lib/domain-matcher";

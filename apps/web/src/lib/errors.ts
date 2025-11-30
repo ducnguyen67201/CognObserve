@@ -1,27 +1,41 @@
 import { toast } from "sonner";
 
+// ============================================================
+// Error Codes & Types
+// ============================================================
+
 /**
  * Application error codes.
  * Keep in sync with packages/api/src/errors/codes.ts
  */
 export type AppErrorCode =
+  // Auth errors
   | "UNAUTHORIZED"
   | "FORBIDDEN"
   | "SESSION_EXPIRED"
+  // Generic errors
   | "NOT_FOUND"
   | "ALREADY_EXISTS"
   | "CONFLICT"
-  | "USER_NOT_FOUND"
-  | "USER_NOT_SIGNED_UP"
-  | "USER_ALREADY_MEMBER"
-  | "WORKSPACE_NOT_FOUND"
-  | "NO_WORKSPACE_ACCESS"
-  | "DOMAIN_ALREADY_EXISTS"
-  | "INVALID_DOMAIN"
   | "VALIDATION_ERROR"
   | "INVALID_INPUT"
   | "INTERNAL_ERROR"
-  | "UNKNOWN_ERROR";
+  | "UNKNOWN_ERROR"
+  // User errors
+  | "USER_NOT_FOUND"
+  | "USER_NOT_SIGNED_UP"
+  | "USER_ALREADY_MEMBER"
+  // Workspace errors
+  | "WORKSPACE_NOT_FOUND"
+  | "NO_WORKSPACE_ACCESS"
+  // Domain errors
+  | "DOMAIN_ALREADY_EXISTS"
+  | "INVALID_DOMAIN"
+  // Project errors
+  | "PROJECT_NOT_FOUND"
+  // API Key errors
+  | "API_KEY_NOT_FOUND"
+  | "API_KEY_EXPIRED";
 
 /**
  * Error data shape from API.
@@ -43,51 +57,79 @@ export interface ErrorDisplay {
   code?: AppErrorCode;
 }
 
+// ============================================================
+// Error Messages & Titles (Source of Truth)
+// ============================================================
+
 /**
  * Human-readable titles for each error code.
  */
 const ERROR_TITLES: Record<AppErrorCode, string> = {
+  // Auth
   UNAUTHORIZED: "Unauthorized",
   FORBIDDEN: "Access Denied",
   SESSION_EXPIRED: "Session Expired",
+  // Generic
   NOT_FOUND: "Not Found",
   ALREADY_EXISTS: "Already Exists",
   CONFLICT: "Conflict",
-  USER_NOT_FOUND: "User Not Found",
-  USER_NOT_SIGNED_UP: "User Not Found",
-  USER_ALREADY_MEMBER: "Already a Member",
-  WORKSPACE_NOT_FOUND: "Workspace Not Found",
-  NO_WORKSPACE_ACCESS: "No Access",
-  DOMAIN_ALREADY_EXISTS: "Domain Already Configured",
-  INVALID_DOMAIN: "Invalid Domain",
   VALIDATION_ERROR: "Validation Error",
   INVALID_INPUT: "Invalid Input",
   INTERNAL_ERROR: "Error",
   UNKNOWN_ERROR: "Error",
+  // User
+  USER_NOT_FOUND: "User Not Found",
+  USER_NOT_SIGNED_UP: "User Not Found",
+  USER_ALREADY_MEMBER: "Already a Member",
+  // Workspace
+  WORKSPACE_NOT_FOUND: "Workspace Not Found",
+  NO_WORKSPACE_ACCESS: "No Access",
+  // Domain
+  DOMAIN_ALREADY_EXISTS: "Domain Already Configured",
+  INVALID_DOMAIN: "Invalid Domain",
+  // Project
+  PROJECT_NOT_FOUND: "Project Not Found",
+  // API Key
+  API_KEY_NOT_FOUND: "API Key Not Found",
+  API_KEY_EXPIRED: "API Key Expired",
 };
 
 /**
  * Human-readable error messages for each error code.
  */
 const ERROR_MESSAGES: Record<AppErrorCode, string> = {
+  // Auth
   UNAUTHORIZED: "You must be logged in to perform this action.",
   FORBIDDEN: "You don't have permission to perform this action.",
   SESSION_EXPIRED: "Your session has expired. Please log in again.",
+  // Generic
   NOT_FOUND: "The requested resource was not found.",
   ALREADY_EXISTS: "This resource already exists.",
   CONFLICT: "This operation conflicts with the current state.",
-  USER_NOT_FOUND: "User not found.",
-  USER_NOT_SIGNED_UP: "This user must sign up first before they can be added.",
-  USER_ALREADY_MEMBER: "This user is already a member of the workspace.",
-  WORKSPACE_NOT_FOUND: "Workspace not found.",
-  NO_WORKSPACE_ACCESS: "You don't have access to any workspace.",
-  DOMAIN_ALREADY_EXISTS: "This domain is already configured.",
-  INVALID_DOMAIN: "Invalid domain format.",
   VALIDATION_ERROR: "The provided data is invalid.",
   INVALID_INPUT: "Invalid input provided.",
   INTERNAL_ERROR: "An internal error occurred. Please try again later.",
   UNKNOWN_ERROR: "An unexpected error occurred.",
+  // User
+  USER_NOT_FOUND: "User not found.",
+  USER_NOT_SIGNED_UP: "This user must sign up first before they can be added.",
+  USER_ALREADY_MEMBER: "This user is already a member of the workspace.",
+  // Workspace
+  WORKSPACE_NOT_FOUND: "Workspace not found.",
+  NO_WORKSPACE_ACCESS: "You don't have access to any workspace.",
+  // Domain
+  DOMAIN_ALREADY_EXISTS: "This domain is already configured for another workspace.",
+  INVALID_DOMAIN: "Invalid domain format. Use format: example.com",
+  // Project
+  PROJECT_NOT_FOUND: "Project not found.",
+  // API Key
+  API_KEY_NOT_FOUND: "API key not found.",
+  API_KEY_EXPIRED: "This API key has expired.",
 };
+
+// ============================================================
+// Error Extraction Utilities
+// ============================================================
 
 /**
  * Type guard to check if an error cause contains AppErrorData.
@@ -111,12 +153,11 @@ function isAppErrorData(cause: unknown): cause is AppErrorData {
  *   await mutation.mutateAsync(data);
  * } catch (error) {
  *   const { title, message } = extractErrorInfo(error);
- *   toast.error(title, { description: message });
+ *   // Use for custom handling
  * }
  * ```
  */
 export function extractErrorInfo(error: unknown): ErrorDisplay {
-  // Default response
   const defaultError: ErrorDisplay = {
     title: "Error",
     message: "An unexpected error occurred. Please try again.",
@@ -124,7 +165,6 @@ export function extractErrorInfo(error: unknown): ErrorDisplay {
 
   if (!error) return defaultError;
 
-  // Handle objects with error data
   if (typeof error === "object") {
     // Check if it's a tRPC error with our custom cause
     if ("cause" in error && isAppErrorData(error.cause)) {
@@ -139,23 +179,13 @@ export function extractErrorInfo(error: unknown): ErrorDisplay {
     // Check for standard message property
     if ("message" in error && typeof error.message === "string") {
       const message = error.message;
-
-      // Try to determine a better title from the message
       const title = inferTitleFromMessage(message);
-
-      return {
-        title,
-        message,
-      };
+      return { title, message };
     }
   }
 
-  // Handle string errors
   if (typeof error === "string") {
-    return {
-      title: "Error",
-      message: error,
-    };
+    return { title: "Error", message: error };
   }
 
   return defaultError;
@@ -206,6 +236,10 @@ export function getErrorTitle(code: AppErrorCode): string {
   return ERROR_TITLES[code] ?? "Error";
 }
 
+// ============================================================
+// Generic Error Toasts
+// ============================================================
+
 /**
  * Show an error toast for any error.
  * Automatically extracts the title and message from the error.
@@ -230,9 +264,145 @@ export function showError(error: unknown): ErrorDisplay {
  *
  * @example
  * ```tsx
- * showErrorMessage("Failed to save", "Please try again later");
+ * showErrorMessage("Failed to save", "Please check your connection and try again.");
  * ```
  */
 export function showErrorMessage(title: string, message?: string): void {
   toast.error(title, { description: message });
 }
+
+// ============================================================
+// Member Error Toasts
+// ============================================================
+
+export const memberError = {
+  notFound: (email?: string) =>
+    toast.error("User Not Found", {
+      description: email
+        ? `${email} must sign up first before they can be added.`
+        : "This user must sign up first before they can be added.",
+    }),
+
+  alreadyMember: (email?: string) =>
+    toast.error("Already a Member", {
+      description: email
+        ? `${email} is already a member of this workspace.`
+        : "This user is already a member of this workspace.",
+    }),
+
+  cannotRemoveSelf: () =>
+    toast.error("Cannot Remove Yourself", {
+      description: "You cannot remove yourself from the workspace.",
+    }),
+
+  cannotRemoveOwner: () =>
+    toast.error("Cannot Remove Owner", {
+      description: "The workspace owner cannot be removed.",
+    }),
+} as const;
+
+// ============================================================
+// Domain Error Toasts
+// ============================================================
+
+export const domainError = {
+  alreadyExists: (domain: string) =>
+    toast.error("Domain Already Configured", {
+      description: `@${domain} is already configured for another workspace.`,
+    }),
+
+  invalidFormat: () =>
+    toast.error("Invalid Domain", {
+      description: "Please enter a valid domain (e.g., example.com).",
+    }),
+} as const;
+
+// ============================================================
+// Workspace Error Toasts
+// ============================================================
+
+export const workspaceError = {
+  notFound: () =>
+    toast.error("Workspace Not Found", {
+      description: "This workspace doesn't exist or you don't have access.",
+    }),
+
+  noAccess: () =>
+    toast.error("No Access", {
+      description: "You don't have access to this workspace.",
+    }),
+
+  slugTaken: (slug: string) =>
+    toast.error("Slug Taken", {
+      description: `The slug "${slug}" is already in use. Please choose another.`,
+    }),
+} as const;
+
+// ============================================================
+// Project Error Toasts
+// ============================================================
+
+export const projectError = {
+  notFound: () =>
+    toast.error("Project Not Found", {
+      description: "This project doesn't exist or you don't have access.",
+    }),
+
+  noAccess: () =>
+    toast.error("No Access", {
+      description: "You don't have access to this project.",
+    }),
+} as const;
+
+// ============================================================
+// API Key Error Toasts
+// ============================================================
+
+export const apiKeyError = {
+  notFound: () =>
+    toast.error("API Key Not Found", {
+      description: "This API key doesn't exist or has been revoked.",
+    }),
+
+  expired: () =>
+    toast.error("API Key Expired", {
+      description: "This API key has expired. Please create a new one.",
+    }),
+} as const;
+
+// ============================================================
+// Auth Error Toasts
+// ============================================================
+
+export const authError = {
+  unauthorized: () =>
+    toast.error("Unauthorized", {
+      description: "You must be logged in to perform this action.",
+    }),
+
+  sessionExpired: () =>
+    toast.error("Session Expired", {
+      description: "Your session has expired. Please log in again.",
+    }),
+
+  invalidCredentials: () =>
+    toast.error("Invalid Credentials", {
+      description: "The email or password you entered is incorrect.",
+    }),
+} as const;
+
+// ============================================================
+// Form Error Toasts
+// ============================================================
+
+export const formError = {
+  validation: (message?: string) =>
+    toast.error("Validation Error", {
+      description: message ?? "Please check your input and try again.",
+    }),
+
+  required: (fieldName: string) =>
+    toast.error("Required Field", {
+      description: `${fieldName} is required.`,
+    }),
+} as const;

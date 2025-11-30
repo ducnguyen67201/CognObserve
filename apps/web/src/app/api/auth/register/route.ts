@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@cognobserve/db";
+import { extractDomainFromEmail } from "@cognobserve/api";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hash(password, 12);
 
     // Extract email domain for domain matcher
-    const emailDomain = email.split("@")[1]?.toLowerCase();
+    const emailDomain = extractDomainFromEmail(email);
 
     // Check if there's a matching allowed domain
     const allowedDomain = emailDomain

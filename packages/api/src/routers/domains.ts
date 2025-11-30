@@ -7,20 +7,8 @@ import {
 } from "../trpc";
 import { WorkspaceRoleSchema } from "../schemas";
 import { createAppError } from "../errors";
+import { DomainSchema } from "../lib/domain-matcher";
 import type { SessionWithWorkspaces } from "../context";
-
-/**
- * Input schemas
- */
-const DomainSchema = z
-  .string()
-  .min(3, "Domain must be at least 3 characters")
-  .max(255, "Domain must be at most 255 characters")
-  .regex(
-    /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i,
-    "Invalid domain format (e.g., example.com)"
-  )
-  .transform((d) => d.toLowerCase());
 
 const createDomainInput = z.object({
   workspaceId: z.string().min(1),

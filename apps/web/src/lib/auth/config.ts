@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
 import { prisma } from "@cognobserve/db";
+import { extractDomainFromEmail } from "@cognobserve/api";
 import { providers } from "./providers";
 import { env } from "../env";
 
@@ -88,7 +89,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, isNewUser }) {
       if (isNewUser && user.id && user.email) {
         // Domain Matcher: Check if user's email domain matches any workspace
-        const domain = user.email.split("@")[1]?.toLowerCase();
+        const domain = extractDomainFromEmail(user.email);
 
         if (domain) {
           const allowedDomain = await prisma.allowedDomain.findUnique({
