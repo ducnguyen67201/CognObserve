@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { format } from "date-fns";
 import {
   Search,
   X,
@@ -10,12 +11,14 @@ import {
   AlertCircle,
   Sparkles,
   Timer,
+  CalendarIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +32,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useTraceFilters } from "@/hooks/traces/use-trace-filters";
+import { useProjectFilters } from "@/components/costs/cost-context";
 import {
   type SpanType,
   type SpanLevel,
@@ -63,7 +66,11 @@ export function TracesFilterBar({
     clearFilters,
     toggleArrayFilter,
     applyQuickToggle,
-  } = useTraceFilters();
+    timeRange,
+    customRange,
+    setTimeRange,
+    setCustomDateRange,
+  } = useProjectFilters();
 
   const [searchValue, setSearchValue] = useState(filters.search ?? "");
   const [durationMinValue, setDurationMinValue] = useState(
@@ -72,6 +79,29 @@ export function TracesFilterBar({
   const [durationMaxValue, setDurationMaxValue] = useState(
     filters.maxDuration?.toString() ?? ""
   );
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [showCustomCalendar, setShowCustomCalendar] = useState(timeRange === "custom");
+  const [tempFromDate, setTempFromDate] = useState<Date | undefined>(
+    customRange?.from ? new Date(customRange.from) : undefined
+  );
+  const [tempToDate, setTempToDate] = useState<Date | undefined>(
+    customRange?.to ? new Date(customRange.to) : undefined
+  );
+  // Time state (HH:MM format)
+  const [tempFromTime, setTempFromTime] = useState(() => {
+    if (customRange?.from) {
+      const date = new Date(customRange.from);
+      return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    }
+    return "00:00";
+  });
+  const [tempToTime, setTempToTime] = useState(() => {
+    if (customRange?.to) {
+      const date = new Date(customRange.to);
+      return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    }
+    return "23:59";
+  });
 
   // Debounced search handler
   const handleSearchChange = useCallback(
@@ -118,6 +148,83 @@ export function TracesFilterBar({
     },
     []
   );
+
+  // Date range handlers
+  const handlePresetSelect = useCallback(
+    (preset: "24h" | "7d" | "30d") => {
+      setTimeRange(preset);
+      setShowCustomCalendar(false);
+      setDatePickerOpen(false);
+    },
+    [setTimeRange]
+  );
+
+  const handleShowCustomCalendar = useCallback(() => {
+    setShowCustomCalendar(true);
+  }, []);
+
+  const handleCancelCustomRange = useCallback(() => {
+    setShowCustomCalendar(timeRange === "custom");
+    setTempFromDate(customRange?.from ? new Date(customRange.from) : undefined);
+    setTempToDate(customRange?.to ? new Date(customRange.to) : undefined);
+    // Reset time values
+    if (customRange?.from) {
+      const fromDate = new Date(customRange.from);
+      setTempFromTime(`${fromDate.getHours().toString().padStart(2, "0")}:${fromDate.getMinutes().toString().padStart(2, "0")}`);
+    } else {
+      setTempFromTime("00:00");
+    }
+    if (customRange?.to) {
+      const toDate = new Date(customRange.to);
+      setTempToTime(`${toDate.getHours().toString().padStart(2, "0")}:${toDate.getMinutes().toString().padStart(2, "0")}`);
+    } else {
+      setTempToTime("23:59");
+    }
+    setDatePickerOpen(false);
+  }, [timeRange, customRange]);
+
+  const handleDateSelect = useCallback(
+    (range: { from?: Date; to?: Date } | undefined) => {
+      if (range) {
+        setTempFromDate(range.from);
+        setTempToDate(range.to);
+      }
+    },
+    []
+  );
+
+  const handleFromTimeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempFromTime(e.target.value);
+  }, []);
+
+  const handleToTimeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempToTime(e.target.value);
+  }, []);
+
+  const handleApplyCustomRange = useCallback(() => {
+    if (tempFromDate && tempToDate) {
+      // Combine date + time into full ISO datetime
+      const fromTimeParts = tempFromTime.split(":");
+      const toTimeParts = tempToTime.split(":");
+      const fromHours = parseInt(fromTimeParts[0] ?? "0", 10);
+      const fromMinutes = parseInt(fromTimeParts[1] ?? "0", 10);
+      const toHours = parseInt(toTimeParts[0] ?? "23", 10);
+      const toMinutes = parseInt(toTimeParts[1] ?? "59", 10);
+
+      const fromDateTime = new Date(tempFromDate);
+      fromDateTime.setHours(fromHours, fromMinutes, 0, 0);
+
+      const toDateTime = new Date(tempToDate);
+      toDateTime.setHours(toHours, toMinutes, 59, 999);
+
+      setCustomDateRange(
+        fromDateTime.toISOString(),
+        toDateTime.toISOString()
+      );
+      setShowCustomCalendar(true);
+      setDatePickerOpen(false);
+    }
+  }, [tempFromDate, tempToDate, tempFromTime, tempToTime, setCustomDateRange]);
 
   // Quick toggle handlers
   const handleQuickToggle = useCallback(
@@ -329,6 +436,131 @@ export function TracesFilterBar({
 
         {/* Dropdown filters section */}
         <div className="flex items-center gap-2">
+          {/* Date range filter */}
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={timeRange === "custom" ? "secondary" : "outline"}
+                size="sm"
+                className="gap-1"
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {timeRange === "custom" && customRange
+                  ? `${format(new Date(customRange.from), "MMM d, HH:mm")} - ${format(new Date(customRange.to), "MMM d, HH:mm")}`
+                  : timeRange === "24h"
+                    ? "Last 24h"
+                    : timeRange === "7d"
+                      ? "Last 7 days"
+                      : timeRange === "30d"
+                        ? "Last 30 days"
+                        : "Date Range"}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              {/* Preset options */}
+              <div className="border-b p-2">
+                <div className="grid grid-cols-2 gap-1">
+                  <Button
+                    variant={timeRange === "24h" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="justify-start"
+                    onClick={() => handlePresetSelect("24h")}
+                  >
+                    Last 24 hours
+                  </Button>
+                  <Button
+                    variant={timeRange === "7d" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="justify-start"
+                    onClick={() => handlePresetSelect("7d")}
+                  >
+                    Last 7 days
+                  </Button>
+                  <Button
+                    variant={timeRange === "30d" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="justify-start"
+                    onClick={() => handlePresetSelect("30d")}
+                  >
+                    Last 30 days
+                  </Button>
+                  <Button
+                    variant={showCustomCalendar ? "secondary" : "ghost"}
+                    size="sm"
+                    className="justify-start"
+                    onClick={handleShowCustomCalendar}
+                  >
+                    Custom range
+                  </Button>
+                </div>
+              </div>
+              {/* Calendar for custom range */}
+              {showCustomCalendar && (
+                <>
+                  <Calendar
+                    mode="range"
+                    selected={tempFromDate && tempToDate ? { from: tempFromDate, to: tempToDate } : undefined}
+                    onSelect={handleDateSelect}
+                    numberOfMonths={2}
+                    disabled={{ after: new Date() }}
+                  />
+                  {/* Time selection */}
+                  <div className="border-t p-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="from-time" className="text-xs text-muted-foreground">
+                          From time
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="from-time"
+                            type="time"
+                            value={tempFromTime}
+                            onChange={handleFromTimeChange}
+                            className="h-8"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="to-time" className="text-xs text-muted-foreground">
+                          To time
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="to-time"
+                            type="time"
+                            value={tempToTime}
+                            onChange={handleToTimeChange}
+                            className="h-8"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 border-t p-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancelCustomRange}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleApplyCustomRange}
+                      disabled={!tempFromDate || !tempToDate}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </>
+              )}
+            </PopoverContent>
+          </Popover>
+
           {/* Type filter dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

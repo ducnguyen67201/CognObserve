@@ -7,20 +7,36 @@
  * - Some errors and warnings for testing status indicators
  */
 
-import { prisma, SpanLevel } from "../src/index.js";
+import { prisma, SpanLevel, Prisma } from "../src/index.js";
+
+const Decimal = Prisma.Decimal;
 
 // Configuration
 const TRACE_COUNT = 250;
 
-// LLM Models to simulate
+// Type for model pricing lookup
+interface ModelPricingInfo {
+  id: string;
+  inputPricePerMillion: Prisma.Decimal;
+  outputPricePerMillion: Prisma.Decimal;
+}
+
+// Cache for model pricing lookup
+let modelPricingCache: Map<string, ModelPricingInfo> = new Map();
+
+// LLM Models to simulate (must match model-pricing.ts)
 const LLM_MODELS = [
   "gpt-4",
   "gpt-4-turbo",
+  "gpt-4o",
+  "gpt-4o-mini",
   "gpt-3.5-turbo",
   "claude-3-opus",
   "claude-3-sonnet",
   "claude-3-haiku",
-  "gemini-pro",
+  "claude-3-5-sonnet",
+  "gemini-1.5-pro",
+  "gemini-1.5-flash",
   "mistral-large",
 ];
 
@@ -152,6 +168,11 @@ interface SpanData {
   totalTokens: number | null;
   level: SpanLevel;
   statusMessage: string | null;
+  // Cost fields
+  inputCost: Prisma.Decimal | null;
+  outputCost: Prisma.Decimal | null;
+  totalCost: Prisma.Decimal | null;
+  pricingId: string | null;
 }
 
 function generateTraceData(projectId: string, hoursAgo: number): {
@@ -221,6 +242,11 @@ function generateTraceData(projectId: string, hoursAgo: number): {
     let input: Record<string, unknown> | null = null;
     let output: Record<string, unknown> | null = null;
     let modelParameters: Record<string, unknown> | null = null;
+    // Cost fields
+    let inputCost: Prisma.Decimal | null = null;
+    let outputCost: Prisma.Decimal | null = null;
+    let totalCost: Prisma.Decimal | null = null;
+    let pricingId: string | null = null;
 
     // Add LLM-specific fields
     if (isLLMSpan && model) {
@@ -246,6 +272,20 @@ function generateTraceData(projectId: string, hoursAgo: number): {
         max_tokens: randomInt(100, 2000),
         top_p: 1,
       };
+
+      // Calculate costs based on model pricing
+      const pricing = modelPricingCache.get(model);
+      if (pricing) {
+        pricingId = pricing.id;
+        // Cost = tokens * (price per million / 1,000,000)
+        inputCost = new Decimal(promptTokens)
+          .mul(pricing.inputPricePerMillion)
+          .div(1_000_000);
+        outputCost = new Decimal(completionTokens)
+          .mul(pricing.outputPricePerMillion)
+          .div(1_000_000);
+        totalCost = inputCost.add(outputCost);
+      }
     }
 
     const span: SpanData = {
@@ -264,6 +304,10 @@ function generateTraceData(projectId: string, hoursAgo: number): {
       totalTokens,
       level,
       statusMessage,
+      inputCost,
+      outputCost,
+      totalCost,
+      pricingId,
     };
 
     spans.push(span);
@@ -290,8 +334,27 @@ function generateTraceData(projectId: string, hoursAgo: number): {
 export async function seedTraces() {
   console.log("🌱 Seeding traces...\n");
 
+  // Load model pricing into cache
+  console.log("💰 Loading model pricing...");
+  const pricingData = await prisma.modelPricing.findMany({
+    orderBy: { effectiveFrom: "desc" },
+  });
+
+  // Build cache with latest pricing per model
+  modelPricingCache = new Map();
+  for (const pricing of pricingData) {
+    if (!modelPricingCache.has(pricing.model)) {
+      modelPricingCache.set(pricing.model, {
+        id: pricing.id,
+        inputPricePerMillion: pricing.inputPricePerMillion,
+        outputPricePerMillion: pricing.outputPricePerMillion,
+      });
+    }
+  }
+  console.log(`   Loaded pricing for ${modelPricingCache.size} models\n`);
+
   // Get the first project (or create one if none exists)
-  let project = await prisma.project.findFirst({
+  const project = await prisma.project.findFirst({
     orderBy: { createdAt: "asc" },
   });
 
@@ -364,7 +427,12 @@ export async function seedTraces() {
   const spanStats = await prisma.span.aggregate({
     where: { trace: { projectId: project.id } },
     _count: true,
-    _sum: { totalTokens: true },
+    _sum: {
+      totalTokens: true,
+      totalCost: true,
+      inputCost: true,
+      outputCost: true,
+    },
   });
 
   const errorCount = await prisma.span.count({
@@ -375,11 +443,19 @@ export async function seedTraces() {
     where: { trace: { projectId: project.id }, level: SpanLevel.WARNING },
   });
 
+  const llmSpanCount = await prisma.span.count({
+    where: { trace: { projectId: project.id }, model: { not: null } },
+  });
+
   console.log("\n✅ Seeding complete!\n");
   console.log("📊 Statistics:");
   console.log(`   Traces created: ${stats._count}`);
   console.log(`   Spans created: ${spanStats._count}`);
+  console.log(`   LLM spans: ${llmSpanCount}`);
   console.log(`   Total tokens: ${(spanStats._sum.totalTokens ?? 0).toLocaleString()}`);
+  console.log(`   Total cost: $${(spanStats._sum.totalCost?.toNumber() ?? 0).toFixed(4)}`);
+  console.log(`   Input cost: $${(spanStats._sum.inputCost?.toNumber() ?? 0).toFixed(4)}`);
+  console.log(`   Output cost: $${(spanStats._sum.outputCost?.toNumber() ?? 0).toFixed(4)}`);
   console.log(`   Error spans: ${errorCount}`);
   console.log(`   Warning spans: ${warningCount}`);
 }
