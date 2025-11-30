@@ -14,3 +14,7 @@ jobs:
   ingest:
     name: Ingest
     uses: ./.github/workflows/ingest.yml
+
+  sdk:
+    name: SDK
+    uses: ./.github/workflows/sdk.yml
