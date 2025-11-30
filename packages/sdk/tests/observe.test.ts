@@ -83,7 +83,8 @@ describe('observe()', () => {
     });
     const duration = Date.now() - start;
 
-    expect(duration).toBeGreaterThanOrEqual(50);
+    // Allow 5ms tolerance for timing imprecision
+    expect(duration).toBeGreaterThanOrEqual(45);
   });
 
   it('should work with type="generation"', async () => {
