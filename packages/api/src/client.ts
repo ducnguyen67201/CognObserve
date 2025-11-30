@@ -46,4 +46,4 @@ export type {
   WorkspaceMemberItem,
 } from "./routers/workspaces";
 export type { ProjectListItem, ProjectDetail } from "./routers/projects";
-export type { TraceListItem, TraceDetail, SpanItem } from "./routers/traces";
+export type { TraceListItem, TraceDetail, SpanItem, SpanDetail } from "./routers/traces";

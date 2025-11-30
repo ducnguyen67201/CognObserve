@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
 import type { TraceListItem } from "@cognobserve/api/client";
 
@@ -30,6 +30,7 @@ export function useTraces({
   const [allTraces, setAllTraces] = useState<TraceListItem[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const appendedCursorRef = useRef<string | undefined>(undefined);
 
   const { data, isLoading, error, refetch } = trpc.traces.list.useQuery(
     { workspaceSlug, projectId, limit, cursor },
@@ -40,13 +41,15 @@ export function useTraces({
   useEffect(() => {
     setAllTraces([]);
     setCursor(undefined);
+    appendedCursorRef.current = undefined;
   }, [projectId, workspaceSlug]);
 
-  // Merge data when cursor changes
+  // Merge data when cursor changes (prevent duplicate appends)
   useEffect(() => {
-    if (data?.items && cursor) {
+    if (data?.items && cursor && cursor !== appendedCursorRef.current) {
       setAllTraces((prev) => [...prev, ...data.items]);
       setIsLoadingMore(false);
+      appendedCursorRef.current = cursor;
     }
   }, [data?.items, cursor]);
 
