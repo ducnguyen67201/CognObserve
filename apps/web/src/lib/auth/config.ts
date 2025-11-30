@@ -86,50 +86,41 @@ export const authOptions: NextAuthOptions = {
 
   events: {
     async signIn({ user, isNewUser }) {
-      if (isNewUser && user.id) {
-        const MAX_RETRIES = 3;
-        const baseSlug = `user-${user.id.slice(-8)}`;
+      if (isNewUser && user.id && user.email) {
+        // Domain Matcher: Check if user's email domain matches any workspace
+        const domain = user.email.split("@")[1]?.toLowerCase();
 
-        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-          const slug = attempt === 0 ? baseSlug : `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+        if (domain) {
+          const allowedDomain = await prisma.allowedDomain.findUnique({
+            where: { domain },
+          });
 
-          try {
-            // Create personal workspace with default project for new users
-            await prisma.workspace.create({
-              data: {
-                name: user.name ? `${user.name}'s Workspace` : "Personal",
-                slug,
-                isPersonal: true,
-                members: {
-                  create: {
-                    userId: user.id,
-                    role: "OWNER",
-                  },
+          if (allowedDomain) {
+            // Auto-add user to workspace based on domain match
+            try {
+              await prisma.workspaceMember.create({
+                data: {
+                  userId: user.id,
+                  workspaceId: allowedDomain.workspaceId,
+                  role: allowedDomain.role,
                 },
-                projects: {
-                  create: {
-                    name: "My First Project",
-                    members: {
-                      create: {
-                        userId: user.id,
-                        role: "OWNER",
-                      },
-                    },
-                  },
-                },
-              },
-            });
-            break; // Success, exit loop
-          } catch (error) {
-            // P2002 = unique constraint violation (slug taken)
-            const isPrismaError = error instanceof Error && "code" in error;
-            if (isPrismaError && (error as { code: string }).code === "P2002" && attempt < MAX_RETRIES - 1) {
-              continue; // Retry with random suffix
+              });
+              console.info("Domain matcher: Auto-added user to workspace", {
+                userId: user.id,
+                email: user.email,
+                domain,
+                workspaceId: allowedDomain.workspaceId,
+              });
+            } catch (error) {
+              // P2002 = user already a member (edge case)
+              const isPrismaError = error instanceof Error && "code" in error;
+              if (!isPrismaError || (error as { code: string }).code !== "P2002") {
+                throw error;
+              }
             }
-            throw error; // Rethrow other errors or final attempt failure
           }
+          // If no domain match, user has no workspace - they'll see the no-workspace page
         }
-
       }
     },
   },

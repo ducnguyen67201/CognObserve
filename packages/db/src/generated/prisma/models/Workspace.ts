@@ -192,6 +192,7 @@ export type WorkspaceWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   members?: Prisma.WorkspaceMemberListRelationFilter
   projects?: Prisma.ProjectListRelationFilter
+  allowedDomains?: Prisma.AllowedDomainListRelationFilter
 }
 
 export type WorkspaceOrderByWithRelationInput = {
@@ -203,6 +204,7 @@ export type WorkspaceOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   members?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
   projects?: Prisma.ProjectOrderByRelationAggregateInput
+  allowedDomains?: Prisma.AllowedDomainOrderByRelationAggregateInput
 }
 
 export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
@@ -217,6 +219,7 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   members?: Prisma.WorkspaceMemberListRelationFilter
   projects?: Prisma.ProjectListRelationFilter
+  allowedDomains?: Prisma.AllowedDomainListRelationFilter
 }, "id" | "slug">
 
 export type WorkspaceOrderByWithAggregationInput = {
@@ -252,6 +255,7 @@ export type WorkspaceCreateInput = {
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateInput = {
@@ -263,6 +267,7 @@ export type WorkspaceUncheckedCreateInput = {
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUpdateInput = {
@@ -274,6 +279,7 @@ export type WorkspaceUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateInput = {
@@ -285,6 +291,7 @@ export type WorkspaceUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyInput = {
@@ -364,6 +371,20 @@ export type WorkspaceUpdateOneRequiredWithoutMembersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutMembersInput, Prisma.WorkspaceUpdateWithoutMembersInput>, Prisma.WorkspaceUncheckedUpdateWithoutMembersInput>
 }
 
+export type WorkspaceCreateNestedOneWithoutAllowedDomainsInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutAllowedDomainsInput, Prisma.WorkspaceUncheckedCreateWithoutAllowedDomainsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutAllowedDomainsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutAllowedDomainsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutAllowedDomainsInput, Prisma.WorkspaceUncheckedCreateWithoutAllowedDomainsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutAllowedDomainsInput
+  upsert?: Prisma.WorkspaceUpsertWithoutAllowedDomainsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutAllowedDomainsInput, Prisma.WorkspaceUpdateWithoutAllowedDomainsInput>, Prisma.WorkspaceUncheckedUpdateWithoutAllowedDomainsInput>
+}
+
 export type WorkspaceCreateNestedOneWithoutProjectsInput = {
   create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutProjectsInput, Prisma.WorkspaceUncheckedCreateWithoutProjectsInput>
   connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutProjectsInput
@@ -386,6 +407,7 @@ export type WorkspaceCreateWithoutMembersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutMembersInput = {
@@ -396,6 +418,7 @@ export type WorkspaceUncheckedCreateWithoutMembersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutMembersInput = {
@@ -422,6 +445,7 @@ export type WorkspaceUpdateWithoutMembersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutMembersInput = {
@@ -431,6 +455,67 @@ export type WorkspaceUncheckedUpdateWithoutMembersInput = {
   isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutAllowedDomainsInput = {
+  id?: string
+  name: string
+  slug: string
+  isPersonal?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutAllowedDomainsInput = {
+  id?: string
+  name: string
+  slug: string
+  isPersonal?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutAllowedDomainsInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutAllowedDomainsInput, Prisma.WorkspaceUncheckedCreateWithoutAllowedDomainsInput>
+}
+
+export type WorkspaceUpsertWithoutAllowedDomainsInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutAllowedDomainsInput, Prisma.WorkspaceUncheckedUpdateWithoutAllowedDomainsInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutAllowedDomainsInput, Prisma.WorkspaceUncheckedCreateWithoutAllowedDomainsInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutAllowedDomainsInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutAllowedDomainsInput, Prisma.WorkspaceUncheckedUpdateWithoutAllowedDomainsInput>
+}
+
+export type WorkspaceUpdateWithoutAllowedDomainsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutAllowedDomainsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
@@ -442,6 +527,7 @@ export type WorkspaceCreateWithoutProjectsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutProjectsInput = {
@@ -452,6 +538,7 @@ export type WorkspaceUncheckedCreateWithoutProjectsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutProjectsInput = {
@@ -478,6 +565,7 @@ export type WorkspaceUpdateWithoutProjectsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
@@ -488,6 +576,7 @@ export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 
@@ -498,11 +587,13 @@ export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
 export type WorkspaceCountOutputType = {
   members: number
   projects: number
+  allowedDomains: number
 }
 
 export type WorkspaceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | WorkspaceCountOutputTypeCountMembersArgs
   projects?: boolean | WorkspaceCountOutputTypeCountProjectsArgs
+  allowedDomains?: boolean | WorkspaceCountOutputTypeCountAllowedDomainsArgs
 }
 
 /**
@@ -529,6 +620,13 @@ export type WorkspaceCountOutputTypeCountProjectsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.ProjectWhereInput
 }
 
+/**
+ * WorkspaceCountOutputType without action
+ */
+export type WorkspaceCountOutputTypeCountAllowedDomainsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AllowedDomainWhereInput
+}
+
 
 export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -539,6 +637,7 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   updatedAt?: boolean
   members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
+  allowedDomains?: boolean | Prisma.Workspace$allowedDomainsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workspace"]>
 
@@ -573,6 +672,7 @@ export type WorkspaceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
+  allowedDomains?: boolean | Prisma.Workspace$allowedDomainsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkspaceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -583,6 +683,7 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
   objects: {
     members: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
     projects: Prisma.$ProjectPayload<ExtArgs>[]
+    allowedDomains: Prisma.$AllowedDomainPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -987,6 +1088,7 @@ export interface Prisma__WorkspaceClient<T, Null = never, ExtArgs extends runtim
   readonly [Symbol.toStringTag]: "PrismaPromise"
   members<T extends Prisma.Workspace$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   projects<T extends Prisma.Workspace$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  allowedDomains<T extends Prisma.Workspace$allowedDomainsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$allowedDomainsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AllowedDomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1455,6 +1557,30 @@ export type Workspace$projectsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ProjectScalarFieldEnum | Prisma.ProjectScalarFieldEnum[]
+}
+
+/**
+ * Workspace.allowedDomains
+ */
+export type Workspace$allowedDomainsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AllowedDomain
+   */
+  select?: Prisma.AllowedDomainSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AllowedDomain
+   */
+  omit?: Prisma.AllowedDomainOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AllowedDomainInclude<ExtArgs> | null
+  where?: Prisma.AllowedDomainWhereInput
+  orderBy?: Prisma.AllowedDomainOrderByWithRelationInput | Prisma.AllowedDomainOrderByWithRelationInput[]
+  cursor?: Prisma.AllowedDomainWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AllowedDomainScalarFieldEnum | Prisma.AllowedDomainScalarFieldEnum[]
 }
 
 /**

@@ -9,7 +9,7 @@ interface OAuthButtonsProps {
   callbackUrl?: string;
 }
 
-export function OAuthButtons({ callbackUrl = "/projects" }: OAuthButtonsProps) {
+export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const handleOAuthSignIn = async (provider: string) => {

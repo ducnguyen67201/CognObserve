@@ -57,7 +57,7 @@ export function RegisterForm() {
         return;
       }
 
-      router.push("/projects");
+      router.push("/");
       router.refresh();
     } catch {
       setError("An error occurred. Please try again.");

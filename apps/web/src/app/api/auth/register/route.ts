@@ -29,18 +29,44 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hash(password, 12);
 
-    // Create user (workspace + default project created on first sign-in via auth events)
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
+    // Extract email domain for domain matcher
+    const emailDomain = email.split("@")[1]?.toLowerCase();
+
+    // Check if there's a matching allowed domain
+    const allowedDomain = emailDomain
+      ? await prisma.allowedDomain.findUnique({
+          where: { domain: emailDomain },
+        })
+      : null;
+
+    // Create user and optionally add to workspace via domain matcher
+    const user = await prisma.$transaction(async (tx) => {
+      // Create the user
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      });
+
+      // Domain matcher: auto-add user to workspace if domain matches
+      if (allowedDomain) {
+        await tx.workspaceMember.create({
+          data: {
+            userId: newUser.id,
+            workspaceId: allowedDomain.workspaceId,
+            role: allowedDomain.role,
+          },
+        });
+      }
+
+      return newUser;
     });
 
     return NextResponse.json(user, { status: 201 });

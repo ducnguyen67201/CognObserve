@@ -30,9 +30,8 @@ export default async function RootPage() {
   });
 
   if (!membership) {
-    // No workspace found - this shouldn't happen for existing users
-    // Redirect to a fallback or show an error
-    redirect("/login");
+    // No workspace found - user needs to be added to a workspace by an admin
+    redirect("/no-workspace");
   }
 
   // Redirect to the default workspace
