@@ -18,3 +18,7 @@ jobs:
   sdk:
     name: SDK
     uses: ./.github/workflows/sdk.yml
+
+  worker:
+    name: Worker
+    uses: ./.github/workflows/worker.yml
