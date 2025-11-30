@@ -85,32 +85,38 @@ export const domainsRouter = createRouter({
       const session = ctx.session as SessionWithWorkspaces;
       const domain = input.domain;
 
-      // Check if domain already claimed by any workspace
-      const existing = await prisma.allowedDomain.findUnique({
-        where: { domain },
-        include: { workspace: { select: { name: true } } },
-      });
-
-      if (existing) {
-        throw createAppError(
-          "DOMAIN_ALREADY_EXISTS",
-          `Domain "${domain}" is already claimed by workspace "${existing.workspace.name}"`
-        );
-      }
-
-      const created = await prisma.allowedDomain.create({
-        data: {
-          workspaceId: input.workspaceId,
-          domain,
-          role: input.role,
-          createdById: session.user.id,
-        },
-        include: {
-          createdBy: {
-            select: { id: true, name: true, email: true },
+      // Create domain atomically (unique constraint handles race condition)
+      let created;
+      try {
+        created = await prisma.allowedDomain.create({
+          data: {
+            workspaceId: input.workspaceId,
+            domain,
+            role: input.role,
+            createdById: session.user.id,
           },
-        },
-      });
+          include: {
+            createdBy: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        });
+      } catch (error) {
+        // P2002 = Unique constraint violation (domain already exists)
+        const isPrismaError = error instanceof Error && "code" in error;
+        if (isPrismaError && (error as { code: string }).code === "P2002") {
+          // Fetch the existing domain to provide helpful error message
+          const existing = await prisma.allowedDomain.findUnique({
+            where: { domain },
+            include: { workspace: { select: { name: true } } },
+          });
+          throw createAppError(
+            "DOMAIN_ALREADY_EXISTS",
+            `Domain "${domain}" is already claimed by workspace "${existing?.workspace.name ?? "another workspace"}"`
+          );
+        }
+        throw error;
+      }
 
       // Auto-add existing users with this email domain to the workspace
       const existingUsers = await prisma.user.findMany({

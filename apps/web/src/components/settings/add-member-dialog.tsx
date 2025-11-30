@@ -162,6 +162,20 @@ export function AddMemberDialog({
 
   const isPending = inviteMember.isPending || createDomain.isPending;
 
+  const renderAddedItem = (item: AddedItem, index: number) => (
+    <Badge
+      key={index}
+      variant="secondary"
+      className="flex items-center gap-1"
+    >
+      <Check className="h-3 w-3 text-green-600" />
+      {item.type === "domain" ? `@${item.value}` : item.value}
+      <span className="text-xs text-muted-foreground">
+        ({item.role})
+      </span>
+    </Badge>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
@@ -185,19 +199,7 @@ export function AddMemberDialog({
               Added in this session:
             </p>
             <div className="flex flex-wrap gap-2">
-              {addedItems.map((item, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  <Check className="h-3 w-3 text-green-600" />
-                  {item.type === "domain" ? `@${item.value}` : item.value}
-                  <span className="text-xs text-muted-foreground">
-                    ({item.role})
-                  </span>
-                </Badge>
-              ))}
+              {addedItems.map(renderAddedItem)}
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Loader2, MoreHorizontal, Shield, User, Crown, Trash2 } from "lucide-react";
+import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api";
 import { showError } from "@/lib/errors";
 import { showDeleted } from "@/lib/success";
 import { trpc } from "@/lib/trpc/client";
@@ -45,7 +46,17 @@ const ROLE_COLORS = {
   MEMBER: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
 } as const;
 
-const ADMIN_ROLES = ["OWNER", "ADMIN"];
+type WorkspaceMember = {
+  id: string;
+  role: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  };
+};
 
 export default function WorkspaceSettingsMembersPage() {
   const params = useParams<{ workspaceSlug: string }>();
@@ -59,7 +70,7 @@ export default function WorkspaceSettingsMembersPage() {
       { enabled: !!params.workspaceSlug }
     );
 
-  const isAdmin = workspace ? ADMIN_ROLES.includes(workspace.role) : false;
+  const isAdmin = workspace ? (WORKSPACE_ADMIN_ROLES as readonly string[]).includes(workspace.role) : false;
 
   const {
     data: members,
@@ -108,6 +119,68 @@ export default function WorkspaceSettingsMembersPage() {
         .slice(0, 2);
     }
     return email.slice(0, 2).toUpperCase();
+  };
+
+  const renderMemberRow = (member: WorkspaceMember) => {
+    const RoleIcon = ROLE_ICONS[member.role as keyof typeof ROLE_ICONS] ?? User;
+    const roleColor = ROLE_COLORS[member.role as keyof typeof ROLE_COLORS] ?? ROLE_COLORS.MEMBER;
+
+    return (
+      <TableRow key={member.id}>
+        <TableCell>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={member.user.image ?? undefined}
+                alt={member.user.name ?? member.user.email}
+              />
+              <AvatarFallback>
+                {getInitials(member.user.name, member.user.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">
+                {member.user.name ?? "Unnamed"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {member.user.email}
+              </p>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary" className={roleColor}>
+            <RoleIcon className="mr-1 h-3 w-3" />
+            {member.role}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-muted-foreground">
+          {new Date(member.createdAt).toLocaleDateString()}
+        </TableCell>
+        <TableCell>
+          {member.role !== "OWNER" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() =>
+                    handleRemoveMember(member.id, member.user.email)
+                  }
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </TableCell>
+      </TableRow>
+    );
   };
 
   if (!isAdmin) {
@@ -163,67 +236,7 @@ export default function WorkspaceSettingsMembersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => {
-                  const RoleIcon = ROLE_ICONS[member.role as keyof typeof ROLE_ICONS] ?? User;
-                  const roleColor = ROLE_COLORS[member.role as keyof typeof ROLE_COLORS] ?? ROLE_COLORS.MEMBER;
-
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage
-                              src={member.user.image ?? undefined}
-                              alt={member.user.name ?? member.user.email}
-                            />
-                            <AvatarFallback>
-                              {getInitials(member.user.name, member.user.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">
-                              {member.user.name ?? "Unnamed"}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {member.user.email}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={roleColor}>
-                          <RoleIcon className="mr-1 h-3 w-3" />
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(member.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {member.role !== "OWNER" && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() =>
-                                  handleRemoveMember(member.id, member.user.email)
-                                }
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {members.map(renderMemberRow)}
               </TableBody>
             </Table>
           ) : (

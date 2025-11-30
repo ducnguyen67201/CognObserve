@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { z } from "zod";
+import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api";
 import { showError } from "@/lib/errors";
 import { showSuccess, showDeleted } from "@/lib/success";
 import { trpc } from "@/lib/trpc/client";
@@ -86,7 +87,17 @@ const ROLE_COLORS = {
   MEMBER: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
 } as const;
 
-const ADMIN_ROLES = ["OWNER", "ADMIN"];
+type AllowedDomain = {
+  id: string;
+  domain: string;
+  role: string;
+  createdAt: string;
+  createdBy: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+};
 
 export default function WorkspaceSettingsDomainsPage() {
   const params = useParams<{ workspaceSlug: string }>();
@@ -100,7 +111,7 @@ export default function WorkspaceSettingsDomainsPage() {
     { enabled: !!params.workspaceSlug }
   );
 
-  const isAdmin = workspace ? ADMIN_ROLES.includes(workspace.role) : false;
+  const isAdmin = workspace ? (WORKSPACE_ADMIN_ROLES as readonly string[]).includes(workspace.role) : false;
 
   const {
     data: domains,
@@ -185,6 +196,51 @@ export default function WorkspaceSettingsDomainsPage() {
     },
     [form]
   );
+
+  const renderDomainRow = (domain: AllowedDomain) => {
+    const RoleIcon =
+      ROLE_ICONS[domain.role as keyof typeof ROLE_ICONS] ?? User;
+    const roleColor =
+      ROLE_COLORS[domain.role as keyof typeof ROLE_COLORS] ??
+      ROLE_COLORS.MEMBER;
+
+    return (
+      <TableRow key={domain.id}>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>
+                <Globe className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-medium">@{domain.domain}</span>
+          </div>
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary" className={roleColor}>
+            <RoleIcon className="mr-1 h-3 w-3" />
+            {domain.role}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-muted-foreground">
+          {domain.createdBy.name ?? domain.createdBy.email}
+        </TableCell>
+        <TableCell className="text-muted-foreground">
+          {new Date(domain.createdAt).toLocaleDateString()}
+        </TableCell>
+        <TableCell>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDelete(domain.id, domain.domain)}
+            disabled={deleteDomain.isPending}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   if (!isAdmin) {
     return (
@@ -335,50 +391,7 @@ export default function WorkspaceSettingsDomainsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {domains.map((domain) => {
-                  const RoleIcon =
-                    ROLE_ICONS[domain.role as keyof typeof ROLE_ICONS] ?? User;
-                  const roleColor =
-                    ROLE_COLORS[domain.role as keyof typeof ROLE_COLORS] ??
-                    ROLE_COLORS.MEMBER;
-
-                  return (
-                    <TableRow key={domain.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              <Globe className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">@{domain.domain}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={roleColor}>
-                          <RoleIcon className="mr-1 h-3 w-3" />
-                          {domain.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {domain.createdBy.name ?? domain.createdBy.email}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(domain.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(domain.id, domain.domain)}
-                          disabled={deleteDomain.isPending}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {domains.map(renderDomainRow)}
               </TableBody>
             </Table>
           ) : (
