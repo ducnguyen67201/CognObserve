@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import type { TraceListItem } from "@cognobserve/api/client";
+import type { TraceListItem, TraceFilters } from "@cognobserve/api/client";
 
 const DEFAULT_LIMIT = 50;
 
@@ -10,6 +10,7 @@ interface UseTracesOptions {
   workspaceSlug: string;
   projectId: string;
   limit?: number;
+  filters?: TraceFilters;
 }
 
 interface UseTracesReturn {
@@ -26,6 +27,7 @@ export function useTraces({
   workspaceSlug,
   projectId,
   limit = DEFAULT_LIMIT,
+  filters,
 }: UseTracesOptions): UseTracesReturn {
   const [allTraces, setAllTraces] = useState<TraceListItem[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -33,16 +35,16 @@ export function useTraces({
   const appendedCursorRef = useRef<string | undefined>(undefined);
 
   const { data, isLoading, error, refetch } = trpc.traces.list.useQuery(
-    { workspaceSlug, projectId, limit, cursor },
+    { workspaceSlug, projectId, limit, cursor, filters },
     { enabled: !!workspaceSlug && !!projectId }
   );
 
-  // Reset when project changes
+  // Reset when project changes or filters change
   useEffect(() => {
     setAllTraces([]);
     setCursor(undefined);
     appendedCursorRef.current = undefined;
-  }, [projectId, workspaceSlug]);
+  }, [projectId, workspaceSlug, filters]);
 
   // Merge data when cursor changes (prevent duplicate appends)
   useEffect(() => {

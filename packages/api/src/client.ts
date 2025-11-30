@@ -33,6 +33,20 @@ export {
   WORKSPACE_MEMBER_ROLES,
   ALL_WORKSPACE_ROLES,
   isValidWorkspaceRole,
+  // Trace filter schemas
+  SpanTypeSchema,
+  type SpanType,
+  ALL_SPAN_TYPES,
+  SpanLevelSchema,
+  type SpanLevel,
+  ALL_SPAN_LEVELS,
+  TraceFiltersSchema,
+  type TraceFilters,
+  FILTER_PARAM_KEYS,
+  type QuickToggle,
+  QUICK_TOGGLES,
+  hasActiveFilters,
+  countActiveFilters,
 } from "./schemas";
 
 // ============================================================
@@ -47,3 +61,10 @@ export type {
 } from "./routers/workspaces";
 export type { ProjectListItem, ProjectDetail } from "./routers/projects";
 export type { TraceListItem, TraceDetail, SpanItem, SpanDetail } from "./routers/traces";
+export type {
+  ProjectAnalytics,
+  TraceVolumePoint,
+  LatencyPoint,
+  TokenUsagePoint,
+  ModelUsage,
+} from "./routers/analytics";

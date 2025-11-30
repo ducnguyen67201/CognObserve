@@ -5,9 +5,9 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FlatWaterfallSpan, SpanLevel } from "@/lib/traces/types";
 import {
-  SPAN_TYPE_CONFIG,
-  SPAN_LEVEL_COLORS,
-  SPAN_LEVEL_BORDER,
+  getSpanTypeConfig,
+  getSpanLevelColor,
+  getSpanLevelBorder,
 } from "./span-type-config";
 import { WATERFALL } from "./waterfall-constants";
 
@@ -35,7 +35,7 @@ export const WaterfallRow = React.memo(
     onSelect,
     onToggleCollapse,
   }: WaterfallRowProps) {
-    const typeConfig = SPAN_TYPE_CONFIG[span.type];
+    const typeConfig = getSpanTypeConfig(span.type);
     const TypeIcon = typeConfig.icon;
     const hasChildren = span.children.length > 0;
     const level = span.level as SpanLevel;
@@ -105,8 +105,8 @@ export const WaterfallRow = React.memo(
           <div
             className={cn(
               "absolute top-1/2 -translate-y-1/2 rounded border-l-4",
-              SPAN_LEVEL_COLORS[level],
-              SPAN_LEVEL_BORDER[level]
+              getSpanLevelColor(level),
+              getSpanLevelBorder(level)
             )}
             style={{
               left: `${span.percentStart}%`,

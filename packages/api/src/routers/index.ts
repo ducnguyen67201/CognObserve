@@ -20,6 +20,7 @@ import { apiKeysRouter } from "./apiKeys";
 import { workspacesRouter } from "./workspaces";
 import { projectsRouter } from "./projects";
 import { tracesRouter } from "./traces";
+import { analyticsRouter } from "./analytics";
 // import { usersRouter } from "./users";
 
 /**
@@ -77,6 +78,14 @@ export const appRouter = createRouter({
   traces: tracesRouter,
 
   /**
+   * Analytics
+   * @see ./analytics.ts
+   *
+   * - analytics.getProjectAnalytics - Get project dashboard data
+   */
+  analytics: analyticsRouter,
+
+  /**
    * Future modules:
    *
    * users: usersRouter,        // User management
@@ -93,4 +102,4 @@ export type AppRouter = typeof appRouter;
 /**
  * Re-export individual routers for direct imports if needed.
  */
-export { apiKeysRouter, workspacesRouter, projectsRouter, tracesRouter };
+export { apiKeysRouter, workspacesRouter, projectsRouter, tracesRouter, analyticsRouter };

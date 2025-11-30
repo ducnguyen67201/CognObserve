@@ -5,3 +5,4 @@
  */
 export * from "./roles";
 export * from "./workspace";
+export * from "./traces";
