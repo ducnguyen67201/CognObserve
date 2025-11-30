@@ -105,6 +105,20 @@ export function TracesFilterBar({
     setFilters({ minDuration: undefined, maxDuration: undefined });
   }, [setFilters]);
 
+  const handleDurationMinChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDurationMinValue(e.target.value);
+    },
+    []
+  );
+
+  const handleDurationMaxChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDurationMaxValue(e.target.value);
+    },
+    []
+  );
+
   // Quick toggle handlers
   const handleQuickToggle = useCallback(
     (id: string) => {
@@ -115,6 +129,18 @@ export function TracesFilterBar({
     },
     [applyQuickToggle]
   );
+
+  const handleErrorsToggle = useCallback(() => {
+    handleQuickToggle("errors");
+  }, [handleQuickToggle]);
+
+  const handleLlmToggle = useCallback(() => {
+    handleQuickToggle("llm");
+  }, [handleQuickToggle]);
+
+  const handleSlowToggle = useCallback(() => {
+    handleQuickToggle("slow");
+  }, [handleQuickToggle]);
 
   // Check if a quick toggle is active
   const isQuickToggleActive = useCallback(
@@ -257,7 +283,7 @@ export function TracesFilterBar({
             <Switch
               id="toggle-errors"
               checked={isQuickToggleActive("errors")}
-              onCheckedChange={() => handleQuickToggle("errors")}
+              onCheckedChange={handleErrorsToggle}
             />
             <Label
               htmlFor="toggle-errors"
@@ -273,7 +299,7 @@ export function TracesFilterBar({
             <Switch
               id="toggle-llm"
               checked={isQuickToggleActive("llm")}
-              onCheckedChange={() => handleQuickToggle("llm")}
+              onCheckedChange={handleLlmToggle}
             />
             <Label
               htmlFor="toggle-llm"
@@ -289,7 +315,7 @@ export function TracesFilterBar({
             <Switch
               id="toggle-slow"
               checked={isQuickToggleActive("slow")}
-              onCheckedChange={() => handleQuickToggle("slow")}
+              onCheckedChange={handleSlowToggle}
             />
             <Label
               htmlFor="toggle-slow"
@@ -393,7 +419,7 @@ export function TracesFilterBar({
                     type="number"
                     placeholder="0"
                     value={durationMinValue}
-                    onChange={(e) => setDurationMinValue(e.target.value)}
+                    onChange={handleDurationMinChange}
                   />
                 </div>
                 <div className="space-y-2">
@@ -403,7 +429,7 @@ export function TracesFilterBar({
                     type="number"
                     placeholder="No limit"
                     value={durationMaxValue}
-                    onChange={(e) => setDurationMaxValue(e.target.value)}
+                    onChange={handleDurationMaxChange}
                   />
                 </div>
                 <div className="flex gap-2">
