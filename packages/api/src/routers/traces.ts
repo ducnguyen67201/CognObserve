@@ -33,13 +33,33 @@ export interface SpanItem {
   parentSpanId: string | null;
   startTime: string;
   endTime: string | null;
+  duration: number | null;
+  offsetFromTraceStart: number;
   model: string | null;
   promptTokens: number | null;
   completionTokens: number | null;
   totalTokens: number | null;
   level: string;
+  statusMessage: string | null;
+}
+
+export interface SpanDetail {
+  id: string;
+  name: string;
+  parentSpanId: string | null;
+  startTime: string;
+  endTime: string | null;
+  duration: number | null;
+  model: string | null;
+  modelParameters: unknown;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  level: string;
+  statusMessage: string | null;
   input: unknown;
   output: unknown;
+  metadata: unknown;
 }
 
 /**
@@ -213,8 +233,8 @@ export const tracesRouter = createRouter({
               completionTokens: true,
               totalTokens: true,
               level: true,
-              input: true,
-              output: true,
+              statusMessage: true,
+              // NOTE: input/output excluded for performance - use getSpanDetail for full data
             },
           },
         },
@@ -227,25 +247,105 @@ export const tracesRouter = createRouter({
         });
       }
 
+      const traceStartTime = trace.timestamp.getTime();
+
       return {
         id: trace.id,
         name: trace.name,
         timestamp: trace.timestamp.toISOString(),
         metadata: trace.metadata,
-        spans: trace.spans.map((span) => ({
-          id: span.id,
-          name: span.name,
-          parentSpanId: span.parentSpanId,
-          startTime: span.startTime.toISOString(),
-          endTime: span.endTime?.toISOString() ?? null,
-          model: span.model,
-          promptTokens: span.promptTokens,
-          completionTokens: span.completionTokens,
-          totalTokens: span.totalTokens,
-          level: span.level,
-          input: span.input,
-          output: span.output,
-        })),
+        spans: trace.spans.map((span) => {
+          const spanStartTime = span.startTime.getTime();
+          const spanEndTime = span.endTime?.getTime() ?? null;
+
+          return {
+            id: span.id,
+            name: span.name,
+            parentSpanId: span.parentSpanId,
+            startTime: span.startTime.toISOString(),
+            endTime: span.endTime?.toISOString() ?? null,
+            duration: spanEndTime ? spanEndTime - spanStartTime : null,
+            offsetFromTraceStart: spanStartTime - traceStartTime,
+            model: span.model,
+            promptTokens: span.promptTokens,
+            completionTokens: span.completionTokens,
+            totalTokens: span.totalTokens,
+            level: span.level,
+            statusMessage: span.statusMessage,
+          };
+        }),
+      };
+    }),
+
+  /**
+   * Get full details for a single span (lazy loading).
+   */
+  getSpanDetail: protectedProcedure
+    .input(
+      z.object({
+        workspaceSlug: z.string().min(1),
+        projectId: z.string().min(1),
+        traceId: z.string().min(1),
+        spanId: z.string().min(1),
+      })
+    )
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }): Promise<SpanDetail> => {
+      // Verify project belongs to workspace
+      const project = await prisma.project.findFirst({
+        where: {
+          id: input.projectId,
+          workspaceId: ctx.workspace.id,
+        },
+        select: { id: true },
+      });
+
+      if (!project) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
+      }
+
+      const span = await withQueryTimeout(
+        prisma.span.findFirst({
+          where: {
+            id: input.spanId,
+            traceId: input.traceId,
+            trace: { projectId: input.projectId },
+          },
+        }),
+        "SPAN",
+        "traces.getSpanDetail"
+      );
+
+      if (!span) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Span not found",
+        });
+      }
+
+      const spanStartTime = span.startTime.getTime();
+      const spanEndTime = span.endTime?.getTime() ?? null;
+
+      return {
+        id: span.id,
+        name: span.name,
+        parentSpanId: span.parentSpanId,
+        startTime: span.startTime.toISOString(),
+        endTime: span.endTime?.toISOString() ?? null,
+        duration: spanEndTime ? spanEndTime - spanStartTime : null,
+        model: span.model,
+        modelParameters: span.modelParameters,
+        promptTokens: span.promptTokens,
+        completionTokens: span.completionTokens,
+        totalTokens: span.totalTokens,
+        level: span.level,
+        statusMessage: span.statusMessage,
+        input: span.input,
+        output: span.output,
+        metadata: span.metadata,
       };
     }),
 });
