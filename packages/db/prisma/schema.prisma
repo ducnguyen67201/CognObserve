@@ -177,6 +177,8 @@ model Trace {
 
   spans Span[]
 
+  @@index([projectId, timestamp(sort: Desc)])
+  @@index([projectId, id])
   @@index([projectId])
   @@index([timestamp])
 }
@@ -200,6 +202,7 @@ model Span {
   level           SpanLevel @default(DEFAULT)
   statusMessage   String?
 
+  @@index([traceId, startTime])
   @@index([traceId])
   @@index([parentSpanId])
   @@index([startTime])

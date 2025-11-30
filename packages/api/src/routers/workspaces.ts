@@ -9,7 +9,6 @@ import {
 } from "../trpc";
 import {
   CreateWorkspaceSchema,
-  WorkspaceSlugSchema,
   InviteMemberSchema,
 } from "../schemas";
 import type { SessionWithWorkspaces } from "../context";
