@@ -192,6 +192,7 @@ export const ERROR_MESSAGES = {
 - **Store schemas in `packages/api/src/schemas/`** - Centralized location for shared types
 - **Never hardcode constants for enums/unions** - Define as Zod schema, derive constants from it
 - **Export both schema and inferred type** - `export const MySchema = z.enum([...]); export type My = z.infer<typeof MySchema>;`
+- **Client components**: Import from `@cognobserve/api/schemas` (NOT `@cognobserve/api`) to avoid server-side deps
 
 ```typescript
 // BAD - Hardcoded constants without schema
@@ -213,6 +214,9 @@ export const ALL_ROLES: readonly ProjectRole[] = ProjectRoleSchema.options;
 export const isValidRole = (role: string): role is ProjectRole => {
   return ProjectRoleSchema.safeParse(role).success;
 };
+
+// Client component usage (avoids server-side deps)
+import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
 ```
 
 ### Custom Hooks
