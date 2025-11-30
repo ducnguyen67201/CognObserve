@@ -11,7 +11,10 @@
   },
   "scripts": {
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@cognobserve/db": "workspace:*",
@@ -26,7 +29,8 @@
     "@types/node": "^22.10.1",
     "eslint": "^9.16.0",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0"
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^4.0.14"
   },
   "peerDependencies": {
     "next-auth": "^4.24.0"

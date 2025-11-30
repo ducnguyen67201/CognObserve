@@ -4,12 +4,6 @@ import type {
   SessionWithWorkspaces,
   WorkspaceAccess,
 } from "../context";
-import {
-  WORKSPACE_ADMIN_ROLES,
-  WORKSPACE_MEMBER_ROLES,
-  ALL_WORKSPACE_ROLES,
-  type WorkspaceRole,
-} from "../schemas";
 
 /**
  * Checks if user has access to a workspace by ID.

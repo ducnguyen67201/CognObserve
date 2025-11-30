@@ -10,6 +10,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
+    "db:seed": "tsx seeding/index.ts",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
   },
@@ -27,6 +28,7 @@
     "@types/pg": "^8.11.0",
     "eslint": "^9.16.0",
     "prisma": "^7.0.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"
   }

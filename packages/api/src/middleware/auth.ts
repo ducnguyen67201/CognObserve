@@ -1,11 +1,5 @@
 import { TRPCError } from "@trpc/server";
 import type { Context, SessionWithProjects, ProjectAccess } from "../context";
-import {
-  ADMIN_ROLES,
-  MEMBER_ROLES,
-  ALL_ROLES,
-  type ProjectRole,
-} from "../schemas";
 
 /**
  * Middleware that ensures the user is authenticated.

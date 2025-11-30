@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { prisma } from "@cognobserve/db";
 import { createRouter, protectedProcedure, workspaceMiddleware } from "../trpc";
+import { withQueryTimeout } from "../lib/query-utils";
 
 /**
  * Output types
@@ -13,6 +14,9 @@ export interface TraceListItem {
   spanCount: number;
   totalTokens: number | null;
   duration: number | null;
+  hasErrors: boolean;
+  hasWarnings: boolean;
+  primaryModel: string | null;
 }
 
 export interface TraceDetail {
@@ -55,7 +59,7 @@ export const tracesRouter = createRouter({
       })
     )
     .use(workspaceMiddleware)
-    .query(async ({ ctx, input }): Promise<{ items: TraceListItem[]; nextCursor: string | null }> => {
+    .query(async ({ ctx, input }): Promise<{ items: TraceListItem[]; nextCursor: string | null; hasMore: boolean }> => {
       // Verify project belongs to workspace
       const project = await prisma.project.findFirst({
         where: {
@@ -72,24 +76,30 @@ export const tracesRouter = createRouter({
         });
       }
 
-      const traces = await prisma.trace.findMany({
-        where: { projectId: input.projectId },
-        orderBy: { timestamp: "desc" },
-        take: input.limit + 1,
-        cursor: input.cursor ? { id: input.cursor } : undefined,
-        select: {
-          id: true,
-          name: true,
-          timestamp: true,
-          spans: {
-            select: {
-              startTime: true,
-              endTime: true,
-              totalTokens: true,
+      const traces = await withQueryTimeout(
+        prisma.trace.findMany({
+          where: { projectId: input.projectId },
+          orderBy: { timestamp: "desc" },
+          take: input.limit + 1,
+          cursor: input.cursor ? { id: input.cursor } : undefined,
+          select: {
+            id: true,
+            name: true,
+            timestamp: true,
+            spans: {
+              select: {
+                startTime: true,
+                endTime: true,
+                totalTokens: true,
+                level: true,
+                model: true,
+              },
             },
           },
-        },
-      });
+        }),
+        "LIST",
+        "traces.list"
+      );
 
       let nextCursor: string | null = null;
       if (traces.length > input.limit) {
@@ -116,6 +126,25 @@ export const tracesRouter = createRouter({
           }
         }
 
+        // Check for errors and warnings
+        const hasErrors = trace.spans.some((s) => s.level === "ERROR");
+        const hasWarnings = trace.spans.some((s) => s.level === "WARNING");
+
+        // Find primary model (most common)
+        const modelCounts = trace.spans
+          .filter((s) => s.model)
+          .reduce(
+            (acc, s) => {
+              acc[s.model!] = (acc[s.model!] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          );
+
+        const primaryModel =
+          Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ??
+          null;
+
         return {
           id: trace.id,
           name: trace.name,
@@ -123,10 +152,13 @@ export const tracesRouter = createRouter({
           spanCount: trace.spans.length,
           totalTokens: totalTokens > 0 ? totalTokens : null,
           duration,
+          hasErrors,
+          hasWarnings,
+          primaryModel,
         };
       });
 
-      return { items, nextCursor };
+      return { items, nextCursor, hasMore: nextCursor !== null };
     }),
 
   /**
