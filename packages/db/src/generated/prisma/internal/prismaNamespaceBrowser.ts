@@ -62,7 +62,9 @@ export const ModelName = {
   ProjectMember: 'ProjectMember',
   ApiKey: 'ApiKey',
   Trace: 'Trace',
-  Span: 'Span'
+  Span: 'Span',
+  ModelPricing: 'ModelPricing',
+  CostDailySummary: 'CostDailySummary'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -234,10 +236,48 @@ export const SpanScalarFieldEnum = {
   completionTokens: 'completionTokens',
   totalTokens: 'totalTokens',
   level: 'level',
-  statusMessage: 'statusMessage'
+  statusMessage: 'statusMessage',
+  inputCost: 'inputCost',
+  outputCost: 'outputCost',
+  totalCost: 'totalCost',
+  pricingId: 'pricingId'
 } as const
 
 export type SpanScalarFieldEnum = (typeof SpanScalarFieldEnum)[keyof typeof SpanScalarFieldEnum]
+
+
+export const ModelPricingScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  model: 'model',
+  displayName: 'displayName',
+  inputPricePerMillion: 'inputPricePerMillion',
+  outputPricePerMillion: 'outputPricePerMillion',
+  effectiveFrom: 'effectiveFrom',
+  effectiveTo: 'effectiveTo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ModelPricingScalarFieldEnum = (typeof ModelPricingScalarFieldEnum)[keyof typeof ModelPricingScalarFieldEnum]
+
+
+export const CostDailySummaryScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  date: 'date',
+  model: 'model',
+  spanCount: 'spanCount',
+  inputTokens: 'inputTokens',
+  outputTokens: 'outputTokens',
+  totalTokens: 'totalTokens',
+  inputCost: 'inputCost',
+  outputCost: 'outputCost',
+  totalCost: 'totalCost',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CostDailySummaryScalarFieldEnum = (typeof CostDailySummaryScalarFieldEnum)[keyof typeof CostDailySummaryScalarFieldEnum]
 
 
 export const SortOrder = {

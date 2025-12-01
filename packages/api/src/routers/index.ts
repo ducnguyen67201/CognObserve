@@ -22,6 +22,7 @@ import { projectsRouter } from "./projects";
 import { tracesRouter } from "./traces";
 import { analyticsRouter } from "./analytics";
 import { domainsRouter } from "./domains";
+import { costsRouter } from "./costs";
 // import { usersRouter } from "./users";
 
 /**
@@ -98,6 +99,17 @@ export const appRouter = createRouter({
   domains: domainsRouter,
 
   /**
+   * Cost Analytics
+   * @see ./costs.ts
+   *
+   * - costs.getOverview   - Get cost overview for a project
+   * - costs.getByModel    - Get cost breakdown by model
+   * - costs.getTimeSeries - Get cost time series data
+   * - costs.listPricing   - List all model pricing
+   */
+  costs: costsRouter,
+
+  /**
    * Future modules:
    *
    * users: usersRouter,        // User management
@@ -114,4 +126,12 @@ export type AppRouter = typeof appRouter;
 /**
  * Re-export individual routers for direct imports if needed.
  */
-export { apiKeysRouter, workspacesRouter, projectsRouter, tracesRouter, analyticsRouter, domainsRouter };
+export {
+  apiKeysRouter,
+  workspacesRouter,
+  projectsRouter,
+  tracesRouter,
+  analyticsRouter,
+  domainsRouter,
+  costsRouter,
+};

@@ -99,3 +99,13 @@ export type Trace = Prisma.TraceModel
  * 
  */
 export type Span = Prisma.SpanModel
+/**
+ * Model ModelPricing
+ * 
+ */
+export type ModelPricing = Prisma.ModelPricingModel
+/**
+ * Model CostDailySummary
+ * 
+ */
+export type CostDailySummary = Prisma.CostDailySummaryModel

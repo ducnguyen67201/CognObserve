@@ -36,12 +36,14 @@ import { trpc } from "@/lib/trpc/client";
 import type { ProjectAnalytics } from "@cognobserve/api/client";
 import { cn } from "@/lib/utils";
 
+type TimeRange = "24h" | "7d" | "30d";
+
 interface ProjectAnalyticsDashboardProps {
   workspaceSlug: string;
   projectId: string;
+  timeRange?: TimeRange;
+  onTimeRangeChange?: (range: TimeRange) => void;
 }
-
-type TimeRange = "24h" | "7d" | "30d";
 
 // Chart colors
 const CHART_COLORS = {
@@ -92,8 +94,14 @@ const formatDateLabel = (dateStr: string, range: TimeRange): string => {
 export function ProjectAnalyticsDashboard({
   workspaceSlug,
   projectId,
+  timeRange: controlledTimeRange,
+  onTimeRangeChange,
 }: ProjectAnalyticsDashboardProps) {
-  const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+  const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>("7d");
+
+  // Use controlled or internal state
+  const timeRange = controlledTimeRange ?? internalTimeRange;
+  const setTimeRange = onTimeRangeChange ?? setInternalTimeRange;
 
   const { data: analytics, isLoading } =
     trpc.analytics.getProjectAnalytics.useQuery(

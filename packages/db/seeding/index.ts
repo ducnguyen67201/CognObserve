@@ -16,20 +16,20 @@
 import "dotenv/config";
 import { prisma } from "../src/index.js";
 import { seedTraces } from "./traces.js";
+import { seedModelPricing } from "./model-pricing.js";
 
 // Registry of available seeds
 const SEEDS: Record<string, { name: string; description: string; fn: () => Promise<void> }> = {
+  "model-pricing": {
+    name: "model-pricing",
+    description: "Default LLM model pricing (OpenAI, Anthropic, Google, Mistral)",
+    fn: seedModelPricing,
+  },
   traces: {
     name: "traces",
     description: "Sample traces with LLM spans, errors, and warnings",
     fn: seedTraces,
   },
-  // Add more seeds here:
-  // users: {
-  //   name: "users",
-  //   description: "Sample users and workspaces",
-  //   fn: seedUsers,
-  // },
 };
 
 function printUsage() {

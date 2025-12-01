@@ -151,10 +151,11 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  apiKeys   ApiKey[]
-  traces    Trace[]
-  members   ProjectMember[]
+  workspace    Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  apiKeys      ApiKey[]
+  traces       Trace[]
+  members      ProjectMember[]
+  costSummary  CostDailySummary[]
 
   @@index([workspaceId])
 }
@@ -207,28 +208,36 @@ model Trace {
 }
 
 model Span {
-  id              String    @id @default(cuid())
-  traceId         String
-  trace           Trace     @relation(fields: [traceId], references: [id], onDelete: Cascade)
-  parentSpanId    String?
-  name            String
-  startTime       DateTime
-  endTime         DateTime?
-  input           Json?
-  output          Json?
-  metadata        Json?
-  model           String?
-  modelParameters Json?
-  promptTokens    Int?
+  id               String        @id @default(cuid())
+  traceId          String
+  trace            Trace         @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  parentSpanId     String?
+  name             String
+  startTime        DateTime
+  endTime          DateTime?
+  input            Json?
+  output           Json?
+  metadata         Json?
+  model            String?
+  modelParameters  Json?
+  promptTokens     Int?
   completionTokens Int?
-  totalTokens     Int?
-  level           SpanLevel @default(DEFAULT)
-  statusMessage   String?
+  totalTokens      Int?
+  level            SpanLevel     @default(DEFAULT)
+  statusMessage    String?
+
+  // Cost tracking fields
+  inputCost        Decimal?      @db.Decimal(10, 6)
+  outputCost       Decimal?      @db.Decimal(10, 6)
+  totalCost        Decimal?      @db.Decimal(10, 6)
+  pricingId        String?
+  pricing          ModelPricing? @relation(fields: [pricingId], references: [id])
 
   @@index([traceId, startTime])
   @@index([traceId])
   @@index([parentSpanId])
   @@index([startTime])
+  @@index([pricingId])
 }
 
 enum SpanLevel {
@@ -236,4 +245,47 @@ enum SpanLevel {
   DEFAULT
   WARNING
   ERROR
+}
+
+// ============================================================
+// Cost Tracking Models
+// ============================================================
+
+model ModelPricing {
+  id                    String    @id @default(cuid())
+  provider              String    // openai, anthropic, google, mistral
+  model                 String    // gpt-4o, claude-3-5-sonnet, etc
+  displayName           String    // Human-readable name
+  inputPricePerMillion  Decimal   @db.Decimal(10, 6)
+  outputPricePerMillion Decimal   @db.Decimal(10, 6)
+  effectiveFrom         DateTime  @default(now())
+  effectiveTo           DateTime? // null = current price
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  spans Span[]
+
+  @@unique([provider, model, effectiveFrom])
+  @@index([provider, model])
+  @@map("model_pricing")
+}
+
+model CostDailySummary {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  date         DateTime @db.Date
+  model        String   // model name or "__all__" for project total
+  spanCount    Int      @default(0)
+  inputTokens  BigInt   @default(0)
+  outputTokens BigInt   @default(0)
+  totalTokens  BigInt   @default(0)
+  inputCost    Decimal  @default(0) @db.Decimal(12, 6)
+  outputCost   Decimal  @default(0) @db.Decimal(12, 6)
+  totalCost    Decimal  @default(0) @db.Decimal(12, 6)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([projectId, date, model])
+  @@index([projectId, date])
+  @@map("cost_daily_summary")
 }

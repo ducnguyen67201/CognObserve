@@ -395,7 +395,9 @@ export const ModelName = {
   ProjectMember: 'ProjectMember',
   ApiKey: 'ApiKey',
   Trace: 'Trace',
-  Span: 'Span'
+  Span: 'Span',
+  ModelPricing: 'ModelPricing',
+  CostDailySummary: 'CostDailySummary'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -411,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1303,6 +1305,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ModelPricing: {
+      payload: Prisma.$ModelPricingPayload<ExtArgs>
+      fields: Prisma.ModelPricingFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ModelPricingFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ModelPricingFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+        }
+        findFirst: {
+          args: Prisma.ModelPricingFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ModelPricingFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+        }
+        findMany: {
+          args: Prisma.ModelPricingFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>[]
+        }
+        create: {
+          args: Prisma.ModelPricingCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+        }
+        createMany: {
+          args: Prisma.ModelPricingCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ModelPricingCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>[]
+        }
+        delete: {
+          args: Prisma.ModelPricingDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+        }
+        update: {
+          args: Prisma.ModelPricingUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+        }
+        deleteMany: {
+          args: Prisma.ModelPricingDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ModelPricingUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ModelPricingUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>[]
+        }
+        upsert: {
+          args: Prisma.ModelPricingUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+        }
+        aggregate: {
+          args: Prisma.ModelPricingAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateModelPricing>
+        }
+        groupBy: {
+          args: Prisma.ModelPricingGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModelPricingGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ModelPricingCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModelPricingCountAggregateOutputType> | number
+        }
+      }
+    }
+    CostDailySummary: {
+      payload: Prisma.$CostDailySummaryPayload<ExtArgs>
+      fields: Prisma.CostDailySummaryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CostDailySummaryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CostDailySummaryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>
+        }
+        findFirst: {
+          args: Prisma.CostDailySummaryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CostDailySummaryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>
+        }
+        findMany: {
+          args: Prisma.CostDailySummaryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>[]
+        }
+        create: {
+          args: Prisma.CostDailySummaryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>
+        }
+        createMany: {
+          args: Prisma.CostDailySummaryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CostDailySummaryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>[]
+        }
+        delete: {
+          args: Prisma.CostDailySummaryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>
+        }
+        update: {
+          args: Prisma.CostDailySummaryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>
+        }
+        deleteMany: {
+          args: Prisma.CostDailySummaryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CostDailySummaryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CostDailySummaryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>[]
+        }
+        upsert: {
+          args: Prisma.CostDailySummaryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CostDailySummaryPayload>
+        }
+        aggregate: {
+          args: Prisma.CostDailySummaryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCostDailySummary>
+        }
+        groupBy: {
+          args: Prisma.CostDailySummaryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CostDailySummaryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CostDailySummaryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CostDailySummaryCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1495,10 +1645,48 @@ export const SpanScalarFieldEnum = {
   completionTokens: 'completionTokens',
   totalTokens: 'totalTokens',
   level: 'level',
-  statusMessage: 'statusMessage'
+  statusMessage: 'statusMessage',
+  inputCost: 'inputCost',
+  outputCost: 'outputCost',
+  totalCost: 'totalCost',
+  pricingId: 'pricingId'
 } as const
 
 export type SpanScalarFieldEnum = (typeof SpanScalarFieldEnum)[keyof typeof SpanScalarFieldEnum]
+
+
+export const ModelPricingScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  model: 'model',
+  displayName: 'displayName',
+  inputPricePerMillion: 'inputPricePerMillion',
+  outputPricePerMillion: 'outputPricePerMillion',
+  effectiveFrom: 'effectiveFrom',
+  effectiveTo: 'effectiveTo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ModelPricingScalarFieldEnum = (typeof ModelPricingScalarFieldEnum)[keyof typeof ModelPricingScalarFieldEnum]
+
+
+export const CostDailySummaryScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  date: 'date',
+  model: 'model',
+  spanCount: 'spanCount',
+  inputTokens: 'inputTokens',
+  outputTokens: 'outputTokens',
+  totalTokens: 'totalTokens',
+  inputCost: 'inputCost',
+  outputCost: 'outputCost',
+  totalCost: 'totalCost',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CostDailySummaryScalarFieldEnum = (typeof CostDailySummaryScalarFieldEnum)[keyof typeof CostDailySummaryScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1654,6 +1842,34 @@ export type ListEnumSpanLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
+ * Reference to a field of type 'Decimal'
+ */
+export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal[]'
+ */
+export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1757,6 +1973,8 @@ export type GlobalOmitConfig = {
   apiKey?: Prisma.ApiKeyOmit
   trace?: Prisma.TraceOmit
   span?: Prisma.SpanOmit
+  modelPricing?: Prisma.ModelPricingOmit
+  costDailySummary?: Prisma.CostDailySummaryOmit
 }
 
 /* Types for Logging */

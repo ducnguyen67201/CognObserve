@@ -1,7 +1,7 @@
 import { APP_NAME, APP_VERSION } from "@cognobserve/shared";
 
-import { createQueueConsumer } from "./queue/consumer";
-import { TraceProcessor } from "./processors/trace";
+import { createQueueConsumer } from "@/queue/consumer";
+import { TraceProcessor } from "@/processors/trace";
 
 console.log(`Starting ${APP_NAME} Worker v${APP_VERSION}`);
 

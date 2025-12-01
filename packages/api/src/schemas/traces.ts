@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TimeRangeSchema, CustomDateRangeSchema } from "./cost";
 
 /**
  * Span types for visual differentiation - defined as Zod schema (source of truth).
@@ -38,6 +39,10 @@ export const TraceFiltersSchema = z.object({
   minDuration: z.number().min(0).optional(),
   /** Maximum duration in milliseconds */
   maxDuration: z.number().min(0).optional(),
+  /** Time range filter (preset or "custom") */
+  timeRange: TimeRangeSchema.optional(),
+  /** Custom date range (when timeRange is "custom") */
+  customRange: CustomDateRangeSchema.optional(),
 });
 
 export type TraceFilters = z.infer<typeof TraceFiltersSchema>;
@@ -52,6 +57,9 @@ export const FILTER_PARAM_KEYS = {
   models: "model",
   minDuration: "minDuration",
   maxDuration: "maxDuration",
+  timeRange: "range",
+  customFrom: "from",
+  customTo: "to",
 } as const;
 
 /**

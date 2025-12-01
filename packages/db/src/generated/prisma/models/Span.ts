@@ -30,12 +30,18 @@ export type SpanAvgAggregateOutputType = {
   promptTokens: number | null
   completionTokens: number | null
   totalTokens: number | null
+  inputCost: runtime.Decimal | null
+  outputCost: runtime.Decimal | null
+  totalCost: runtime.Decimal | null
 }
 
 export type SpanSumAggregateOutputType = {
   promptTokens: number | null
   completionTokens: number | null
   totalTokens: number | null
+  inputCost: runtime.Decimal | null
+  outputCost: runtime.Decimal | null
+  totalCost: runtime.Decimal | null
 }
 
 export type SpanMinAggregateOutputType = {
@@ -51,6 +57,10 @@ export type SpanMinAggregateOutputType = {
   totalTokens: number | null
   level: $Enums.SpanLevel | null
   statusMessage: string | null
+  inputCost: runtime.Decimal | null
+  outputCost: runtime.Decimal | null
+  totalCost: runtime.Decimal | null
+  pricingId: string | null
 }
 
 export type SpanMaxAggregateOutputType = {
@@ -66,6 +76,10 @@ export type SpanMaxAggregateOutputType = {
   totalTokens: number | null
   level: $Enums.SpanLevel | null
   statusMessage: string | null
+  inputCost: runtime.Decimal | null
+  outputCost: runtime.Decimal | null
+  totalCost: runtime.Decimal | null
+  pricingId: string | null
 }
 
 export type SpanCountAggregateOutputType = {
@@ -85,6 +99,10 @@ export type SpanCountAggregateOutputType = {
   totalTokens: number
   level: number
   statusMessage: number
+  inputCost: number
+  outputCost: number
+  totalCost: number
+  pricingId: number
   _all: number
 }
 
@@ -93,12 +111,18 @@ export type SpanAvgAggregateInputType = {
   promptTokens?: true
   completionTokens?: true
   totalTokens?: true
+  inputCost?: true
+  outputCost?: true
+  totalCost?: true
 }
 
 export type SpanSumAggregateInputType = {
   promptTokens?: true
   completionTokens?: true
   totalTokens?: true
+  inputCost?: true
+  outputCost?: true
+  totalCost?: true
 }
 
 export type SpanMinAggregateInputType = {
@@ -114,6 +138,10 @@ export type SpanMinAggregateInputType = {
   totalTokens?: true
   level?: true
   statusMessage?: true
+  inputCost?: true
+  outputCost?: true
+  totalCost?: true
+  pricingId?: true
 }
 
 export type SpanMaxAggregateInputType = {
@@ -129,6 +157,10 @@ export type SpanMaxAggregateInputType = {
   totalTokens?: true
   level?: true
   statusMessage?: true
+  inputCost?: true
+  outputCost?: true
+  totalCost?: true
+  pricingId?: true
 }
 
 export type SpanCountAggregateInputType = {
@@ -148,6 +180,10 @@ export type SpanCountAggregateInputType = {
   totalTokens?: true
   level?: true
   statusMessage?: true
+  inputCost?: true
+  outputCost?: true
+  totalCost?: true
+  pricingId?: true
   _all?: true
 }
 
@@ -254,6 +290,10 @@ export type SpanGroupByOutputType = {
   totalTokens: number | null
   level: $Enums.SpanLevel
   statusMessage: string | null
+  inputCost: runtime.Decimal | null
+  outputCost: runtime.Decimal | null
+  totalCost: runtime.Decimal | null
+  pricingId: string | null
   _count: SpanCountAggregateOutputType | null
   _avg: SpanAvgAggregateOutputType | null
   _sum: SpanSumAggregateOutputType | null
@@ -296,7 +336,12 @@ export type SpanWhereInput = {
   totalTokens?: Prisma.IntNullableFilter<"Span"> | number | null
   level?: Prisma.EnumSpanLevelFilter<"Span"> | $Enums.SpanLevel
   statusMessage?: Prisma.StringNullableFilter<"Span"> | string | null
+  inputCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.StringNullableFilter<"Span"> | string | null
   trace?: Prisma.XOR<Prisma.TraceScalarRelationFilter, Prisma.TraceWhereInput>
+  pricing?: Prisma.XOR<Prisma.ModelPricingNullableScalarRelationFilter, Prisma.ModelPricingWhereInput> | null
 }
 
 export type SpanOrderByWithRelationInput = {
@@ -316,7 +361,12 @@ export type SpanOrderByWithRelationInput = {
   totalTokens?: Prisma.SortOrderInput | Prisma.SortOrder
   level?: Prisma.SortOrder
   statusMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  inputCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  outputCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  pricingId?: Prisma.SortOrderInput | Prisma.SortOrder
   trace?: Prisma.TraceOrderByWithRelationInput
+  pricing?: Prisma.ModelPricingOrderByWithRelationInput
 }
 
 export type SpanWhereUniqueInput = Prisma.AtLeast<{
@@ -339,7 +389,12 @@ export type SpanWhereUniqueInput = Prisma.AtLeast<{
   totalTokens?: Prisma.IntNullableFilter<"Span"> | number | null
   level?: Prisma.EnumSpanLevelFilter<"Span"> | $Enums.SpanLevel
   statusMessage?: Prisma.StringNullableFilter<"Span"> | string | null
+  inputCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.StringNullableFilter<"Span"> | string | null
   trace?: Prisma.XOR<Prisma.TraceScalarRelationFilter, Prisma.TraceWhereInput>
+  pricing?: Prisma.XOR<Prisma.ModelPricingNullableScalarRelationFilter, Prisma.ModelPricingWhereInput> | null
 }, "id">
 
 export type SpanOrderByWithAggregationInput = {
@@ -359,6 +414,10 @@ export type SpanOrderByWithAggregationInput = {
   totalTokens?: Prisma.SortOrderInput | Prisma.SortOrder
   level?: Prisma.SortOrder
   statusMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  inputCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  outputCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  pricingId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.SpanCountOrderByAggregateInput
   _avg?: Prisma.SpanAvgOrderByAggregateInput
   _max?: Prisma.SpanMaxOrderByAggregateInput
@@ -386,6 +445,10 @@ export type SpanScalarWhereWithAggregatesInput = {
   totalTokens?: Prisma.IntNullableWithAggregatesFilter<"Span"> | number | null
   level?: Prisma.EnumSpanLevelWithAggregatesFilter<"Span"> | $Enums.SpanLevel
   statusMessage?: Prisma.StringNullableWithAggregatesFilter<"Span"> | string | null
+  inputCost?: Prisma.DecimalNullableWithAggregatesFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.DecimalNullableWithAggregatesFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.DecimalNullableWithAggregatesFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.StringNullableWithAggregatesFilter<"Span"> | string | null
 }
 
 export type SpanCreateInput = {
@@ -404,7 +467,11 @@ export type SpanCreateInput = {
   totalTokens?: number | null
   level?: $Enums.SpanLevel
   statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   trace: Prisma.TraceCreateNestedOneWithoutSpansInput
+  pricing?: Prisma.ModelPricingCreateNestedOneWithoutSpansInput
 }
 
 export type SpanUncheckedCreateInput = {
@@ -424,6 +491,10 @@ export type SpanUncheckedCreateInput = {
   totalTokens?: number | null
   level?: $Enums.SpanLevel
   statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: string | null
 }
 
 export type SpanUpdateInput = {
@@ -442,7 +513,11 @@ export type SpanUpdateInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   trace?: Prisma.TraceUpdateOneRequiredWithoutSpansNestedInput
+  pricing?: Prisma.ModelPricingUpdateOneWithoutSpansNestedInput
 }
 
 export type SpanUncheckedUpdateInput = {
@@ -462,6 +537,10 @@ export type SpanUncheckedUpdateInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SpanCreateManyInput = {
@@ -481,6 +560,10 @@ export type SpanCreateManyInput = {
   totalTokens?: number | null
   level?: $Enums.SpanLevel
   statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: string | null
 }
 
 export type SpanUpdateManyMutationInput = {
@@ -499,6 +582,9 @@ export type SpanUpdateManyMutationInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 export type SpanUncheckedUpdateManyInput = {
@@ -518,6 +604,10 @@ export type SpanUncheckedUpdateManyInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SpanListRelationFilter = {
@@ -547,12 +637,19 @@ export type SpanCountOrderByAggregateInput = {
   totalTokens?: Prisma.SortOrder
   level?: Prisma.SortOrder
   statusMessage?: Prisma.SortOrder
+  inputCost?: Prisma.SortOrder
+  outputCost?: Prisma.SortOrder
+  totalCost?: Prisma.SortOrder
+  pricingId?: Prisma.SortOrder
 }
 
 export type SpanAvgOrderByAggregateInput = {
   promptTokens?: Prisma.SortOrder
   completionTokens?: Prisma.SortOrder
   totalTokens?: Prisma.SortOrder
+  inputCost?: Prisma.SortOrder
+  outputCost?: Prisma.SortOrder
+  totalCost?: Prisma.SortOrder
 }
 
 export type SpanMaxOrderByAggregateInput = {
@@ -568,6 +665,10 @@ export type SpanMaxOrderByAggregateInput = {
   totalTokens?: Prisma.SortOrder
   level?: Prisma.SortOrder
   statusMessage?: Prisma.SortOrder
+  inputCost?: Prisma.SortOrder
+  outputCost?: Prisma.SortOrder
+  totalCost?: Prisma.SortOrder
+  pricingId?: Prisma.SortOrder
 }
 
 export type SpanMinOrderByAggregateInput = {
@@ -583,12 +684,19 @@ export type SpanMinOrderByAggregateInput = {
   totalTokens?: Prisma.SortOrder
   level?: Prisma.SortOrder
   statusMessage?: Prisma.SortOrder
+  inputCost?: Prisma.SortOrder
+  outputCost?: Prisma.SortOrder
+  totalCost?: Prisma.SortOrder
+  pricingId?: Prisma.SortOrder
 }
 
 export type SpanSumOrderByAggregateInput = {
   promptTokens?: Prisma.SortOrder
   completionTokens?: Prisma.SortOrder
   totalTokens?: Prisma.SortOrder
+  inputCost?: Prisma.SortOrder
+  outputCost?: Prisma.SortOrder
+  totalCost?: Prisma.SortOrder
 }
 
 export type SpanCreateNestedManyWithoutTraceInput = {
@@ -637,6 +745,56 @@ export type EnumSpanLevelFieldUpdateOperationsInput = {
   set?: $Enums.SpanLevel
 }
 
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
+export type SpanCreateNestedManyWithoutPricingInput = {
+  create?: Prisma.XOR<Prisma.SpanCreateWithoutPricingInput, Prisma.SpanUncheckedCreateWithoutPricingInput> | Prisma.SpanCreateWithoutPricingInput[] | Prisma.SpanUncheckedCreateWithoutPricingInput[]
+  connectOrCreate?: Prisma.SpanCreateOrConnectWithoutPricingInput | Prisma.SpanCreateOrConnectWithoutPricingInput[]
+  createMany?: Prisma.SpanCreateManyPricingInputEnvelope
+  connect?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+}
+
+export type SpanUncheckedCreateNestedManyWithoutPricingInput = {
+  create?: Prisma.XOR<Prisma.SpanCreateWithoutPricingInput, Prisma.SpanUncheckedCreateWithoutPricingInput> | Prisma.SpanCreateWithoutPricingInput[] | Prisma.SpanUncheckedCreateWithoutPricingInput[]
+  connectOrCreate?: Prisma.SpanCreateOrConnectWithoutPricingInput | Prisma.SpanCreateOrConnectWithoutPricingInput[]
+  createMany?: Prisma.SpanCreateManyPricingInputEnvelope
+  connect?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+}
+
+export type SpanUpdateManyWithoutPricingNestedInput = {
+  create?: Prisma.XOR<Prisma.SpanCreateWithoutPricingInput, Prisma.SpanUncheckedCreateWithoutPricingInput> | Prisma.SpanCreateWithoutPricingInput[] | Prisma.SpanUncheckedCreateWithoutPricingInput[]
+  connectOrCreate?: Prisma.SpanCreateOrConnectWithoutPricingInput | Prisma.SpanCreateOrConnectWithoutPricingInput[]
+  upsert?: Prisma.SpanUpsertWithWhereUniqueWithoutPricingInput | Prisma.SpanUpsertWithWhereUniqueWithoutPricingInput[]
+  createMany?: Prisma.SpanCreateManyPricingInputEnvelope
+  set?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  disconnect?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  delete?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  connect?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  update?: Prisma.SpanUpdateWithWhereUniqueWithoutPricingInput | Prisma.SpanUpdateWithWhereUniqueWithoutPricingInput[]
+  updateMany?: Prisma.SpanUpdateManyWithWhereWithoutPricingInput | Prisma.SpanUpdateManyWithWhereWithoutPricingInput[]
+  deleteMany?: Prisma.SpanScalarWhereInput | Prisma.SpanScalarWhereInput[]
+}
+
+export type SpanUncheckedUpdateManyWithoutPricingNestedInput = {
+  create?: Prisma.XOR<Prisma.SpanCreateWithoutPricingInput, Prisma.SpanUncheckedCreateWithoutPricingInput> | Prisma.SpanCreateWithoutPricingInput[] | Prisma.SpanUncheckedCreateWithoutPricingInput[]
+  connectOrCreate?: Prisma.SpanCreateOrConnectWithoutPricingInput | Prisma.SpanCreateOrConnectWithoutPricingInput[]
+  upsert?: Prisma.SpanUpsertWithWhereUniqueWithoutPricingInput | Prisma.SpanUpsertWithWhereUniqueWithoutPricingInput[]
+  createMany?: Prisma.SpanCreateManyPricingInputEnvelope
+  set?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  disconnect?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  delete?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  connect?: Prisma.SpanWhereUniqueInput | Prisma.SpanWhereUniqueInput[]
+  update?: Prisma.SpanUpdateWithWhereUniqueWithoutPricingInput | Prisma.SpanUpdateWithWhereUniqueWithoutPricingInput[]
+  updateMany?: Prisma.SpanUpdateManyWithWhereWithoutPricingInput | Prisma.SpanUpdateManyWithWhereWithoutPricingInput[]
+  deleteMany?: Prisma.SpanScalarWhereInput | Prisma.SpanScalarWhereInput[]
+}
+
 export type SpanCreateWithoutTraceInput = {
   id?: string
   parentSpanId?: string | null
@@ -653,6 +811,10 @@ export type SpanCreateWithoutTraceInput = {
   totalTokens?: number | null
   level?: $Enums.SpanLevel
   statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricing?: Prisma.ModelPricingCreateNestedOneWithoutSpansInput
 }
 
 export type SpanUncheckedCreateWithoutTraceInput = {
@@ -671,6 +833,10 @@ export type SpanUncheckedCreateWithoutTraceInput = {
   totalTokens?: number | null
   level?: $Enums.SpanLevel
   statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: string | null
 }
 
 export type SpanCreateOrConnectWithoutTraceInput = {
@@ -719,6 +885,80 @@ export type SpanScalarWhereInput = {
   totalTokens?: Prisma.IntNullableFilter<"Span"> | number | null
   level?: Prisma.EnumSpanLevelFilter<"Span"> | $Enums.SpanLevel
   statusMessage?: Prisma.StringNullableFilter<"Span"> | string | null
+  inputCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.DecimalNullableFilter<"Span"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.StringNullableFilter<"Span"> | string | null
+}
+
+export type SpanCreateWithoutPricingInput = {
+  id?: string
+  parentSpanId?: string | null
+  name: string
+  startTime: Date | string
+  endTime?: Date | string | null
+  input?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  output?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
+  modelParameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  promptTokens?: number | null
+  completionTokens?: number | null
+  totalTokens?: number | null
+  level?: $Enums.SpanLevel
+  statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  trace: Prisma.TraceCreateNestedOneWithoutSpansInput
+}
+
+export type SpanUncheckedCreateWithoutPricingInput = {
+  id?: string
+  traceId: string
+  parentSpanId?: string | null
+  name: string
+  startTime: Date | string
+  endTime?: Date | string | null
+  input?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  output?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
+  modelParameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  promptTokens?: number | null
+  completionTokens?: number | null
+  totalTokens?: number | null
+  level?: $Enums.SpanLevel
+  statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+}
+
+export type SpanCreateOrConnectWithoutPricingInput = {
+  where: Prisma.SpanWhereUniqueInput
+  create: Prisma.XOR<Prisma.SpanCreateWithoutPricingInput, Prisma.SpanUncheckedCreateWithoutPricingInput>
+}
+
+export type SpanCreateManyPricingInputEnvelope = {
+  data: Prisma.SpanCreateManyPricingInput | Prisma.SpanCreateManyPricingInput[]
+  skipDuplicates?: boolean
+}
+
+export type SpanUpsertWithWhereUniqueWithoutPricingInput = {
+  where: Prisma.SpanWhereUniqueInput
+  update: Prisma.XOR<Prisma.SpanUpdateWithoutPricingInput, Prisma.SpanUncheckedUpdateWithoutPricingInput>
+  create: Prisma.XOR<Prisma.SpanCreateWithoutPricingInput, Prisma.SpanUncheckedCreateWithoutPricingInput>
+}
+
+export type SpanUpdateWithWhereUniqueWithoutPricingInput = {
+  where: Prisma.SpanWhereUniqueInput
+  data: Prisma.XOR<Prisma.SpanUpdateWithoutPricingInput, Prisma.SpanUncheckedUpdateWithoutPricingInput>
+}
+
+export type SpanUpdateManyWithWhereWithoutPricingInput = {
+  where: Prisma.SpanScalarWhereInput
+  data: Prisma.XOR<Prisma.SpanUpdateManyMutationInput, Prisma.SpanUncheckedUpdateManyWithoutPricingInput>
 }
 
 export type SpanCreateManyTraceInput = {
@@ -737,6 +977,10 @@ export type SpanCreateManyTraceInput = {
   totalTokens?: number | null
   level?: $Enums.SpanLevel
   statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: string | null
 }
 
 export type SpanUpdateWithoutTraceInput = {
@@ -755,6 +999,10 @@ export type SpanUpdateWithoutTraceInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricing?: Prisma.ModelPricingUpdateOneWithoutSpansNestedInput
 }
 
 export type SpanUncheckedUpdateWithoutTraceInput = {
@@ -773,6 +1021,10 @@ export type SpanUncheckedUpdateWithoutTraceInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SpanUncheckedUpdateManyWithoutTraceInput = {
@@ -791,6 +1043,98 @@ export type SpanUncheckedUpdateManyWithoutTraceInput = {
   totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
   statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  pricingId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type SpanCreateManyPricingInput = {
+  id?: string
+  traceId: string
+  parentSpanId?: string | null
+  name: string
+  startTime: Date | string
+  endTime?: Date | string | null
+  input?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  output?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: string | null
+  modelParameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  promptTokens?: number | null
+  completionTokens?: number | null
+  totalTokens?: number | null
+  level?: $Enums.SpanLevel
+  statusMessage?: string | null
+  inputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+}
+
+export type SpanUpdateWithoutPricingInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  parentSpanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  input?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  output?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelParameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  promptTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completionTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
+  statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  trace?: Prisma.TraceUpdateOneRequiredWithoutSpansNestedInput
+}
+
+export type SpanUncheckedUpdateWithoutPricingInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  traceId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentSpanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  input?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  output?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelParameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  promptTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completionTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
+  statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+}
+
+export type SpanUncheckedUpdateManyWithoutPricingInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  traceId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentSpanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  input?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  output?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelParameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  promptTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completionTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  totalTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.EnumSpanLevelFieldUpdateOperationsInput | $Enums.SpanLevel
+  statusMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  outputCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  totalCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
 }
 
 
@@ -812,7 +1156,12 @@ export type SpanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   totalTokens?: boolean
   level?: boolean
   statusMessage?: boolean
+  inputCost?: boolean
+  outputCost?: boolean
+  totalCost?: boolean
+  pricingId?: boolean
   trace?: boolean | Prisma.TraceDefaultArgs<ExtArgs>
+  pricing?: boolean | Prisma.Span$pricingArgs<ExtArgs>
 }, ExtArgs["result"]["span"]>
 
 export type SpanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -832,7 +1181,12 @@ export type SpanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   totalTokens?: boolean
   level?: boolean
   statusMessage?: boolean
+  inputCost?: boolean
+  outputCost?: boolean
+  totalCost?: boolean
+  pricingId?: boolean
   trace?: boolean | Prisma.TraceDefaultArgs<ExtArgs>
+  pricing?: boolean | Prisma.Span$pricingArgs<ExtArgs>
 }, ExtArgs["result"]["span"]>
 
 export type SpanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -852,7 +1206,12 @@ export type SpanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   totalTokens?: boolean
   level?: boolean
   statusMessage?: boolean
+  inputCost?: boolean
+  outputCost?: boolean
+  totalCost?: boolean
+  pricingId?: boolean
   trace?: boolean | Prisma.TraceDefaultArgs<ExtArgs>
+  pricing?: boolean | Prisma.Span$pricingArgs<ExtArgs>
 }, ExtArgs["result"]["span"]>
 
 export type SpanSelectScalar = {
@@ -872,23 +1231,31 @@ export type SpanSelectScalar = {
   totalTokens?: boolean
   level?: boolean
   statusMessage?: boolean
+  inputCost?: boolean
+  outputCost?: boolean
+  totalCost?: boolean
+  pricingId?: boolean
 }
 
-export type SpanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "traceId" | "parentSpanId" | "name" | "startTime" | "endTime" | "input" | "output" | "metadata" | "model" | "modelParameters" | "promptTokens" | "completionTokens" | "totalTokens" | "level" | "statusMessage", ExtArgs["result"]["span"]>
+export type SpanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "traceId" | "parentSpanId" | "name" | "startTime" | "endTime" | "input" | "output" | "metadata" | "model" | "modelParameters" | "promptTokens" | "completionTokens" | "totalTokens" | "level" | "statusMessage" | "inputCost" | "outputCost" | "totalCost" | "pricingId", ExtArgs["result"]["span"]>
 export type SpanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trace?: boolean | Prisma.TraceDefaultArgs<ExtArgs>
+  pricing?: boolean | Prisma.Span$pricingArgs<ExtArgs>
 }
 export type SpanIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trace?: boolean | Prisma.TraceDefaultArgs<ExtArgs>
+  pricing?: boolean | Prisma.Span$pricingArgs<ExtArgs>
 }
 export type SpanIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trace?: boolean | Prisma.TraceDefaultArgs<ExtArgs>
+  pricing?: boolean | Prisma.Span$pricingArgs<ExtArgs>
 }
 
 export type $SpanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Span"
   objects: {
     trace: Prisma.$TracePayload<ExtArgs>
+    pricing: Prisma.$ModelPricingPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -907,6 +1274,10 @@ export type $SpanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     totalTokens: number | null
     level: $Enums.SpanLevel
     statusMessage: string | null
+    inputCost: runtime.Decimal | null
+    outputCost: runtime.Decimal | null
+    totalCost: runtime.Decimal | null
+    pricingId: string | null
   }, ExtArgs["result"]["span"]>
   composites: {}
 }
@@ -1302,6 +1673,7 @@ readonly fields: SpanFieldRefs;
 export interface Prisma__SpanClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   trace<T extends Prisma.TraceDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TraceDefaultArgs<ExtArgs>>): Prisma.Prisma__TraceClient<runtime.Types.Result.GetResult<Prisma.$TracePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  pricing<T extends Prisma.Span$pricingArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Span$pricingArgs<ExtArgs>>): Prisma.Prisma__ModelPricingClient<runtime.Types.Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1347,6 +1719,10 @@ export interface SpanFieldRefs {
   readonly totalTokens: Prisma.FieldRef<"Span", 'Int'>
   readonly level: Prisma.FieldRef<"Span", 'SpanLevel'>
   readonly statusMessage: Prisma.FieldRef<"Span", 'String'>
+  readonly inputCost: Prisma.FieldRef<"Span", 'Decimal'>
+  readonly outputCost: Prisma.FieldRef<"Span", 'Decimal'>
+  readonly totalCost: Prisma.FieldRef<"Span", 'Decimal'>
+  readonly pricingId: Prisma.FieldRef<"Span", 'String'>
 }
     
 
@@ -1740,6 +2116,25 @@ export type SpanDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Spans to delete.
    */
   limit?: number
+}
+
+/**
+ * Span.pricing
+ */
+export type Span$pricingArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ModelPricing
+   */
+  select?: Prisma.ModelPricingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ModelPricing
+   */
+  omit?: Prisma.ModelPricingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ModelPricingInclude<ExtArgs> | null
+  where?: Prisma.ModelPricingWhereInput
 }
 
 /**

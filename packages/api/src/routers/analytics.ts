@@ -1,20 +1,49 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { prisma } from "@cognobserve/db";
+import { prisma, Prisma } from "@cognobserve/db";
 import { createRouter, protectedProcedure, workspaceMiddleware } from "../trpc";
+import { SpanTypeSchema, SpanLevelSchema } from "../schemas/traces";
+import { TimeRangeSchema, type TimeRange } from "../schemas/cost";
 
 /**
- * Time range for analytics queries
+ * Input schema for analytics queries with filters
  */
-const TimeRangeSchema = z.enum(["24h", "7d", "30d"]);
-type TimeRange = z.infer<typeof TimeRangeSchema>;
+const AnalyticsQueryInput = z.object({
+  workspaceSlug: z.string().min(1),
+  projectId: z.string().min(1),
+  timeRange: TimeRangeSchema.default("7d"),
+  // Custom date range (when timeRange is "custom")
+  customFrom: z.string().optional(),
+  customTo: z.string().optional(),
+  // Trace filters
+  search: z.string().optional(),
+  types: z.array(SpanTypeSchema).optional(),
+  levels: z.array(SpanLevelSchema).optional(),
+  models: z.array(z.string()).optional(),
+  minDuration: z.number().min(0).optional(),
+  maxDuration: z.number().min(0).optional(),
+});
+
+type AnalyticsFilters = z.infer<typeof AnalyticsQueryInput>;
 
 /**
- * Get date range based on time range enum
+ * Get date range based on time range enum or custom dates
  */
-const getDateRange = (range: TimeRange): { start: Date; end: Date } => {
+const getDateRange = (
+  range: TimeRange,
+  customFrom?: string,
+  customTo?: string
+): { start: Date; end: Date } => {
   const end = new Date();
   const start = new Date();
+
+  // Handle custom date range
+  if (range === "custom" && customFrom && customTo) {
+    return {
+      start: new Date(customFrom),
+      end: new Date(customTo),
+    };
+  }
 
   switch (range) {
     case "24h":
@@ -29,6 +58,55 @@ const getDateRange = (range: TimeRange): { start: Date; end: Date } => {
   }
 
   return { start, end };
+};
+
+/**
+ * Check if any filters are applied (beyond just timeRange)
+ */
+const hasFilters = (input: AnalyticsFilters): boolean => {
+  return !!(
+    input.search ||
+    input.types?.length ||
+    input.levels?.length ||
+    input.models?.length ||
+    input.minDuration !== undefined ||
+    input.maxDuration !== undefined
+  );
+};
+
+/**
+ * Build span filter conditions based on input
+ */
+const buildSpanFilters = (
+  input: AnalyticsFilters,
+  dateRange: { start: Date; end: Date }
+): Prisma.SpanWhereInput => {
+  const conditions: Prisma.SpanWhereInput = {
+    trace: {
+      projectId: input.projectId,
+      timestamp: { gte: dateRange.start, lte: dateRange.end },
+    },
+  };
+
+  // Search filter - match trace name
+  if (input.search) {
+    conditions.trace = {
+      ...conditions.trace,
+      name: { contains: input.search, mode: "insensitive" },
+    } as Prisma.TraceWhereInput;
+  }
+
+  // Level filter
+  if (input.levels?.length) {
+    conditions.level = { in: input.levels };
+  }
+
+  // Model filter
+  if (input.models?.length) {
+    conditions.model = { in: input.models };
+  }
+
+  return conditions;
 };
 
 /**
@@ -117,6 +195,174 @@ export interface WorkspaceAnalytics {
 }
 
 /**
+ * Calculate percentile from an array of numbers
+ */
+const calculatePercentile = (arr: number[], p: number): number => {
+  if (arr.length === 0) return 0;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const idx = Math.ceil((p / 100) * sorted.length) - 1;
+  return sorted[Math.max(0, idx)] ?? 0;
+};
+
+/**
+ * Get filtered project analytics by querying spans directly
+ */
+async function getFilteredProjectAnalytics(
+  input: AnalyticsFilters,
+  dateRange: { start: Date; end: Date }
+): Promise<ProjectAnalytics> {
+  const spanFilters = buildSpanFilters(input, dateRange);
+
+  // Fetch filtered spans with trace info
+  const spans = await prisma.span.findMany({
+    where: spanFilters,
+    select: {
+      startTime: true,
+      endTime: true,
+      level: true,
+      model: true,
+      promptTokens: true,
+      completionTokens: true,
+      totalTokens: true,
+      trace: {
+        select: {
+          id: true,
+          timestamp: true,
+        },
+      },
+    },
+  });
+
+  // Get unique trace IDs for trace count
+  const traceIds = new Set(spans.map((s) => s.trace.id));
+
+  // Calculate summary stats
+  let errorCount = 0;
+  let totalLatency = 0;
+  let latencyCount = 0;
+  let totalTokens = 0;
+
+  for (const span of spans) {
+    if (span.level === "ERROR") errorCount++;
+    if (span.totalTokens) totalTokens += span.totalTokens;
+    if (span.startTime && span.endTime) {
+      const duration = span.endTime.getTime() - span.startTime.getTime();
+      totalLatency += duration;
+      latencyCount++;
+    }
+  }
+
+  const summary = {
+    totalTraces: traceIds.size,
+    totalSpans: spans.length,
+    errorCount,
+    errorRate: traceIds.size > 0 ? (errorCount / traceIds.size) * 100 : 0,
+    avgLatency: latencyCount > 0 ? totalLatency / latencyCount : 0,
+    totalTokens,
+  };
+
+  // Group by date for time series
+  const groupByDate = input.timeRange === "24h" ? "hour" : "day";
+  const dateFormat =
+    groupByDate === "hour"
+      ? (d: Date) => d.toISOString().slice(0, 13) + ":00"
+      : (d: Date) => d.toISOString().slice(0, 10);
+
+  const dateGroups = new Map<
+    string,
+    {
+      traceIds: Set<string>;
+      errors: number;
+      latencies: number[];
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+    }
+  >();
+
+  for (const span of spans) {
+    const dateKey = dateFormat(span.trace.timestamp);
+
+    if (!dateGroups.has(dateKey)) {
+      dateGroups.set(dateKey, {
+        traceIds: new Set(),
+        errors: 0,
+        latencies: [],
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      });
+    }
+
+    const group = dateGroups.get(dateKey)!;
+    group.traceIds.add(span.trace.id);
+
+    if (span.level === "ERROR") group.errors++;
+    if (span.promptTokens) group.promptTokens += span.promptTokens;
+    if (span.completionTokens) group.completionTokens += span.completionTokens;
+    if (span.totalTokens) group.totalTokens += span.totalTokens;
+    if (span.startTime && span.endTime) {
+      group.latencies.push(span.endTime.getTime() - span.startTime.getTime());
+    }
+  }
+
+  // Convert to arrays
+  const sortedDates = Array.from(dateGroups.keys()).sort();
+
+  const traceVolume: TraceVolumePoint[] = sortedDates.map((date) => {
+    const group = dateGroups.get(date)!;
+    return { date, traces: group.traceIds.size, errors: group.errors };
+  });
+
+  const latency: LatencyPoint[] = sortedDates.map((date) => {
+    const group = dateGroups.get(date)!;
+    const avg =
+      group.latencies.length > 0
+        ? group.latencies.reduce((a, b) => a + b, 0) / group.latencies.length
+        : 0;
+    return {
+      date,
+      p50: calculatePercentile(group.latencies, 50),
+      p95: calculatePercentile(group.latencies, 95),
+      avg: Math.round(avg),
+    };
+  });
+
+  const tokenUsage: TokenUsagePoint[] = sortedDates.map((date) => {
+    const group = dateGroups.get(date)!;
+    return {
+      date,
+      prompt: group.promptTokens,
+      completion: group.completionTokens,
+      total: group.totalTokens,
+    };
+  });
+
+  // Model usage breakdown
+  const modelCounts = new Map<string, { count: number; tokens: number }>();
+  for (const span of spans) {
+    if (span.model) {
+      const existing = modelCounts.get(span.model) ?? { count: 0, tokens: 0 };
+      existing.count++;
+      existing.tokens += span.totalTokens ?? 0;
+      modelCounts.set(span.model, existing);
+    }
+  }
+
+  const modelUsage: ModelUsage[] = Array.from(modelCounts.entries())
+    .map(([model, data]) => ({ model, count: data.count, tokens: data.tokens }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    summary,
+    traceVolume,
+    latency,
+    tokenUsage,
+    modelUsage,
+  };
+}
+
+/**
  * Analytics Router
  */
 export const analyticsRouter = createRouter({
@@ -124,13 +370,7 @@ export const analyticsRouter = createRouter({
    * Get project analytics dashboard data
    */
   getProjectAnalytics: protectedProcedure
-    .input(
-      z.object({
-        workspaceSlug: z.string().min(1),
-        projectId: z.string().min(1),
-        timeRange: TimeRangeSchema.default("7d"),
-      })
-    )
+    .input(AnalyticsQueryInput)
     .use(workspaceMiddleware)
     .query(async ({ ctx, input }): Promise<ProjectAnalytics> => {
       // Verify project belongs to workspace
@@ -149,9 +389,14 @@ export const analyticsRouter = createRouter({
         });
       }
 
-      const { start, end } = getDateRange(input.timeRange);
+      const { start, end } = getDateRange(input.timeRange, input.customFrom, input.customTo);
 
-      // Fetch traces with spans for the time range
+      // If filters are applied, query spans first and build trace data from filtered spans
+      if (hasFilters(input)) {
+        return getFilteredProjectAnalytics(input, { start, end });
+      }
+
+      // No filters - fetch all traces with spans for the time range
       const traces = await prisma.trace.findMany({
         where: {
           projectId: input.projectId,
@@ -256,18 +501,12 @@ export const analyticsRouter = createRouter({
         return { date, traces: group.traces, errors: group.errors };
       });
 
-      const calculatePercentile = (arr: number[], p: number): number => {
-        if (arr.length === 0) return 0;
-        const sorted = [...arr].sort((a, b) => a - b);
-        const idx = Math.ceil((p / 100) * sorted.length) - 1;
-        return sorted[Math.max(0, idx)] ?? 0;
-      };
-
       const latency: LatencyPoint[] = sortedDates.map((date) => {
         const group = dateGroups.get(date)!;
-        const avg = group.latencies.length > 0
-          ? group.latencies.reduce((a, b) => a + b, 0) / group.latencies.length
-          : 0;
+        const avg =
+          group.latencies.length > 0
+            ? group.latencies.reduce((a, b) => a + b, 0) / group.latencies.length
+            : 0;
         return {
           date,
           p50: calculatePercentile(group.latencies, 50),
@@ -320,11 +559,13 @@ export const analyticsRouter = createRouter({
       z.object({
         workspaceSlug: z.string().min(1),
         timeRange: TimeRangeSchema.default("7d"),
+        customFrom: z.string().optional(),
+        customTo: z.string().optional(),
       })
     )
     .use(workspaceMiddleware)
     .query(async ({ ctx, input }): Promise<WorkspaceAnalytics> => {
-      const { start, end } = getDateRange(input.timeRange);
+      const { start, end } = getDateRange(input.timeRange, input.customFrom, input.customTo);
 
       // Get all projects in workspace
       const projects = await prisma.project.findMany({
@@ -491,18 +732,12 @@ export const analyticsRouter = createRouter({
         return { date, traces: group.traces, errors: group.errors };
       });
 
-      const calculatePercentile = (arr: number[], p: number): number => {
-        if (arr.length === 0) return 0;
-        const sorted = [...arr].sort((a, b) => a - b);
-        const idx = Math.ceil((p / 100) * sorted.length) - 1;
-        return sorted[Math.max(0, idx)] ?? 0;
-      };
-
       const latency: LatencyPoint[] = sortedDates.map((date) => {
         const group = dateGroups.get(date)!;
-        const avg = group.latencies.length > 0
-          ? group.latencies.reduce((a, b) => a + b, 0) / group.latencies.length
-          : 0;
+        const avg =
+          group.latencies.length > 0
+            ? group.latencies.reduce((a, b) => a + b, 0) / group.latencies.length
+            : 0;
         return {
           date,
           p50: calculatePercentile(group.latencies, 50),

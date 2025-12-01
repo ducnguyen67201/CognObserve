@@ -136,12 +136,12 @@ export function TracesTable({ workspaceSlug, projectId }: TracesTableProps) {
               <TableHead className="w-[40px]"></TableHead>
               <TableHead className="w-[180px]">Name</TableHead>
               <TableHead className="w-[90px]">Type</TableHead>
-              <TableHead className="w-[200px]">Input</TableHead>
-              <TableHead className="w-[200px]">Output</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead className="text-right">Duration</TableHead>
-              <TableHead className="text-right">Tokens</TableHead>
-              <TableHead className="w-[80px] text-center">Status</TableHead>
+              <TableHead className="min-w-[200px]">Input</TableHead>
+              <TableHead className="min-w-[200px]">Output</TableHead>
+              <TableHead className="w-[120px]">Time</TableHead>
+              <TableHead className="w-[80px] text-right">Duration</TableHead>
+              <TableHead className="w-[70px] text-right">Tokens</TableHead>
+              <TableHead className="w-[70px] text-center">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -375,12 +375,12 @@ function TracesTableSkeleton() {
           <TableHead className="w-[40px]"></TableHead>
           <TableHead className="w-[180px]">Name</TableHead>
           <TableHead className="w-[90px]">Type</TableHead>
-          <TableHead className="w-[200px]">Input</TableHead>
-          <TableHead className="w-[200px]">Output</TableHead>
-          <TableHead>Time</TableHead>
-          <TableHead className="text-right">Duration</TableHead>
-          <TableHead className="text-right">Tokens</TableHead>
-          <TableHead className="w-[80px] text-center">Status</TableHead>
+          <TableHead className="min-w-[200px]">Input</TableHead>
+          <TableHead className="min-w-[200px]">Output</TableHead>
+          <TableHead className="w-[120px]">Time</TableHead>
+          <TableHead className="w-[80px] text-right">Duration</TableHead>
+          <TableHead className="w-[70px] text-right">Tokens</TableHead>
+          <TableHead className="w-[70px] text-center">Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>{[0, 1, 2, 3, 4].map(renderSkeletonRow)}</TableBody>
