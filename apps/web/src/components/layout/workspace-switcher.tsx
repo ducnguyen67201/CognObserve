@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Check, ChevronsUpDown, Plus, Building2, User } from "lucide-react";
@@ -16,6 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
 import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog";
 
@@ -27,6 +28,12 @@ export function WorkspaceSwitcher({ currentWorkspace }: WorkspaceSwitcherProps) 
   const router = useRouter();
   const { data: session } = useSession();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch with Radix UI dropdown IDs
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const workspaces = session?.user?.workspaces ?? [];
 
@@ -70,6 +77,17 @@ export function WorkspaceSwitcher({ currentWorkspace }: WorkspaceSwitcherProps) 
       </DropdownMenuItem>
     );
   };
+
+  // Show skeleton during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuSkeleton showIcon className="h-12" />
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   return (
     <>
