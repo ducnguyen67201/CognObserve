@@ -102,8 +102,11 @@ export class TraceProcessor {
     }
 
     // Update spans with costs in a transaction
+    // Note: We update spans individually because each has unique cost values.
+    // Prisma's updateMany doesn't support per-record data, and raw SQL batching
+    // would add complexity. The transaction ensures atomicity with acceptable
+    // performance for typical trace sizes (< 100 spans).
     await prisma.$transaction(async (tx) => {
-      // Update individual spans
       for (const update of costUpdates) {
         await tx.span.update({
           where: { id: update.spanId },

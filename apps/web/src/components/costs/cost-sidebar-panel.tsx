@@ -78,6 +78,12 @@ const formatChange = (change: number): string => {
 };
 
 /**
+ * Formatter wrapper for tooltip (handles unknown type from recharts)
+ */
+const formatNumberValue = (value: unknown): string => formatNumber(value as number);
+const formatCurrencyValue = (value: unknown): string => formatCurrency(value as number);
+
+/**
  * Format date for chart axis
  */
 const formatDateLabel = (dateStr: string, range: TimeRange): string => {
@@ -276,10 +282,10 @@ function TokenUsageChart({
             axisLine={false}
             tick={{ fontSize: 9 }}
             width={35}
-            tickFormatter={(v) => formatNumber(v)}
+            tickFormatter={formatNumber}
           />
           <ChartTooltip
-            content={<ChartTooltipContent formatter={(v) => formatNumber(v as number)} />}
+            content={<ChartTooltipContent formatter={formatNumberValue} />}
           />
           <Area type="monotone" dataKey="prompt" stackId="1" stroke="var(--color-prompt)" fill="var(--color-prompt)" fillOpacity={0.4} />
           <Area type="monotone" dataKey="completion" stackId="1" stroke="var(--color-completion)" fill="var(--color-completion)" fillOpacity={0.4} />
@@ -308,6 +314,21 @@ function ModelUsageChart({
     return config;
   }, [data]);
 
+  const renderPieCell = (entry: { model: string; count: number }, idx: number) => (
+    <Cell key={entry.model} fill={MODEL_COLORS[idx % MODEL_COLORS.length]} />
+  );
+
+  const renderLegendItem = (item: { model: string; count: number }, idx: number) => (
+    <div key={item.model} className="flex items-center gap-1">
+      <span
+        className="h-2 w-2 rounded-full"
+        style={{ backgroundColor: MODEL_COLORS[idx % MODEL_COLORS.length] }}
+      />
+      <span className="text-muted-foreground">{item.model}</span>
+      <span className="font-medium">{item.count}</span>
+    </div>
+  );
+
   if (data.length === 0) {
     return (
       <div className="space-y-2">
@@ -335,24 +356,13 @@ function ModelUsageChart({
             outerRadius={40}
             paddingAngle={2}
           >
-            {data.map((entry, idx) => (
-              <Cell key={entry.model} fill={MODEL_COLORS[idx % MODEL_COLORS.length]} />
-            ))}
+            {data.map(renderPieCell)}
           </Pie>
         </PieChart>
       </ChartContainer>
       {/* Legend */}
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-        {data.slice(0, 5).map((item, idx) => (
-          <div key={item.model} className="flex items-center gap-1">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: MODEL_COLORS[idx % MODEL_COLORS.length] }}
-            />
-            <span className="text-muted-foreground">{item.model}</span>
-            <span className="font-medium">{item.count}</span>
-          </div>
-        ))}
+        {data.slice(0, 5).map(renderLegendItem)}
       </div>
     </div>
   );
@@ -414,10 +424,10 @@ function CostTrendChart({
             axisLine={false}
             tick={{ fontSize: 9 }}
             width={35}
-            tickFormatter={(v) => formatCurrency(v)}
+            tickFormatter={formatCurrency}
           />
           <ChartTooltip
-            content={<ChartTooltipContent formatter={(v) => formatCurrency(v as number)} />}
+            content={<ChartTooltipContent formatter={formatCurrencyValue} />}
           />
           <Area
             type="monotone"
@@ -453,10 +463,15 @@ function CostByModelChart({
     return config;
   }, [topModels]);
 
-  const chartData = topModels.map((item, idx) => ({
+  const addFillColor = (
+    item: { model: string; displayName: string; cost: number; percentage: number },
+    idx: number
+  ) => ({
     ...item,
     fill: MODEL_COLORS[idx % MODEL_COLORS.length],
-  }));
+  });
+
+  const chartData = topModels.map(addFillColor);
 
   if (data.length === 0) {
     return (
@@ -480,7 +495,7 @@ function CostByModelChart({
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 9 }}
-            tickFormatter={(v) => formatCurrency(v)}
+            tickFormatter={formatCurrency}
           />
           <YAxis
             dataKey="displayName"
@@ -491,7 +506,7 @@ function CostByModelChart({
             width={60}
           />
           <ChartTooltip
-            content={<ChartTooltipContent formatter={(v) => formatCurrency(v as number)} />}
+            content={<ChartTooltipContent formatter={formatCurrencyValue} />}
           />
           <Bar dataKey="cost" radius={[0, 4, 4, 0]} />
         </BarChart>
