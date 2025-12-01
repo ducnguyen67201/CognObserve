@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc/client";
 import { useWorkspaceUrl } from "@/hooks/use-workspace-url";
 import { TracesTable } from "@/components/traces/traces-table";
+import { AlertsPanel } from "@/components/alerts/alerts-panel";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ workspaceSlug: string; projectId: string }>();
@@ -67,18 +68,21 @@ export default function ProjectDetailPage() {
   return (
     <div className="space-y-6 p-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={workspaceUrl("/projects")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-          <p className="text-muted-foreground">
-            Created {new Date(project.createdAt).toLocaleDateString()}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={workspaceUrl("/projects")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
+            <p className="text-muted-foreground">
+              Created {new Date(project.createdAt).toLocaleDateString()}
+            </p>
+          </div>
         </div>
+        <AlertsPanel workspaceSlug={workspaceSlug ?? ""} projectId={projectId} />
       </div>
 
       {/* Traces Table */}

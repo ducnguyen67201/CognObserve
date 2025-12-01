@@ -9,7 +9,9 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./schemas": "./src/schemas.ts",
-    "./lib/cost": "./src/lib/cost/index.ts"
+    "./lib/cost": "./src/lib/cost/index.ts",
+    "./lib/alerting": "./src/lib/alerting/index.ts",
+    "./lib/alerting/init": "./src/lib/alerting/init.ts"
   },
   "scripts": {
     "lint": "eslint src/",
@@ -22,6 +24,7 @@
     "@cognobserve/db": "workspace:*",
     "@cognobserve/shared": "workspace:*",
     "@trpc/server": "^11.0.0",
+    "nodemailer": "^6.9.16",
     "superjson": "^2.2.2",
     "zod": "^3.24.0"
   },
@@ -29,6 +32,7 @@
     "@cognobserve/config-eslint": "workspace:*",
     "@cognobserve/config-typescript": "workspace:*",
     "@types/node": "^22.10.1",
+    "@types/nodemailer": "^6.4.17",
     "eslint": "^9.16.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0",

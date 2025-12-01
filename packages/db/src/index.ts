@@ -2,10 +2,6 @@ import { PrismaClient } from "./generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
 function parseConnectionString(url: string) {
   const parsed = new URL(url);
   return {
@@ -37,22 +33,16 @@ function createPrismaClient() {
   });
 }
 
-function getPrismaClient() {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = createPrismaClient();
-  }
-  return globalForPrisma.prisma;
+// Use globalThis to persist client across hot reloads in development
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+// Create or get cached client
+if (!globalForPrisma.prisma) {
+  globalForPrisma.prisma = createPrismaClient();
 }
 
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_, prop) {
-    const client = getPrismaClient();
-    const value = client[prop as keyof PrismaClient];
-    if (typeof value === "function") {
-      return value.bind(client);
-    }
-    return value;
-  },
-});
+export const prisma: PrismaClient = globalForPrisma.prisma;
 
 export * from "./generated/prisma/client";

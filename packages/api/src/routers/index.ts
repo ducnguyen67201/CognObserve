@@ -23,6 +23,7 @@ import { tracesRouter } from "./traces";
 import { analyticsRouter } from "./analytics";
 import { domainsRouter } from "./domains";
 import { costsRouter } from "./costs";
+import { alertsRouter } from "./alerts";
 // import { usersRouter } from "./users";
 
 /**
@@ -110,6 +111,24 @@ export const appRouter = createRouter({
   costs: costsRouter,
 
   /**
+   * Alerts
+   * @see ./alerts.ts
+   *
+   * - alerts.list        - List alerts for a project
+   * - alerts.get         - Get alert details
+   * - alerts.create      - Create new alert
+   * - alerts.update      - Update alert config
+   * - alerts.delete      - Delete alert
+   * - alerts.toggle      - Enable/disable alert
+   * - alerts.history     - Get alert history
+   * - alerts.addChannel  - Add notification channel
+   * - alerts.removeChannel - Remove channel
+   * - alerts.testChannel - Test notification channel
+   * - alerts.getProviders - Get available providers
+   */
+  alerts: alertsRouter,
+
+  /**
    * Future modules:
    *
    * users: usersRouter,        // User management
@@ -134,4 +153,5 @@ export {
   analyticsRouter,
   domainsRouter,
   costsRouter,
+  alertsRouter,
 };

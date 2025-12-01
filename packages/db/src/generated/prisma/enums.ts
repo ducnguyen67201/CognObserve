@@ -36,3 +36,32 @@ export const SpanLevel = {
 } as const
 
 export type SpanLevel = (typeof SpanLevel)[keyof typeof SpanLevel]
+
+
+export const AlertType = {
+  ERROR_RATE: 'ERROR_RATE',
+  LATENCY_P50: 'LATENCY_P50',
+  LATENCY_P95: 'LATENCY_P95',
+  LATENCY_P99: 'LATENCY_P99'
+} as const
+
+export type AlertType = (typeof AlertType)[keyof typeof AlertType]
+
+
+export const AlertOperator = {
+  GREATER_THAN: 'GREATER_THAN',
+  LESS_THAN: 'LESS_THAN'
+} as const
+
+export type AlertOperator = (typeof AlertOperator)[keyof typeof AlertOperator]
+
+
+export const ChannelProvider = {
+  GMAIL: 'GMAIL',
+  DISCORD: 'DISCORD',
+  SLACK: 'SLACK',
+  PAGERDUTY: 'PAGERDUTY',
+  WEBHOOK: 'WEBHOOK'
+} as const
+
+export type ChannelProvider = (typeof ChannelProvider)[keyof typeof ChannelProvider]
