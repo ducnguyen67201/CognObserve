@@ -109,3 +109,18 @@ export type ModelPricing = Prisma.ModelPricingModel
  * 
  */
 export type CostDailySummary = Prisma.CostDailySummaryModel
+/**
+ * Model Alert
+ * 
+ */
+export type Alert = Prisma.AlertModel
+/**
+ * Model AlertChannel
+ * 
+ */
+export type AlertChannel = Prisma.AlertChannelModel
+/**
+ * Model AlertHistory
+ * 
+ */
+export type AlertHistory = Prisma.AlertHistoryModel

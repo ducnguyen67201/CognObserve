@@ -156,6 +156,7 @@ model Project {
   traces       Trace[]
   members      ProjectMember[]
   costSummary  CostDailySummary[]
+  alerts       Alert[]
 
   @@index([workspaceId])
 }
@@ -288,4 +289,79 @@ model CostDailySummary {
   @@unique([projectId, date, model])
   @@index([projectId, date])
   @@map("cost_daily_summary")
+}
+
+// ============================================================
+// Alerting Models
+// ============================================================
+
+enum AlertType {
+  ERROR_RATE
+  LATENCY_P50
+  LATENCY_P95
+  LATENCY_P99
+}
+
+enum AlertOperator {
+  GREATER_THAN
+  LESS_THAN
+}
+
+enum ChannelProvider {
+  GMAIL
+  DISCORD
+  SLACK
+  PAGERDUTY
+  WEBHOOK
+}
+
+model Alert {
+  id              String         @id @default(cuid())
+  projectId       String
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name            String
+  type            AlertType
+  threshold       Float
+  operator        AlertOperator  @default(GREATER_THAN)
+  windowMins      Int            @default(5)
+  cooldownMins    Int            @default(60)
+  enabled         Boolean        @default(true)
+  lastTriggeredAt DateTime?
+  channels        AlertChannel[]
+  history         AlertHistory[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([projectId])
+  @@index([enabled, lastTriggeredAt])
+  @@map("alerts")
+}
+
+model AlertChannel {
+  id        String          @id @default(cuid())
+  alertId   String
+  alert     Alert           @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  provider  ChannelProvider
+  config    Json
+  verified  Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([alertId])
+  @@map("alert_channels")
+}
+
+model AlertHistory {
+  id          String    @id @default(cuid())
+  alertId     String
+  alert       Alert     @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  triggeredAt DateTime  @default(now())
+  value       Float
+  threshold   Float
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime?
+  notifiedVia String[]
+
+  @@index([alertId, triggeredAt])
+  @@index([triggeredAt])
+  @@map("alert_history")
 }

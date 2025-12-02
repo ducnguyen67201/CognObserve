@@ -69,8 +69,8 @@ describe("errors", () => {
 
       // TRPCError wraps cause in UnknownCauseError, check properties exist
       expect(error.cause).toBeDefined();
-      expect((error.cause as Record<string, unknown>).traceId).toBe("123");
-      expect((error.cause as Record<string, unknown>).projectId).toBe("456");
+      expect((error.cause as unknown as Record<string, unknown>).traceId).toBe("123");
+      expect((error.cause as unknown as Record<string, unknown>).projectId).toBe("456");
     });
 
     it("should create different errors for different keys", () => {

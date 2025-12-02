@@ -64,7 +64,10 @@ export const ModelName = {
   Trace: 'Trace',
   Span: 'Span',
   ModelPricing: 'ModelPricing',
-  CostDailySummary: 'CostDailySummary'
+  CostDailySummary: 'CostDailySummary',
+  Alert: 'Alert',
+  AlertChannel: 'AlertChannel',
+  AlertHistory: 'AlertHistory'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -280,6 +283,50 @@ export const CostDailySummaryScalarFieldEnum = {
 export type CostDailySummaryScalarFieldEnum = (typeof CostDailySummaryScalarFieldEnum)[keyof typeof CostDailySummaryScalarFieldEnum]
 
 
+export const AlertScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  name: 'name',
+  type: 'type',
+  threshold: 'threshold',
+  operator: 'operator',
+  windowMins: 'windowMins',
+  cooldownMins: 'cooldownMins',
+  enabled: 'enabled',
+  lastTriggeredAt: 'lastTriggeredAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AlertScalarFieldEnum = (typeof AlertScalarFieldEnum)[keyof typeof AlertScalarFieldEnum]
+
+
+export const AlertChannelScalarFieldEnum = {
+  id: 'id',
+  alertId: 'alertId',
+  provider: 'provider',
+  config: 'config',
+  verified: 'verified',
+  createdAt: 'createdAt'
+} as const
+
+export type AlertChannelScalarFieldEnum = (typeof AlertChannelScalarFieldEnum)[keyof typeof AlertChannelScalarFieldEnum]
+
+
+export const AlertHistoryScalarFieldEnum = {
+  id: 'id',
+  alertId: 'alertId',
+  triggeredAt: 'triggeredAt',
+  value: 'value',
+  threshold: 'threshold',
+  resolved: 'resolved',
+  resolvedAt: 'resolvedAt',
+  notifiedVia: 'notifiedVia'
+} as const
+
+export type AlertHistoryScalarFieldEnum = (typeof AlertHistoryScalarFieldEnum)[keyof typeof AlertHistoryScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -294,6 +341,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

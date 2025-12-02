@@ -406,3 +406,24 @@ export const formError = {
       description: `${fieldName} is required.`,
     }),
 } as const;
+
+// ============================================================
+// Alert Error Toasts
+// ============================================================
+
+export const alertError = {
+  notFound: () =>
+    toast.error("Alert Not Found", {
+      description: "This alert doesn't exist or has been deleted.",
+    }),
+
+  testFailed: (reason?: string) =>
+    toast.error("Test Failed", {
+      description: reason ?? "Failed to send test notification. Please check your channel configuration.",
+    }),
+
+  channelFailed: (provider: string) =>
+    toast.error("Channel Error", {
+      description: `Failed to add ${provider} channel. Please check your configuration.`,
+    }),
+} as const;
