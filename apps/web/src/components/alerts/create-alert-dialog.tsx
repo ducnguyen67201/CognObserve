@@ -29,7 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc/client";
-import { toast } from "sonner";
+import { showError } from "@/lib/errors";
+import { alertToast } from "@/lib/success";
+import { AlertTypeSchema, ALERT_TYPE_LABELS, type AlertType } from "@cognobserve/api/schemas";
 
 interface CreateAlertDialogProps {
   workspaceSlug: string;
@@ -38,12 +40,18 @@ interface CreateAlertDialogProps {
   onClose: () => void;
 }
 
-const ALERT_TYPES = [
-  { value: "ERROR_RATE", label: "Error Rate", unit: "%" },
-  { value: "LATENCY_P50", label: "Latency (P50)", unit: "ms" },
-  { value: "LATENCY_P95", label: "Latency (P95)", unit: "ms" },
-  { value: "LATENCY_P99", label: "Latency (P99)", unit: "ms" },
-] as const;
+const ALERT_TYPE_UNITS: Record<AlertType, string> = {
+  ERROR_RATE: "%",
+  LATENCY_P50: "ms",
+  LATENCY_P95: "ms",
+  LATENCY_P99: "ms",
+};
+
+const ALERT_TYPES = AlertTypeSchema.options.map((value) => ({
+  value,
+  label: ALERT_TYPE_LABELS[value],
+  unit: ALERT_TYPE_UNITS[value],
+}));
 
 const OPERATORS = [
   { value: "GREATER_THAN", label: "Greater than (>)" },
@@ -52,7 +60,7 @@ const OPERATORS = [
 
 interface CreateAlertFormValues {
   name: string;
-  type: "ERROR_RATE" | "LATENCY_P50" | "LATENCY_P95" | "LATENCY_P99";
+  type: AlertType;
   threshold: string;
   operator: "GREATER_THAN" | "LESS_THAN";
   windowMins: string;
@@ -80,14 +88,14 @@ export function CreateAlertDialog({
   });
 
   const createMutation = trpc.alerts.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       utils.alerts.list.invalidate();
-      toast.success("Alert created successfully");
+      alertToast.created(variables.name);
       form.reset();
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showError(error);
     },
   });
 

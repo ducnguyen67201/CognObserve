@@ -153,3 +153,24 @@ export const clipboardToast = {
   copyFailed: () =>
     toast.error("Copy failed", { description: "Could not copy to clipboard." }),
 } as const;
+
+// ============================================================
+// Alert Toasts
+// ============================================================
+
+export const alertToast = {
+  created: (name: string) =>
+    toast.success("Alert created", { description: `"${name}" is now monitoring your project.` }),
+
+  updated: (name?: string) =>
+    toast.success("Alert updated", { description: name ? `"${name}" has been updated.` : undefined }),
+
+  deleted: (name?: string) =>
+    toast.success("Alert deleted", { description: name ? `"${name}" has been removed.` : undefined }),
+
+  channelAdded: (provider: string) =>
+    toast.success(`${provider} channel added`, { description: "You will receive notifications on this channel." }),
+
+  testSent: () =>
+    toast.success("Test notification sent", { description: "Check your notification channel." }),
+} as const;

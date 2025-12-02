@@ -23,19 +23,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc/client";
 import { CreateAlertDialog } from "./create-alert-dialog";
 import { AddChannelDialog } from "./add-channel-dialog";
-import { toast } from "sonner";
+import { showError, alertError } from "@/lib/errors";
+import { alertToast } from "@/lib/success";
+import { ALERT_TYPE_LABELS, type AlertType } from "@cognobserve/api/schemas";
 
 interface AlertsPanelProps {
   workspaceSlug: string;
   projectId: string;
 }
-
-const ALERT_TYPE_LABELS: Record<string, string> = {
-  ERROR_RATE: "Error Rate",
-  LATENCY_P50: "Latency P50",
-  LATENCY_P95: "Latency P95",
-  LATENCY_P99: "Latency P99",
-};
 
 const ALERT_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
   ERROR_RATE: AlertTriangle,
@@ -59,34 +54,34 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
   const toggleMutation = trpc.alerts.toggle.useMutation({
     onSuccess: () => {
       utils.alerts.list.invalidate();
-      toast.success("Alert updated");
+      alertToast.updated();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showError(error);
     },
   });
 
   const deleteMutation = trpc.alerts.delete.useMutation({
     onSuccess: () => {
       utils.alerts.list.invalidate();
-      toast.success("Alert deleted");
+      alertToast.deleted();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showError(error);
     },
   });
 
   const testChannelMutation = trpc.alerts.testChannel.useMutation({
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Test notification sent");
+        alertToast.testSent();
         utils.alerts.list.invalidate();
       } else {
-        toast.error(`Test failed: ${result.error}`);
+        alertError.testFailed(result.error);
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      showError(error);
     },
   });
 
@@ -193,7 +188,7 @@ interface AlertCardProps {
   alert: {
     id: string;
     name: string;
-    type: string;
+    type: AlertType;
     threshold: number;
     operator: string;
     windowMins: number;

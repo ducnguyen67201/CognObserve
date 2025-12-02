@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +24,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
-import { toast } from "sonner";
+import { showError } from "@/lib/errors";
+import { alertToast } from "@/lib/success";
+import {
+  GmailConfigSchema,
+  DiscordConfigSchema,
+  type GmailConfig,
+  type DiscordConfig,
+} from "@cognobserve/api/schemas";
 
 interface AddChannelDialogProps {
   workspaceSlug: string;
@@ -50,20 +56,6 @@ const CHANNEL_PROVIDERS = [
     description: "Send alerts to a Discord channel",
   },
 ] as const;
-
-const GmailFormSchema = z.object({
-  email: z.string().email("Invalid email address"),
-});
-
-const DiscordFormSchema = z.object({
-  webhookUrl: z
-    .string()
-    .url("Invalid URL")
-    .refine(
-      (url) => url.startsWith("https://discord.com/api/webhooks/"),
-      "Must be a Discord webhook URL"
-    ),
-});
 
 export function AddChannelDialog({
   workspaceSlug,
@@ -162,23 +154,23 @@ interface ChannelFormProps {
 
 function GmailChannelForm({ workspaceSlug, alertId, onBack, onClose }: ChannelFormProps) {
   const utils = trpc.useUtils();
-  const form = useForm<z.infer<typeof GmailFormSchema>>({
-    resolver: zodResolver(GmailFormSchema),
+  const form = useForm<GmailConfig>({
+    resolver: zodResolver(GmailConfigSchema),
     defaultValues: { email: "" },
   });
 
   const addMutation = trpc.alerts.addChannel.useMutation({
     onSuccess: () => {
       utils.alerts.list.invalidate();
-      toast.success("Email channel added");
+      alertToast.channelAdded("Email");
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showError(error);
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof GmailFormSchema>) => {
+  const handleSubmit = (values: GmailConfig) => {
     addMutation.mutate({
       workspaceSlug,
       alertId,
@@ -235,23 +227,23 @@ function GmailChannelForm({ workspaceSlug, alertId, onBack, onClose }: ChannelFo
 
 function DiscordChannelForm({ workspaceSlug, alertId, onBack, onClose }: ChannelFormProps) {
   const utils = trpc.useUtils();
-  const form = useForm<z.infer<typeof DiscordFormSchema>>({
-    resolver: zodResolver(DiscordFormSchema),
+  const form = useForm<DiscordConfig>({
+    resolver: zodResolver(DiscordConfigSchema),
     defaultValues: { webhookUrl: "" },
   });
 
   const addMutation = trpc.alerts.addChannel.useMutation({
     onSuccess: () => {
       utils.alerts.list.invalidate();
-      toast.success("Discord channel added");
+      alertToast.channelAdded("Discord");
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message);
+      showError(error);
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof DiscordFormSchema>) => {
+  const handleSubmit = (values: DiscordConfig) => {
     addMutation.mutate({
       workspaceSlug,
       alertId,
