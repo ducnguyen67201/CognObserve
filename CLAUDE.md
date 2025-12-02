@@ -224,21 +224,392 @@ import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
 - Use hooks for: data fetching, form handling, subscriptions, complex state
 - Name hooks with `use` prefix: `useProjects`, `useAuth`, `useDebounce`
 - Keep components thin - business logic belongs in hooks
+- **Optimize hook dependencies** - Use stable references, memoize objects/arrays passed to deps
 
 ```tsx
 // src/hooks/use-projects.ts
-export function useProjects() {
+export function useProjects(workspaceId: string) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  // ... fetch logic
-  return { projects, isLoading, refetch };
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchProjects = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await api.projects.list(workspaceId);
+      setProjects(data);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Failed to fetch"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  return { projects, isLoading, error, refetch: fetchProjects };
 }
 
-// Component stays simple
-function ProjectsPage() {
-  const { projects, isLoading } = useProjects();
-  if (isLoading) return <Skeleton />;
+// Component stays simple - no business logic
+function ProjectsPage({ workspaceId }: Props) {
+  const { projects, isLoading, error } = useProjects(workspaceId);
+
+  if (error) return <ErrorState error={error} />;
+  if (isLoading) return <ProjectsSkeleton />;
   return <ProjectList projects={projects} />;
+}
+```
+
+## Frontend Engineering Best Practices
+
+**Code like a senior frontend engineer.** Write maintainable, performant, and scalable code. Every component, hook, and utility should be crafted with care.
+
+### Function Decomposition
+- **Break large functions into smaller, focused functions** - Each function should do ONE thing well
+- **Functions over 20-30 lines are candidates for splitting** - If you need to scroll, it's too long
+- **Name functions by what they do, not how** - `validateEmail` not `checkStringForAtSymbol`
+- **Pure functions are preferred** - Same input always produces same output, no side effects
+
+```tsx
+// BAD - Monolithic function doing too many things
+function handleSubmit(data: FormData) {
+  const errors: string[] = [];
+  if (!data.email) errors.push("Email required");
+  if (!data.email.includes("@")) errors.push("Invalid email");
+  if (!data.password) errors.push("Password required");
+  if (data.password.length < 8) errors.push("Password too short");
+  if (!/[A-Z]/.test(data.password)) errors.push("Need uppercase");
+  if (!/[0-9]/.test(data.password)) errors.push("Need number");
+  if (errors.length > 0) {
+    setErrors(errors);
+    return;
+  }
+  setIsLoading(true);
+  fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+    .then((res) => res.json())
+    .then((result) => {
+      if (result.success) {
+        router.push("/dashboard");
+      } else {
+        setErrors([result.message]);
+      }
+    })
+    .catch(() => setErrors(["Network error"]))
+    .finally(() => setIsLoading(false));
+}
+
+// GOOD - Decomposed into focused, testable functions
+// src/lib/validation/auth.ts
+const validateEmail = (email: string): string | null => {
+  if (!email) return "Email is required";
+  if (!email.includes("@")) return "Invalid email format";
+  return null;
+};
+
+const validatePassword = (password: string): string[] => {
+  const errors: string[] = [];
+  if (!password) return ["Password is required"];
+  if (password.length < 8) errors.push("Password must be at least 8 characters");
+  if (!/[A-Z]/.test(password)) errors.push("Password must contain uppercase letter");
+  if (!/[0-9]/.test(password)) errors.push("Password must contain a number");
+  return errors;
+};
+
+export const validateRegistration = (data: FormData): string[] => {
+  const errors: string[] = [];
+  const emailError = validateEmail(data.email);
+  if (emailError) errors.push(emailError);
+  errors.push(...validatePassword(data.password));
+  return errors;
+};
+
+// src/hooks/use-registration.ts
+export function useRegistration() {
+  const router = useRouter();
+  const [errors, setErrors] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const register = useCallback(async (data: FormData) => {
+    const validationErrors = validateRegistration(data);
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors([]);
+
+    try {
+      const result = await authApi.register(data);
+      router.push("/dashboard");
+    } catch (error) {
+      setErrors([getErrorMessage(error)]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  return { register, errors, isLoading };
+}
+
+// Component is minimal
+function RegistrationForm() {
+  const { register, errors, isLoading } = useRegistration();
+  const handleSubmit = (data: FormData) => register(data);
+  // ... render form
+}
+```
+
+### Shared Utilities
+- **Create reusable utilities in `src/lib/`** - Formatting, validation, API helpers
+- **Cross-package utilities go in `packages/shared/`** - Used by multiple apps
+- **Group utilities by domain** - `lib/format.ts`, `lib/date.ts`, `lib/validation.ts`
+- **Utilities must be pure functions** - No React hooks, no side effects
+- **Write utilities once, use everywhere** - DRY principle
+
+```tsx
+// BAD - Duplicated formatting logic across components
+function TraceCard({ trace }: Props) {
+  const duration = trace.endTime - trace.startTime;
+  const formatted = duration < 1000
+    ? `${duration}ms`
+    : duration < 60000
+    ? `${(duration / 1000).toFixed(2)}s`
+    : `${(duration / 60000).toFixed(2)}m`;
+  // ...
+}
+
+function SpanRow({ span }: Props) {
+  const duration = span.endTime - span.startTime;
+  const formatted = duration < 1000
+    ? `${duration}ms`
+    : duration < 60000
+    ? `${(duration / 1000).toFixed(2)}s`
+    : `${(duration / 60000).toFixed(2)}m`;  // Duplicated!
+  // ...
+}
+
+// GOOD - Centralized utility functions
+// src/lib/format.ts
+export const formatDuration = (ms: number): string => {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+  return `${(ms / 60000).toFixed(2)}m`;
+};
+
+export const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const formatNumber = (num: number): string => {
+  return new Intl.NumberFormat().format(num);
+};
+
+export const formatPercentage = (value: number, total: number): string => {
+  if (total === 0) return "0%";
+  return `${((value / total) * 100).toFixed(1)}%`;
+};
+
+// Usage - clean and consistent
+function TraceCard({ trace }: Props) {
+  const duration = formatDuration(trace.endTime - trace.startTime);
+  // ...
+}
+
+function SpanRow({ span }: Props) {
+  const duration = formatDuration(span.endTime - span.startTime);
+  // ...
+}
+```
+
+### Component Optimization
+- **Use React.memo for expensive pure components** - Prevents unnecessary re-renders
+- **Use useMemo for expensive computations** - Cache calculated values
+- **Use useCallback for stable function references** - Prevent child re-renders
+- **Lazy load heavy components** - Code splitting with `React.lazy` and `next/dynamic`
+- **Virtualize long lists** - Use `@tanstack/react-virtual` for 100+ items
+
+```tsx
+// BAD - Re-renders on every parent render, recalculates on every render
+function TraceList({ traces, filter }: Props) {
+  // Recalculated every render
+  const filteredTraces = traces
+    .filter((t) => t.status === filter)
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  // New function reference every render
+  const handleTraceClick = (id: string) => {
+    router.push(`/traces/${id}`);
+  };
+
+  return (
+    <div>
+      {filteredTraces.map((trace) => (
+        <TraceRow
+          key={trace.id}
+          trace={trace}
+          onClick={() => handleTraceClick(trace.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+// GOOD - Optimized with memoization and stable references
+const TraceRow = memo(function TraceRow({ trace, onClick }: TraceRowProps) {
+  return (
+    <div onClick={onClick} className="trace-row">
+      <span>{trace.name}</span>
+      <span>{formatDuration(trace.duration)}</span>
+    </div>
+  );
+});
+
+function TraceList({ traces, filter }: Props) {
+  const router = useRouter();
+
+  // Memoize expensive computation
+  const filteredTraces = useMemo(() => {
+    return traces
+      .filter((t) => t.status === filter)
+      .sort((a, b) => b.timestamp - a.timestamp);
+  }, [traces, filter]);
+
+  // Stable function reference
+  const handleTraceClick = useCallback((id: string) => {
+    router.push(`/traces/${id}`);
+  }, [router]);
+
+  // Create stable onClick handlers
+  const getClickHandler = useCallback(
+    (id: string) => () => handleTraceClick(id),
+    [handleTraceClick]
+  );
+
+  return (
+    <div>
+      {filteredTraces.map((trace) => (
+        <TraceRow
+          key={trace.id}
+          trace={trace}
+          onClick={getClickHandler(trace.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Lazy loading for heavy components
+const TraceDetailPanel = dynamic(
+  () => import("@/components/trace-detail-panel"),
+  { loading: () => <Skeleton className="h-96" /> }
+);
+```
+
+### Component Structure
+- **One component per file** - Easier to find and maintain
+- **Co-locate related files** - Component, styles, tests in same directory for complex components
+- **Extract sub-components** - Break large components into smaller pieces
+- **Props interface at top** - Define types before component
+
+```tsx
+// BAD - Everything in one massive component
+function Dashboard() {
+  // 50+ lines of hooks and state
+  // 200+ lines of JSX with inline logic
+  // Impossible to test individual parts
+}
+
+// GOOD - Structured component hierarchy
+// src/components/dashboard/index.tsx
+interface DashboardProps {
+  workspaceId: string;
+}
+
+export function Dashboard({ workspaceId }: DashboardProps) {
+  const { metrics, isLoading } = useDashboardMetrics(workspaceId);
+
+  if (isLoading) return <DashboardSkeleton />;
+
+  return (
+    <div className="space-y-6">
+      <DashboardHeader workspaceId={workspaceId} />
+      <MetricsGrid metrics={metrics} />
+      <RecentTraces workspaceId={workspaceId} />
+      <UsageChart workspaceId={workspaceId} />
+    </div>
+  );
+}
+
+// src/components/dashboard/metrics-grid.tsx
+interface MetricsGridProps {
+  metrics: DashboardMetrics;
+}
+
+export function MetricsGrid({ metrics }: MetricsGridProps) {
+  return (
+    <div className="grid grid-cols-4 gap-4">
+      <MetricCard title="Total Traces" value={metrics.totalTraces} />
+      <MetricCard title="Avg Latency" value={formatDuration(metrics.avgLatency)} />
+      <MetricCard title="Error Rate" value={formatPercentage(metrics.errors, metrics.total)} />
+      <MetricCard title="Token Usage" value={formatNumber(metrics.tokens)} />
+    </div>
+  );
+}
+```
+
+### Performance Patterns
+- **Avoid prop drilling** - Use context or composition for deeply nested data
+- **Debounce user inputs** - Search, filters, form fields
+- **Throttle scroll/resize handlers** - Prevent excessive calls
+- **Use Suspense boundaries** - Graceful loading states
+- **Preload critical data** - Use Next.js `prefetch` and React Query `prefetchQuery`
+
+```tsx
+// BAD - Uncontrolled re-fetching on every keystroke
+function SearchInput({ onSearch }: Props) {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onSearch(e.target.value);  // Fires on every keystroke!
+  };
+  return <Input onChange={handleChange} />;
+}
+
+// GOOD - Debounced search with custom hook
+// src/hooks/use-debounce.ts
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// src/components/search-input.tsx
+function SearchInput({ onSearch }: Props) {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() => {
+    onSearch(debouncedQuery);
+  }, [debouncedQuery, onSearch]);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
+  return <Input value={query} onChange={handleChange} />;
 }
 ```
 
