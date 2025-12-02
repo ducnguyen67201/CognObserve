@@ -398,6 +398,53 @@ export const alertsRouter = createRouter({
   getProviders: protectedProcedure.query(() => {
     return getAvailableProviders();
   }),
+
+  /**
+   * Get all alert history for a project
+   */
+  projectHistory: protectedProcedure
+    .input(
+      z.object({
+        workspaceSlug: z.string(),
+        projectId: z.string(),
+        limit: z.number().int().min(1).max(100).default(50),
+        cursor: z.string().optional(),
+      })
+    )
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }) => {
+      // Verify project belongs to workspace
+      const project = await prisma.project.findFirst({
+        where: { id: input.projectId, workspaceId: ctx.workspace.id },
+        select: { id: true },
+      });
+
+      if (!project) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
+      }
+
+      const history = await prisma.alertHistory.findMany({
+        where: {
+          alert: { projectId: input.projectId },
+        },
+        include: {
+          alert: {
+            select: { id: true, name: true, type: true, threshold: true, operator: true },
+          },
+        },
+        take: input.limit + 1,
+        cursor: input.cursor ? { id: input.cursor } : undefined,
+        orderBy: { triggeredAt: "desc" },
+      });
+
+      let nextCursor: string | undefined;
+      if (history.length > input.limit) {
+        const next = history.pop();
+        nextCursor = next?.id;
+      }
+
+      return { items: history, nextCursor };
+    }),
 });
 
 export type AlertsRouter = typeof alertsRouter;

@@ -19,10 +19,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc/client";
 import { CreateAlertDialog } from "./create-alert-dialog";
 import { AddChannelDialog } from "./add-channel-dialog";
+import { AlertHistory } from "./alert-history";
 import { showError, alertError } from "@/lib/errors";
 import { alertToast } from "@/lib/success";
 import { ALERT_TYPE_LABELS, type AlertType } from "@cognobserve/api/schemas";
@@ -41,6 +43,7 @@ const ALERT_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
 
 export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("alerts");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
@@ -111,6 +114,10 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
     setSelectedAlertId(null);
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   // Count active alerts
   const activeAlerts = alerts?.filter((a) => a.enabled).length ?? 0;
 
@@ -135,33 +142,58 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
                 <Bell className="h-5 w-5" />
                 Project Alerts
               </SheetTitle>
-              <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Alert
-              </Button>
+              {activeTab === "alerts" && (
+                <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Alert
+                </Button>
+              )}
             </div>
           </SheetHeader>
 
-          <ScrollArea className="flex-1">
-            <div className="p-6 space-y-4">
-              {isLoading ? (
-                <AlertsSkeleton />
-              ) : alerts?.length === 0 ? (
-                <EmptyState onCreateClick={() => setIsCreateOpen(true)} />
-              ) : (
-                alerts?.map((alert) => (
-                  <AlertCard
-                    key={alert.id}
-                    alert={alert}
-                    onToggle={handleToggle}
-                    onDelete={handleDelete}
-                    onAddChannel={handleOpenAddChannel}
-                    onTestChannel={handleTestChannel}
-                  />
-                ))
-              )}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+            <div className="px-6 pt-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+              </TabsList>
             </div>
-          </ScrollArea>
+
+            <TabsContent value="alerts" className="flex-1 mt-0">
+              <ScrollArea className="h-[calc(100vh-180px)]">
+                <div className="p-6 space-y-4">
+                  {isLoading ? (
+                    <AlertsSkeleton />
+                  ) : alerts?.length === 0 ? (
+                    <EmptyState onCreateClick={() => setIsCreateOpen(true)} />
+                  ) : (
+                    alerts?.map((alert) => (
+                      <AlertCard
+                        key={alert.id}
+                        alert={alert}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
+                        onAddChannel={handleOpenAddChannel}
+                        onTestChannel={handleTestChannel}
+                      />
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="history" className="flex-1 mt-0">
+              <ScrollArea className="h-[calc(100vh-180px)]">
+                <div className="p-6">
+                  <AlertHistory
+                    workspaceSlug={workspaceSlug}
+                    projectId={projectId}
+                    enabled={isOpen && activeTab === "history"}
+                  />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </SheetContent>
       </Sheet>
 
