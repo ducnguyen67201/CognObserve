@@ -1,9 +1,18 @@
+// Load .env from project root (Next.js does this automatically, worker needs manual load)
+import { config } from "dotenv";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, "../../../../.env") });
+
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
   /**
    * Server-side environment variables schema.
+   * These are only available on the server.
    */
   server: {
     NODE_ENV: z
@@ -26,6 +35,7 @@ export const env = createEnv({
 
   /**
    * Runtime environment variables.
+   * Map environment variables to the schema.
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
@@ -40,11 +50,13 @@ export const env = createEnv({
 
   /**
    * Skip validation in certain environments.
+   * Useful for Docker builds where env vars aren't available.
    */
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 
   /**
    * Treat empty strings as undefined.
+   * Useful for optional env vars that might be set to "".
    */
   emptyStringAsUndefined: true,
 });

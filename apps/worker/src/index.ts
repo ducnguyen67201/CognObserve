@@ -1,5 +1,3 @@
-// Load environment variables first
-import "dotenv/config";
 import "@/lib/env"; // Validate env vars
 
 import { APP_NAME, APP_VERSION } from "@cognobserve/shared";
