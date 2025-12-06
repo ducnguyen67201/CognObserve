@@ -103,23 +103,6 @@ SDK → [Ingest (Go)] → Redis Queue → [Worker (TS)] → PostgreSQL
                                     [Web (Next.js)]
 ```
 
-### Type Sharing with Protobuf
-```
-proto/*.proto (source of truth)
-        ↓
-    buf generate
-        ↓
-┌───────────────────────────────────┐
-│                                   │
-▼                                   ▼
-packages/proto/           apps/ingest/internal/proto/
-(TypeScript)              (Go)
-```
-
-- Edit `.proto` files → run `make proto` → types sync everywhere
-- All services use same type definitions
-- Each service bundles types at build time (no runtime dependency)
-
 ## Services
 
 | Service | Port | Purpose |
@@ -136,13 +119,6 @@ Core models in `packages/db/prisma/schema.prisma`:
 - **ApiKey**: Authentication keys per project
 - **Trace**: Top-level trace for a request/operation
 - **Span**: Individual operations within a trace (LLM calls, etc.)
-
-## Development Guidelines
-- **Types**: Edit `proto/*.proto`, run `make proto`
-- **TypeScript packages**: `@cognobserve/proto`, `@cognobserve/shared`, `@cognobserve/db`
-- **Go service**: Standard layout in `apps/ingest/`
-- Run `pnpm lint` before committing
-- Database changes go through `packages/db`
 
 ## Code Style Rules
 
@@ -217,50 +193,6 @@ export const isValidRole = (role: string): role is ProjectRole => {
 
 // Client component usage (avoids server-side deps)
 import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
-```
-
-### Custom Hooks
-- **Extract reusable logic into custom hooks** in `src/hooks/`
-- Use hooks for: data fetching, form handling, subscriptions, complex state
-- Name hooks with `use` prefix: `useProjects`, `useAuth`, `useDebounce`
-- Keep components thin - business logic belongs in hooks
-- **Optimize hook dependencies** - Use stable references, memoize objects/arrays passed to deps
-
-```tsx
-// src/hooks/use-projects.ts
-export function useProjects(workspaceId: string) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchProjects = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await api.projects.list(workspaceId);
-      setProjects(data);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [workspaceId]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
-
-  return { projects, isLoading, error, refetch: fetchProjects };
-}
-
-// Component stays simple - no business logic
-function ProjectsPage({ workspaceId }: Props) {
-  const { projects, isLoading, error } = useProjects(workspaceId);
-
-  if (error) return <ErrorState error={error} />;
-  if (isLoading) return <ProjectsSkeleton />;
-  return <ProjectList projects={projects} />;
-}
 ```
 
 ## Frontend Engineering Best Practices
@@ -515,58 +447,6 @@ const TraceDetailPanel = dynamic(
 );
 ```
 
-### Component Structure
-- **One component per file** - Easier to find and maintain
-- **Co-locate related files** - Component, styles, tests in same directory for complex components
-- **Extract sub-components** - Break large components into smaller pieces
-- **Props interface at top** - Define types before component
-
-```tsx
-// BAD - Everything in one massive component
-function Dashboard() {
-  // 50+ lines of hooks and state
-  // 200+ lines of JSX with inline logic
-  // Impossible to test individual parts
-}
-
-// GOOD - Structured component hierarchy
-// src/components/dashboard/index.tsx
-interface DashboardProps {
-  workspaceId: string;
-}
-
-export function Dashboard({ workspaceId }: DashboardProps) {
-  const { metrics, isLoading } = useDashboardMetrics(workspaceId);
-
-  if (isLoading) return <DashboardSkeleton />;
-
-  return (
-    <div className="space-y-6">
-      <DashboardHeader workspaceId={workspaceId} />
-      <MetricsGrid metrics={metrics} />
-      <RecentTraces workspaceId={workspaceId} />
-      <UsageChart workspaceId={workspaceId} />
-    </div>
-  );
-}
-
-// src/components/dashboard/metrics-grid.tsx
-interface MetricsGridProps {
-  metrics: DashboardMetrics;
-}
-
-export function MetricsGrid({ metrics }: MetricsGridProps) {
-  return (
-    <div className="grid grid-cols-4 gap-4">
-      <MetricCard title="Total Traces" value={metrics.totalTraces} />
-      <MetricCard title="Avg Latency" value={formatDuration(metrics.avgLatency)} />
-      <MetricCard title="Error Rate" value={formatPercentage(metrics.errors, metrics.total)} />
-      <MetricCard title="Token Usage" value={formatNumber(metrics.tokens)} />
-    </div>
-  );
-}
-```
-
 ### Performance Patterns
 - **Avoid prop drilling** - Use context or composition for deeply nested data
 - **Debounce user inputs** - Search, filters, form fields
@@ -653,6 +533,442 @@ result, err := repo.Delete(ctx, id)
 if result.RowsAffected == 0 { return ErrNotFound }
 ```
 
+## Architecture Patterns (CRITICAL)
+
+### Shared Type Packages - Single Source of Truth
+**ALWAYS use shared type packages.** Never duplicate types across apps. This ensures type safety across the entire monorepo.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    TYPE FLOW (Single Source of Truth)               │
+└─────────────────────────────────────────────────────────────────────┘
+
+    proto/*.proto                     packages/db/prisma/schema.prisma
+    (API contracts)                   (Database models)
+          │                                    │
+          ▼                                    ▼
+    ┌─────────────┐                    ┌─────────────────┐
+    │ buf generate│                    │ prisma generate │
+    └─────────────┘                    └─────────────────┘
+          │                                    │
+          ▼                                    ▼
+┌──────────────────────┐              ┌──────────────────────┐
+│  @cognobserve/proto  │              │   @cognobserve/db    │
+│  (Generated TS/Go)   │              │  (Prisma Client)     │
+└──────────────────────┘              └──────────────────────┘
+          │                                    │
+          │         ┌──────────────────────────┤
+          │         │                          │
+          ▼         ▼                          ▼
+┌──────────────────────┐              ┌──────────────────────┐
+│  @cognobserve/api    │              │     apps/web         │
+│  (tRPC + Schemas)    │──────────────│   (Next.js App)      │
+└──────────────────────┘              └──────────────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│ @cognobserve/api/    │  ← Client-safe imports (no server deps)
+│     schemas          │
+└──────────────────────┘
+
+RULE: Always import from shared packages, NEVER duplicate types!
+```
+
+```tsx
+// ❌ BAD - Duplicating types in components
+interface Project {
+  id: string;
+  name: string;
+  // ... manually defined
+}
+
+// ❌ BAD - Importing from wrong package
+import { Project } from "@prisma/client";  // Direct Prisma import
+
+// ✅ GOOD - Use shared packages
+import { type Project, type Trace, type Span } from "@cognobserve/db";
+import { type ProjectRole, ProjectRoleSchema } from "@cognobserve/api/schemas";
+import { type IngestRequest } from "@cognobserve/proto";
+```
+
+**Available shared packages:**
+| Package | Purpose | Example Imports |
+|---------|---------|-----------------|
+| `@cognobserve/db` | Database types & Prisma client | `Project`, `Trace`, `Span`, `ApiKey`, `prisma` |
+| `@cognobserve/api/schemas` | Zod schemas & derived types (client-safe) | `ProjectRoleSchema`, `AlertTypeSchema` |
+| `@cognobserve/api` | tRPC routers & server utilities | `appRouter`, `createContext` |
+| `@cognobserve/proto` | Protobuf-generated types | `IngestRequest`, `TokenUsage` |
+| `@cognobserve/shared` | Cross-app utilities | `formatDuration`, `parseError` |
+
+### Frontend Architecture
+
+#### File Size Rule
+- **Keep files under 150-200 lines** - If larger, split into smaller modules
+- **One component per file** - No multiple exports of components
+- **One hook per file** - Complex hooks get their own file
+
+#### Directory Structure
+```
+apps/web/src/
+├── app/                      # Next.js App Router pages
+│   └── (dashboard)/
+│       └── [workspaceSlug]/
+│           └── projects/
+│               ├── page.tsx           # Page component (thin, orchestrates)
+│               └── [projectId]/
+│                   └── page.tsx
+├── components/
+│   ├── ui/                   # shadcn/ui primitives (auto-generated)
+│   ├── projects/             # Domain: Project components
+│   │   ├── project-card.tsx
+│   │   ├── project-list.tsx
+│   │   ├── project-form.tsx
+│   │   └── project-settings.tsx
+│   ├── traces/               # Domain: Trace components
+│   │   ├── trace-table.tsx
+│   │   ├── trace-detail.tsx
+│   │   └── span-tree.tsx
+│   ├── alerts/               # Domain: Alert components
+│   │   ├── alert-card.tsx
+│   │   └── alert-form.tsx
+│   └── shared/               # Cross-domain components
+│       ├── data-table.tsx
+│       ├── page-header.tsx
+│       └── empty-state.tsx
+├── hooks/
+│   ├── use-projects.ts       # Domain: Project hooks
+│   ├── use-traces.ts         # Domain: Trace hooks
+│   ├── use-alerts.ts         # Domain: Alert hooks
+│   ├── use-debounce.ts       # Utility hooks
+│   └── use-clipboard.ts
+├── lib/
+│   ├── errors.ts             # Error handling (toast)
+│   ├── success.ts            # Success toasts
+│   ├── format.ts             # Formatting utilities
+│   ├── env.ts                # Environment variables
+│   └── utils.ts              # General utilities
+└── types/
+    └── index.ts              # App-specific types (extend shared types)
+```
+
+#### Component Architecture Pattern
+```tsx
+// ❌ BAD - Fat component with everything inline
+function ProjectPage({ projectId }: Props) {
+  const [project, setProject] = useState<Project | null>(null);
+  const [traces, setTraces] = useState<Trace[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [filter, setFilter] = useState("");
+
+  useEffect(() => {
+    // 50 lines of data fetching logic...
+  }, [projectId]);
+
+  const handleFilterChange = (e) => { /* ... */ };
+  const handleTraceClick = (id) => { /* ... */ };
+  const handleExport = () => { /* ... */ };
+
+  // 200+ lines of JSX with inline conditions...
+}
+
+// ✅ GOOD - Thin component + domain hook + sub-components
+// hooks/use-project-detail.ts
+export function useProjectDetail(projectId: string) {
+  const { data: project, isLoading, error } = api.project.getById.useQuery({ projectId });
+  const { data: traces } = api.trace.list.useQuery({ projectId });
+
+  return { project, traces, isLoading, error };
+}
+
+// components/projects/project-detail-page.tsx (< 50 lines)
+export function ProjectDetailPage({ projectId }: Props) {
+  const { project, traces, isLoading, error } = useProjectDetail(projectId);
+
+  if (error) return <ErrorState error={error} />;
+  if (isLoading) return <ProjectDetailSkeleton />;
+  if (!project) return <NotFound />;
+
+  return (
+    <div className="space-y-6">
+      <ProjectHeader project={project} />
+      <ProjectMetrics project={project} />
+      <TraceList traces={traces} projectId={projectId} />
+    </div>
+  );
+}
+
+// components/projects/project-header.tsx (< 40 lines)
+export function ProjectHeader({ project }: { project: Project }) {
+  return (
+    <PageHeader
+      title={project.name}
+      description={project.description}
+      actions={<ProjectActions project={project} />}
+    />
+  );
+}
+```
+
+#### Hook Patterns
+```tsx
+// ✅ Domain hook - encapsulates all project-related logic
+// hooks/use-projects.ts
+export function useProjects(workspaceId: string) {
+  const utils = api.useUtils();
+
+  const { data: projects, isLoading, error } = api.project.list.useQuery(
+    { workspaceId },
+    { staleTime: 30_000 }
+  );
+
+  const createProject = api.project.create.useMutation({
+    onSuccess: (newProject) => {
+      projectToast.created(newProject.name);
+      utils.project.list.invalidate({ workspaceId });
+    },
+    onError: showError,
+  });
+
+  const deleteProject = api.project.delete.useMutation({
+    onSuccess: (_, { name }) => {
+      projectToast.deleted(name);
+      utils.project.list.invalidate({ workspaceId });
+    },
+    onError: showError,
+  });
+
+  return {
+    projects: projects ?? [],
+    isLoading,
+    error,
+    createProject: createProject.mutateAsync,
+    deleteProject: deleteProject.mutateAsync,
+    isCreating: createProject.isPending,
+    isDeleting: deleteProject.isPending,
+  };
+}
+
+// Component is minimal
+function ProjectsPage({ workspaceId }: Props) {
+  const { projects, isLoading, createProject, isCreating } = useProjects(workspaceId);
+  // Just render, no logic
+}
+```
+
+### Backend Architecture (API Layer)
+
+#### Directory Structure
+```
+packages/api/src/
+├── routers/
+│   ├── index.ts              # Root router (merges all)
+│   ├── project.ts            # Project router
+│   ├── trace.ts              # Trace router
+│   ├── alert.ts              # Alert router
+│   └── workspace.ts          # Workspace router
+├── services/
+│   ├── project.service.ts    # Project business logic
+│   ├── trace.service.ts      # Trace business logic
+│   ├── alert.service.ts      # Alert business logic
+│   └── notification.service.ts
+├── schemas/
+│   ├── project.ts            # Project Zod schemas
+│   ├── trace.ts              # Trace Zod schemas
+│   ├── alert.ts              # Alert Zod schemas
+│   └── index.ts              # Re-exports all schemas
+├── errors/
+│   ├── codes.ts              # Error codes
+│   └── app-error.ts          # Custom error class
+└── trpc.ts                   # tRPC setup
+```
+
+#### Router → Service Pattern
+Routers are thin. Business logic lives in services.
+
+```tsx
+// ❌ BAD - Fat router with business logic
+// routers/project.ts
+export const projectRouter = router({
+  create: protectedProcedure
+    .input(CreateProjectSchema)
+    .mutation(async ({ ctx, input }) => {
+      // 50 lines of validation, business logic, database calls...
+      const existing = await ctx.db.project.findFirst({ where: { slug: input.slug } });
+      if (existing) throw new TRPCError({ code: "CONFLICT" });
+
+      const project = await ctx.db.project.create({ data: { ...input } });
+      await ctx.db.auditLog.create({ data: { ... } });
+      await sendNotification({ ... });
+      // ...more logic
+      return project;
+    }),
+});
+
+// ✅ GOOD - Thin router + service
+// routers/project.ts
+import { ProjectService } from "../services/project.service";
+
+export const projectRouter = router({
+  create: protectedProcedure
+    .input(CreateProjectSchema)
+    .mutation(async ({ ctx, input }) => {
+      return ProjectService.create(ctx.db, ctx.user, input);
+    }),
+
+  getById: protectedProcedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ProjectService.getById(ctx.db, input.projectId, ctx.user);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ projectId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ProjectService.delete(ctx.db, input.projectId, ctx.user);
+    }),
+});
+
+// services/project.service.ts
+import { type PrismaClient, type Project, type User } from "@cognobserve/db";
+import { type CreateProjectInput } from "../schemas/project";
+import { AppError } from "../errors/app-error";
+
+export class ProjectService {
+  static async create(
+    db: PrismaClient,
+    user: User,
+    input: CreateProjectInput
+  ): Promise<Project> {
+    // Check permissions
+    await this.assertCanCreateProject(db, user, input.workspaceId);
+
+    // Create with transaction
+    return db.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          ...input,
+          createdById: user.id,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          action: "PROJECT_CREATED",
+          userId: user.id,
+          resourceId: project.id,
+        },
+      });
+
+      return project;
+    });
+  }
+
+  static async getById(
+    db: PrismaClient,
+    projectId: string,
+    user: User
+  ): Promise<Project> {
+    const project = await db.project.findUnique({
+      where: { id: projectId },
+      include: { workspace: true },
+    });
+
+    if (!project) {
+      throw AppError.notFound("PROJECT_NOT_FOUND");
+    }
+
+    await this.assertCanAccessProject(db, user, project);
+    return project;
+  }
+
+  static async delete(
+    db: PrismaClient,
+    projectId: string,
+    user: User
+  ): Promise<void> {
+    const project = await this.getById(db, projectId, user);
+    await this.assertCanDeleteProject(db, user, project);
+
+    await db.project.delete({ where: { id: projectId } });
+  }
+
+  // Private helper methods
+  private static async assertCanCreateProject(
+    db: PrismaClient,
+    user: User,
+    workspaceId: string
+  ): Promise<void> {
+    // Permission check logic
+  }
+
+  private static async assertCanAccessProject(
+    db: PrismaClient,
+    user: User,
+    project: Project
+  ): Promise<void> {
+    // Access check logic
+  }
+
+  private static async assertCanDeleteProject(
+    db: PrismaClient,
+    user: User,
+    project: Project
+  ): Promise<void> {
+    // Delete permission check
+  }
+}
+```
+
+#### Schema Organization
+```tsx
+// schemas/project.ts
+import { z } from "zod";
+
+// Input schemas
+export const CreateProjectSchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+  workspaceId: z.string().uuid(),
+  description: z.string().max(500).optional(),
+});
+
+export const UpdateProjectSchema = CreateProjectSchema.partial().extend({
+  projectId: z.string().uuid(),
+});
+
+// Derived types
+export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
+export type UpdateProjectInput = z.infer<typeof UpdateProjectSchema>;
+
+// Enums
+export const ProjectStatusSchema = z.enum(["ACTIVE", "ARCHIVED", "DELETED"]);
+export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
+```
+
+### Architecture Checklist
+
+Before submitting code, verify:
+
+**Frontend:**
+- [ ] Components are < 150 lines
+- [ ] Business logic is in hooks, not components
+- [ ] Using shared types from `@cognobserve/db` or `@cognobserve/api/schemas`
+- [ ] Domain-specific components are in domain folders
+- [ ] No direct `toast()` calls - using `@/lib/errors` and `@/lib/success`
+
+**Backend:**
+- [ ] Routers are thin (< 20 lines per procedure)
+- [ ] Business logic is in service files
+- [ ] Using shared types from `@cognobserve/db`
+- [ ] Schemas are in `schemas/` directory
+- [ ] Errors use `AppError` with proper codes
+
+**Shared:**
+- [ ] No type duplication across packages
+- [ ] Types flow: `proto/*.proto` → `@cognobserve/proto` → `@cognobserve/db` → apps
+- [ ] Zod schemas are source of truth for input validation
+
 ## UI Components (shadcn/ui)
 
 ### Setup
@@ -663,37 +979,24 @@ if result.RowsAffected == 0 { return ErrNotFound }
 
 ### Best Practices
 - **ALWAYS use shadcn/ui components** - Never create custom CSS for buttons, inputs, cards, dialogs, etc.
-- **Add components via CLI**: `pnpm dlx shadcn@latest add <component>` from `apps/web/`
-- **Use semantic color variables** - Use `primary`, `secondary`, `muted`, `accent`, `destructive` instead of hardcoded colors
-- **Extend, don't override** - If customizing, use the `cn()` utility to merge classes
+- **Use semantic color variables** - `primary`, `secondary`, `muted`, `accent`, `destructive`
+- **Extend, don't override** - Use `cn()` utility to merge classes
 - **Available components**: button, card, input, label, form, sonner, dialog, dropdown-menu, table, tabs, avatar, badge, separator, skeleton
 
 ### Usage Examples
 ```tsx
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 
-// Use semantic variants
-<Button variant="default">Primary Action</Button>  // Yellow theme
-<Button variant="secondary">Secondary</Button>
+<Button variant="default">Primary</Button>   // Yellow theme
 <Button variant="destructive">Delete</Button>
 <Button variant="outline">Outlined</Button>
-<Button variant="ghost">Ghost</Button>
 
-// Cards
 <Card>
-  <CardHeader>
-    <CardTitle>Title</CardTitle>
-  </CardHeader>
+  <CardHeader><CardTitle>Title</CardTitle></CardHeader>
   <CardContent>Content</CardContent>
 </Card>
 ```
-
-### Environment Variables
-- Centralized in `apps/web/src/lib/env.ts` using `@t3-oss/env-nextjs`
-- Always use `env.VAR_NAME` instead of `process.env.VAR_NAME`
-- Validation runs at build/startup time
 
 ## API Endpoints
 
@@ -882,19 +1185,30 @@ const handleCopy = async (text: string) => {
 4. **Use consistent naming**: `{domain}Toast` for success, `{domain}Error` for errors
 5. **Export from the file** so it can be imported elsewhere
 
-## Notes for Claude
-- Proto files are source of truth for types
-- After editing `.proto`, run `make proto`
-- Go ingest service uses chi router (module: `github.com/cognobserve/ingest`)
-- Go imports: `import pb "github.com/cognobserve/ingest/internal/proto/cognobservev1"`
-- Web app uses Next.js 16 App Router
-- Database schema in `packages/db/prisma/schema.prisma`
-- Proto definitions in `proto/cognobserve/v1/`
-- Full documentation in `/docs` folder
-- **UI**: ALWAYS use shadcn/ui components from `@/components/ui/`. Never write custom CSS for standard UI elements.
-- **Env vars**: Use `env` from `@/lib/env` instead of `process.env`
-- **Adding shadcn components**: Run `pnpm dlx shadcn@latest add <component>` from `apps/web/`
-- **Toasts (CRITICAL)**: NEVER import `toast` from "sonner" in components/hooks. ALWAYS use:
-  - `@/lib/errors` for errors: `showError(error)`, `memberError.notFound()`, etc.
-  - `@/lib/success` for success/info/warning: `projectToast.created()`, `showSuccess()`, etc.
-  - See "Toast & Error Handling" section for complete API reference
+## Quick Reference for Claude
+
+### Key Locations
+- **Proto definitions**: `proto/cognobserve/v1/` → run `make proto` after edits
+- **Database schema**: `packages/db/prisma/schema.prisma`
+- **Go ingest service**: `apps/ingest/` (chi router, module: `github.com/cognobserve/ingest`)
+- **Full documentation**: `/docs` folder
+
+### Critical Rules (MUST Follow)
+| Rule | What to Do | What NOT to Do |
+|------|-----------|----------------|
+| **Types** | Import from `@cognobserve/db`, `@cognobserve/api/schemas`, `@cognobserve/proto` | Duplicate types, import from `@prisma/client` |
+| **Toasts** | Use `@/lib/errors` and `@/lib/success` | Import `toast` from "sonner" directly |
+| **UI** | Use shadcn/ui from `@/components/ui/` | Write custom CSS for standard elements |
+| **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |
+| **Frontend** | < 150 lines, logic in hooks, domain folders | Fat components, inline business logic |
+| **Backend** | Thin routers + service files | Business logic in routers |
+
+### Adding Components
+```bash
+pnpm dlx shadcn@latest add <component>  # Run from apps/web/
+```
+
+### Go Imports
+```go
+import pb "github.com/cognobserve/ingest/internal/proto/cognobservev1"
+```
