@@ -701,63 +701,186 @@ import { Input } from "@/components/ui/input"
 - `GET /health` - Health check
 - `POST /v1/traces` - Ingest a trace with spans
 
-## Toast & Error Handling
+## Toast & Error Handling (CRITICAL)
 
-### Source of Truth
-- **Errors**: `apps/web/src/lib/errors.ts` - All error toasts and messages
-- **Success**: `apps/web/src/lib/success.ts` - All success/info/warning toasts
+### Source of Truth - Two Unified Files
+All toast notifications in the application MUST use these two centralized files:
+- **Errors**: `apps/web/src/lib/errors.ts` - All error toasts, error extraction, and error messages
+- **Success**: `apps/web/src/lib/success.ts` - All success, info, and warning toasts
 
-### NEVER use `toast()` directly
-Always use the centralized toast utilities. This ensures consistent messaging across the app.
+### NEVER Import or Use `toast` from "sonner" Directly
+This is a **strict rule**. Never import `toast` from "sonner" in components or hooks. Always use the centralized utilities.
 
 ```tsx
-// BAD - Direct toast usage
+// ❌ BAD - Direct toast import (FORBIDDEN)
 import { toast } from "sonner";
-toast.error("Something went wrong");
-toast.success("Member added");
 
-// GOOD - Use centralized utilities
-import { showError, memberError } from "@/lib/errors";
-import { memberToast, showSuccess } from "@/lib/success";
-
-// Generic error handling (auto-extracts message from any error)
-try {
-  await mutation.mutateAsync(data);
-} catch (error) {
-  showError(error);  // Automatically shows appropriate toast
+function MyComponent() {
+  const handleSave = async () => {
+    try {
+      await saveData();
+      toast.success("Saved!");  // ❌ NEVER do this
+    } catch (error) {
+      toast.error("Failed to save");  // ❌ NEVER do this
+    }
+  };
 }
 
-// Domain-specific toasts
-memberToast.added("user@example.com");
-memberError.notFound("user@example.com");
-domainToast.added("example.com");
-apiKeyToast.created("Production Key");
+// ❌ BAD - Inline toast messages
+toast.success("Project created", { description: "Your project is ready." });
+toast.error("Something went wrong", { description: "Please try again." });
+toast.info("Processing...");
+toast.warning("This action cannot be undone");
+
+// ✅ GOOD - Use centralized utilities
+import { showError, projectError } from "@/lib/errors";
+import { projectToast, showSuccess, showInfo, showWarning } from "@/lib/success";
+
+function MyComponent() {
+  const handleSave = async () => {
+    try {
+      await saveData();
+      projectToast.created("My Project");  // ✅ Domain-specific
+    } catch (error) {
+      showError(error);  // ✅ Auto-extracts error info
+    }
+  };
+}
 ```
 
-### Available Toast Objects
+### Complete Usage Examples
+
+#### Handling tRPC/API Mutations
+```tsx
+import { showError } from "@/lib/errors";
+import { projectToast } from "@/lib/success";
+
+function CreateProjectForm() {
+  const createProject = api.project.create.useMutation({
+    onSuccess: (project) => {
+      projectToast.created(project.name);  // ✅
+      router.push(`/projects/${project.id}`);
+    },
+    onError: (error) => {
+      showError(error);  // ✅ Handles tRPC errors automatically
+    },
+  });
+}
+```
+
+#### Try-Catch Pattern
+```tsx
+import { showError, memberError } from "@/lib/errors";
+import { memberToast } from "@/lib/success";
+
+const handleAddMember = async (email: string) => {
+  try {
+    await addMember.mutateAsync({ email });
+    memberToast.added(email);  // ✅
+  } catch (error) {
+    // Option 1: Generic error handling
+    showError(error);  // ✅ Auto-extracts title & message
+
+    // Option 2: Specific error based on code
+    const errorInfo = extractErrorInfo(error);
+    if (errorInfo.code === "USER_NOT_FOUND") {
+      memberError.notFound(email);  // ✅ Domain-specific
+    } else {
+      showError(error);
+    }
+  }
+};
+```
+
+#### Generic Toasts (Non-Domain-Specific)
+```tsx
+import { showSuccess, showInfo, showWarning } from "@/lib/success";
+import { showErrorMessage } from "@/lib/errors";
+
+// Success
+showSuccess("Settings saved");
+showSuccess("Changes applied", "Your preferences have been updated.");
+
+// Info
+showInfo("Processing", "This may take a moment.");
+
+// Warning
+showWarning("Rate limit approaching", "You've used 80% of your quota.");
+
+// Error with custom message
+showErrorMessage("Upload failed", "The file exceeds the 10MB limit.");
+```
+
+#### Clipboard Operations
+```tsx
+import { clipboardToast } from "@/lib/success";
+
+const handleCopy = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    clipboardToast.copied("API key");  // ✅
+  } catch {
+    clipboardToast.copyFailed();  // ✅ (Note: copyFailed is in success.ts)
+  }
+};
+```
+
+### Available Toast Utilities
 
 **Success toasts** (`@/lib/success`):
-- `workspaceToast` - created, updated, deleted
-- `memberToast` - added, removed, roleUpdated, inviteSent
-- `domainToast` - added, removed
-- `projectToast` - created, updated, deleted
-- `apiKeyToast` - created, revoked, copied
-- `authToast` - signedIn, signedOut, passwordChanged
-- `clipboardToast` - copied, copyFailed
+| Object | Methods |
+|--------|---------|
+| `showSuccess(title, message?)` | Generic success toast |
+| `showCreated(resource, details?)` | Resource created |
+| `showUpdated(resource, details?)` | Resource updated |
+| `showDeleted(resource, details?)` | Resource deleted |
+| `showInfo(title, message?)` | Info toast |
+| `showWarning(title, message?)` | Warning toast |
+| `workspaceToast` | `.created(name)`, `.updated(name)`, `.deleted(name)` |
+| `memberToast` | `.added(email)`, `.removed(email)`, `.roleUpdated(email, role)`, `.inviteSent(email)` |
+| `domainToast` | `.added(domain)`, `.removed(domain)` |
+| `projectToast` | `.created(name)`, `.updated(name)`, `.deleted(name)` |
+| `apiKeyToast` | `.created(name)`, `.revoked(name)`, `.copied()` |
+| `authToast` | `.signedIn()`, `.signedOut()`, `.passwordChanged()` |
+| `clipboardToast` | `.copied(what?)`, `.copyFailed()` |
+| `alertToast` | `.created(name)`, `.updated(name?)`, `.deleted(name?)`, `.channelAdded(provider)`, `.testSent()` |
 
 **Error toasts** (`@/lib/errors`):
-- `memberError` - notFound, alreadyMember, cannotRemoveSelf, cannotRemoveOwner
-- `domainError` - alreadyExists, invalidFormat
-- `workspaceError` - notFound, noAccess, slugTaken
-- `projectError` - notFound, noAccess
-- `apiKeyError` - notFound, expired
-- `authError` - unauthorized, sessionExpired, invalidCredentials
-- `formError` - validation, required
+| Object | Methods |
+|--------|---------|
+| `showError(error)` | Auto-extracts and shows error (returns ErrorDisplay) |
+| `showErrorMessage(title, message?)` | Custom error toast |
+| `extractErrorInfo(error)` | Extract error info without showing toast |
+| `memberError` | `.notFound(email?)`, `.alreadyMember(email?)`, `.cannotRemoveSelf()`, `.cannotRemoveOwner()` |
+| `domainError` | `.alreadyExists(domain)`, `.invalidFormat()` |
+| `workspaceError` | `.notFound()`, `.noAccess()`, `.slugTaken(slug)` |
+| `projectError` | `.notFound()`, `.noAccess()` |
+| `apiKeyError` | `.notFound()`, `.expired()` |
+| `authError` | `.unauthorized()`, `.sessionExpired()`, `.invalidCredentials()` |
+| `formError` | `.validation(message?)`, `.required(fieldName)` |
+| `alertError` | `.notFound()`, `.testFailed(reason?)`, `.channelFailed(provider)` |
 
 ### Adding New Toast Messages
-1. Add to appropriate section in `errors.ts` or `success.ts`
-2. Group by domain/model (workspace, member, project, etc.)
-3. Use consistent naming: `{domain}Toast` for success, `{domain}Error` for errors
+1. **Identify the domain** - Is it for workspace, member, project, alert, etc.?
+2. **Add to the correct file**:
+   - Success/info/warning → `apps/web/src/lib/success.ts`
+   - Error → `apps/web/src/lib/errors.ts`
+3. **Follow existing patterns**:
+   ```tsx
+   // In success.ts - add to existing object or create new
+   export const newDomainToast = {
+     created: (name: string) =>
+       toast.success("Domain created", { description: `"${name}" is ready.` }),
+   } as const;
+
+   // In errors.ts - add to existing object or create new
+   export const newDomainError = {
+     notFound: () =>
+       toast.error("Domain Not Found", { description: "This domain doesn't exist." }),
+   } as const;
+   ```
+4. **Use consistent naming**: `{domain}Toast` for success, `{domain}Error` for errors
+5. **Export from the file** so it can be imported elsewhere
 
 ## Notes for Claude
 - Proto files are source of truth for types
@@ -771,4 +894,7 @@ apiKeyToast.created("Production Key");
 - **UI**: ALWAYS use shadcn/ui components from `@/components/ui/`. Never write custom CSS for standard UI elements.
 - **Env vars**: Use `env` from `@/lib/env` instead of `process.env`
 - **Adding shadcn components**: Run `pnpm dlx shadcn@latest add <component>` from `apps/web/`
-- **Toasts**: ALWAYS use utilities from `@/lib/errors` and `@/lib/success`. Never use `toast()` directly.
+- **Toasts (CRITICAL)**: NEVER import `toast` from "sonner" in components/hooks. ALWAYS use:
+  - `@/lib/errors` for errors: `showError(error)`, `memberError.notFound()`, etc.
+  - `@/lib/success` for success/info/warning: `projectToast.created()`, `showSuccess()`, etc.
+  - See "Toast & Error Handling" section for complete API reference
