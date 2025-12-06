@@ -993,16 +993,18 @@ docker compose -f docker-compose.test.yml down -v
 
 ---
 
-## 8. Competitive Analysis
+## 8. Industry Best Practices
 
-| Feature | CognObserve | Langfuse | PostHog |
-|---------|-------------|----------|---------|
-| Docker Compose | ✅ | ✅ | ✅ |
-| All-in-one image | ✅ (planned) | ❌ | ✅ |
-| Auto-migrations | ✅ (planned) | ✅ | ✅ |
-| Required config vars | 4 | 5 | 3 |
-| One-click deploys | ✅ (planned) | ✅ Railway | ✅ |
-| Helm chart | ❌ (future) | ✅ | ✅ |
+Self-hosted observability platforms typically provide:
+
+| Feature | CognObserve | Industry Standard |
+|---------|-------------|-------------------|
+| Docker Compose | ✅ | ✅ Required |
+| All-in-one image | ✅ (planned) | ✅ Common |
+| Auto-migrations | ✅ (planned) | ✅ Expected |
+| Required config vars | 4 | 3-5 typical |
+| One-click deploys | ✅ (planned) | ✅ Common |
+| Helm chart | ❌ (future) | ✅ For enterprise |
 
 ---
 
