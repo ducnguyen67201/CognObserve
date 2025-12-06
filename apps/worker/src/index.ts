@@ -1,3 +1,5 @@
+import { env } from "@/lib/env";
+
 import { APP_NAME, APP_VERSION } from "@cognobserve/shared";
 import { initializeAlertingAdapters } from "@cognobserve/api/lib/alerting/init";
 
@@ -20,7 +22,7 @@ async function main() {
 
   // Initialize queue consumer
   const consumer = createQueueConsumer({
-    redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
+    redisUrl: env.REDIS_URL,
     onTrace: (data) => traceProcessor.process(data),
   });
 
