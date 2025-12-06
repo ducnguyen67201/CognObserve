@@ -8,29 +8,29 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-const THEME_OPTIONS = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
-] as const;
+const THEME_CYCLE = ["light", "dark", "system"] as const;
+type Theme = (typeof THEME_CYCLE)[number];
+
+const THEME_CONFIG: Record<Theme, { label: string; icon: typeof Sun }> = {
+  light: { label: "Light", icon: Sun },
+  dark: { label: "Dark", icon: Moon },
+  system: { label: "System", icon: Monitor },
+};
 
 export function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
+  const handleToggle = () => {
+    const currentIndex = THEME_CYCLE.indexOf(theme as Theme);
+    const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
+    const nextTheme = THEME_CYCLE[nextIndex] ?? "system";
+    setTheme(nextTheme);
   };
 
   // Render placeholder during SSR to prevent hydration mismatch
@@ -38,7 +38,7 @@ export function ThemeSwitcher() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="sm" disabled className="justify-center">
+          <SidebarMenuButton size="sm" disabled>
             <div className="size-4 animate-pulse rounded bg-muted" />
             <span className="group-data-[collapsible=icon]:hidden">Theme</span>
           </SidebarMenuButton>
@@ -47,40 +47,16 @@ export function ThemeSwitcher() {
     );
   }
 
-  const CurrentIcon = resolvedTheme === "dark" ? Moon : Sun;
+  const currentTheme = (theme as Theme) || "system";
+  const { label, icon: Icon } = THEME_CONFIG[currentTheme];
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="sm"
-              tooltip="Toggle theme"
-              className="justify-center"
-            >
-              <CurrentIcon className="size-4" />
-              <span className="group-data-[collapsible=icon]:hidden">
-                Theme
-              </span>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" sideOffset={4}>
-            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
-              const handleClick = () => handleThemeChange(value);
-              return (
-                <DropdownMenuItem
-                  key={value}
-                  onClick={handleClick}
-                  className={theme === value ? "bg-accent" : ""}
-                >
-                  <Icon className="mr-2 size-4" />
-                  {label}
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SidebarMenuButton size="sm" onClick={handleToggle} tooltip={label}>
+          <Icon className="size-4" />
+          <span className="group-data-[collapsible=icon]:hidden">{label}</span>
+        </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
   );
