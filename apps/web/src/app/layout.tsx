@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
-import { AuthProvider } from "@/components/providers";
+import { AuthProvider, ThemeProvider } from "@/components/providers";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import "./globals.css";
 
@@ -19,11 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <ConfirmProvider>{children}</ConfirmProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </AuthProvider>
+        </ThemeProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>
