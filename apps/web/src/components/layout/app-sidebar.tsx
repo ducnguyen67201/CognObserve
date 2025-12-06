@@ -7,9 +7,11 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
+import { ThemeSwitcher } from "./theme-switcher";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 interface AppSidebarProps {
@@ -28,6 +30,8 @@ export function AppSidebar({ workspace }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
+        <ThemeSwitcher />
+        <SidebarSeparator />
         <NavUser />
       </SidebarFooter>
 
