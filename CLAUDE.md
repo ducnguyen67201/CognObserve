@@ -1202,6 +1202,31 @@ const handleCopy = async (text: string) => {
 | **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |
 | **Frontend** | < 150 lines, logic in hooks, domain folders | Fat components, inline business logic |
 | **Backend** | Thin routers + service files | Business logic in routers |
+| **Competitors** | Use "industry standard" or "similar platforms" | Name specific competitors |
+
+### No Competitor Names (STRICT)
+**NEVER mention competitor company or product names** in code, documentation, specs, or comments. This includes but is not limited to:
+- Other observability/monitoring platforms
+- Similar open-source projects
+- Alternative SaaS products
+
+**Instead of naming competitors:**
+- Use "industry standard" or "industry best practices"
+- Use "similar platforms" or "comparable solutions"
+- Use "common patterns" or "typical implementations"
+- Focus on CognObserve's own features and roadmap
+
+```markdown
+# ❌ BAD
+"Similar to Langfuse, we support..."
+"Unlike Datadog, our approach..."
+"Competitors like PostHog offer..."
+
+# ✅ GOOD
+"Following industry best practices, we support..."
+"Our unique approach provides..."
+"Similar platforms typically offer..."
+```
 
 ### Adding Components
 ```bash
