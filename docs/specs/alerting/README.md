@@ -164,6 +164,7 @@ enum ChannelProvider {
 | [90_SPRINT_1_CORE_ALERTING_SPEC.md](./90_SPRINT_1_CORE_ALERTING_SPEC.md) | Sprint 1: Core alerting spec |
 | [91_SPRINT_2_GMAIL_DISCORD_SPEC.md](./91_SPRINT_2_GMAIL_DISCORD_SPEC.md) | Sprint 2: Gmail & Discord spec |
 | [92_SPRINT_3_UI_HISTORY_SPEC.md](./92_SPRINT_3_UI_HISTORY_SPEC.md) | Sprint 3: UI & History spec |
+| [93_NOTIFICATION_CHANNELS_SETTINGS_SPEC.md](./93_NOTIFICATION_CHANNELS_SETTINGS_SPEC.md) | Channels Settings Page (#93) |
 
 ---
 
