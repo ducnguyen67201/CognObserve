@@ -156,13 +156,14 @@ enum ChannelProvider {
 
 ---
 
-## Sprint Documents
+## Documents
 
-| Sprint | Document |
-|--------|----------|
-| 1 | [90_SPRINT_1_CORE_ALERTING_SPEC.md](./90_SPRINT_1_CORE_ALERTING_SPEC.md) |
-| 2 | [91_SPRINT_2_GMAIL_DISCORD_SPEC.md](./91_SPRINT_2_GMAIL_DISCORD_SPEC.md) |
-| 3 | [92_SPRINT_3_UI_HISTORY_SPEC.md](./92_SPRINT_3_UI_HISTORY_SPEC.md) |
+| Document | Purpose |
+|----------|---------|
+| [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md) | How to run, configure, and troubleshoot |
+| [90_SPRINT_1_CORE_ALERTING_SPEC.md](./90_SPRINT_1_CORE_ALERTING_SPEC.md) | Sprint 1: Core alerting spec |
+| [91_SPRINT_2_GMAIL_DISCORD_SPEC.md](./91_SPRINT_2_GMAIL_DISCORD_SPEC.md) | Sprint 2: Gmail & Discord spec |
+| [92_SPRINT_3_UI_HISTORY_SPEC.md](./92_SPRINT_3_UI_HISTORY_SPEC.md) | Sprint 3: UI & History spec |
 
 ---
 
