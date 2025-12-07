@@ -15,8 +15,20 @@ import {
   type AlertType,
 } from "@cognobserve/api/lib/alerting";
 
-const EVALUATION_INTERVAL_MS = 10_000; // 10 seconds
+// Time constants
+const MS_PER_SECOND = 1_000;
+const SECONDS_PER_MINUTE = 60;
+const MS_PER_MINUTE = MS_PER_SECOND * SECONDS_PER_MINUTE;
+
+const EVALUATION_INTERVAL_MS = 10 * MS_PER_SECOND; // 10 seconds
+const MIN_COOLDOWN_MS = 1 * MS_PER_MINUTE; // Minimum 1 minute between triggers
+
 const INTERNAL_SECRET_HEADER = "X-Internal-Secret";
+
+/**
+ * Convert minutes to milliseconds
+ */
+const minutesToMs = (minutes: number): number => minutes * MS_PER_MINUTE;
 
 type AlertWithProject = Alert & {
   project: Pick<Project, "id" | "name" | "workspaceId">;
@@ -91,7 +103,9 @@ export class AlertEvaluator {
   }
 
   /**
-   * Get alerts that are enabled and not in cooldown
+   * Get alerts that are enabled and potentially ready to evaluate.
+   * Uses MIN_COOLDOWN_MS as a pre-filter to reduce unnecessary processing.
+   * The actual cooldown check happens in evaluateAlert() using alert.cooldownMins.
    */
   private async getEligibleAlerts(): Promise<AlertWithProject[]> {
     return prisma.alert.findMany({
@@ -101,7 +115,7 @@ export class AlertEvaluator {
           { lastTriggeredAt: null },
           {
             lastTriggeredAt: {
-              lt: new Date(Date.now() - 60_000), // At least 1 min ago
+              lt: new Date(Date.now() - MIN_COOLDOWN_MS),
             },
           },
         ],
@@ -119,11 +133,11 @@ export class AlertEvaluator {
    */
   private async evaluateAlert(alert: AlertWithProject): Promise<void> {
     try {
-      // Check cooldown
+      // Check cooldown - skip if alert was triggered too recently
       if (alert.lastTriggeredAt) {
-        const cooldownMs = alert.cooldownMins * 5 * 1000; // 1 minutes
-        const timeSinceLastTrigger =
-          Date.now() - alert.lastTriggeredAt.getTime();
+        const cooldownMs = minutesToMs(alert.cooldownMins);
+        const timeSinceLastTrigger = Date.now() - alert.lastTriggeredAt.getTime();
+
         if (timeSinceLastTrigger < cooldownMs) {
           return; // Still in cooldown
         }
