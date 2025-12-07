@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatDuration, formatTokens } from "@/lib/format";
+import { formatDuration, formatTokens, formatCost } from "@/lib/format";
 import { useSessionDetail } from "@/hooks/sessions/use-session-detail";
 import { SessionWaterfall } from "./session-waterfall";
 
@@ -55,9 +55,9 @@ export function SessionDetailPanel({
     [onClose]
   );
 
-  const handleTraceSelect = useCallback((traceId: string) => {
-    // Future: Could navigate to trace detail or show more info
-    console.log("Selected trace:", traceId);
+  // Future: Could navigate to trace detail or show more info
+  const handleTraceSelect = useCallback(() => {
+    // No-op for now
   }, []);
 
   return (
@@ -180,14 +180,6 @@ function StatItem({
     </div>
   );
 }
-
-const formatCost = (cost: number): string => {
-  if (cost === 0) return "$0.00";
-  if (cost >= 1000) return `$${(cost / 1000).toFixed(1)}K`;
-  if (cost >= 1) return `$${cost.toFixed(2)}`;
-  if (cost >= 0.01) return `$${cost.toFixed(3)}`;
-  return `$${cost.toFixed(4)}`;
-};
 
 function SessionDetailSkeleton() {
   return (

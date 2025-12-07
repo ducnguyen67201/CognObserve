@@ -1,16 +1,36 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, memo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronRight, ChevronDown, Activity, MessagesSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDuration } from "@/lib/format";
 import {
   getSpanTypeConfig,
   getSpanLevelColor,
   getSpanLevelBorder,
 } from "@/components/traces/span-type-config";
 import { WATERFALL, getTimeScaleConfig } from "@/components/traces/waterfall-constants";
+import { SpanLevelSchema } from "@cognobserve/api/schemas";
 import type { SpanType, SpanLevel } from "@/lib/traces/types";
+
+/**
+ * Constants for waterfall visualization
+ */
+const WATERFALL_CONSTANTS = {
+  /** Threshold for placing duration label outside bar (percentage) */
+  NARROW_BAR_THRESHOLD: 5,
+  /** Threshold for placing label on left side (percentage from right edge) */
+  RIGHT_EDGE_THRESHOLD: 85,
+  /** Minimum bar width percentage */
+  MIN_BAR_WIDTH_PERCENT: 0.5,
+  /** Target number of time markers */
+  TARGET_MARKER_COUNT: 6,
+  /** Highlight auto-clear delay (ms) */
+  HIGHLIGHT_CLEAR_DELAY: 2000,
+  /** Minimum selection width to be considered a drag (percentage) */
+  MIN_SELECTION_WIDTH: 1,
+} as const;
 
 // Timeline item type - can be trace or span
 interface TimelineItem {
@@ -55,10 +75,12 @@ interface SessionWaterfallProps {
   onTraceSelect?: (traceId: string) => void;
 }
 
-const formatDuration = (ms: number | null): string => {
-  if (ms === null) return "";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(2)}s`;
+/**
+ * Parse span level safely using Zod schema
+ */
+const parseSpanLevel = (level: string): SpanLevel => {
+  const result = SpanLevelSchema.safeParse(level);
+  return result.success ? result.data : "DEFAULT";
 };
 
 // Infer span type from name
@@ -168,7 +190,7 @@ export function SessionWaterfall({
             type: "span",
             traceId: trace.id,
             spanType: inferSpanType(span.name),
-            level: (span.level as SpanLevel) || "DEFAULT",
+            level: parseSpanLevel(span.level),
             startTime: new Date(span.startTime),
             endTime: span.endTime ? new Date(span.endTime) : null,
             duration: spanDuration,
@@ -265,7 +287,8 @@ export function SessionWaterfall({
       setDragEnd(null);
 
       // If very small selection (click), find closest item
-      if (end - start < 1) {
+      const { MIN_SELECTION_WIDTH, HIGHLIGHT_CLEAR_DELAY } = WATERFALL_CONSTANTS;
+      if (end - start < MIN_SELECTION_WIDTH) {
         let closestItem: TimelineItem | null = null;
         let closestDistance = Infinity;
 
@@ -287,7 +310,7 @@ export function SessionWaterfall({
           if (itemIndex >= 0) {
             virtualizer.scrollToIndex(itemIndex, { align: "center" });
             setHighlightedItemIds(new Set([closestItem.id]));
-            setTimeout(() => setHighlightedItemIds(new Set()), 2000);
+            setTimeout(() => setHighlightedItemIds(new Set()), HIGHLIGHT_CLEAR_DELAY);
           }
         }
         return;
@@ -336,26 +359,19 @@ export function SessionWaterfall({
     setHighlightedItemIds(new Set());
   }, []);
 
-  if (flatItems.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        No traces in this session
-      </div>
-    );
-  }
-
   // Calculate grid line positions (same as header)
+  // NOTE: This must be before any early returns to follow React hooks rules
   const gridPositions = useMemo(() => {
     if (sessionDuration <= 0) return [];
 
     const config = getTimeScaleConfig(sessionDuration);
     const positions: number[] = [];
 
-    const targetMarkerCount = 6;
+    const { TARGET_MARKER_COUNT } = WATERFALL_CONSTANTS;
     let interval = config.interval;
     const rawCount = sessionDuration / interval;
-    if (rawCount > targetMarkerCount * 2) {
-      interval = Math.ceil(sessionDuration / targetMarkerCount / interval) * interval;
+    if (rawCount > TARGET_MARKER_COUNT * 2) {
+      interval = Math.ceil(sessionDuration / TARGET_MARKER_COUNT / interval) * interval;
     }
 
     for (let ms = interval; ms < sessionDuration; ms += interval) {
@@ -364,6 +380,14 @@ export function SessionWaterfall({
 
     return positions;
   }, [sessionDuration]);
+
+  if (flatItems.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        No traces in this session
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col border rounded-lg overflow-hidden h-full bg-card">
@@ -494,14 +518,13 @@ function SessionTimelineHeader({
     const config = getTimeScaleConfig(durationMs);
     const result: { position: number; label: string }[] = [];
 
-    // Calculate optimal interval to get ~6 markers
-    const targetMarkerCount = 6;
+    const { TARGET_MARKER_COUNT } = WATERFALL_CONSTANTS;
     let interval = config.interval;
 
     // Adjust interval to get approximately target number of markers
     const rawCount = durationMs / interval;
-    if (rawCount > targetMarkerCount * 2) {
-      interval = Math.ceil(durationMs / targetMarkerCount / interval) * interval;
+    if (rawCount > TARGET_MARKER_COUNT * 2) {
+      interval = Math.ceil(durationMs / TARGET_MARKER_COUNT / interval) * interval;
     }
 
     for (let ms = interval; ms < durationMs; ms += interval) {
@@ -598,9 +621,9 @@ interface WaterfallRowProps {
   onToggleCollapse: () => void;
 }
 
-function WaterfallRow({ item, isHighlighted, onClick, onToggleCollapse }: WaterfallRowProps) {
+const WaterfallRow = memo(function WaterfallRow({ item, isHighlighted, onClick, onToggleCollapse }: WaterfallRowProps) {
   const isTrace = item.type === "trace";
-  const level = item.level || "DEFAULT";
+  const level = item.level ?? "DEFAULT";
 
   const handleCollapseClick = useCallback(
     (e: React.MouseEvent) => {
@@ -613,6 +636,10 @@ function WaterfallRow({ item, isHighlighted, onClick, onToggleCollapse }: Waterf
   // Get icon and colors
   const Icon = isTrace ? MessagesSquare : item.spanType ? getSpanTypeConfig(item.spanType).icon : Activity;
   const iconColor = isTrace ? "text-primary" : item.spanType ? getSpanTypeConfig(item.spanType).color : "text-muted-foreground";
+
+  const { NARROW_BAR_THRESHOLD, RIGHT_EDGE_THRESHOLD, MIN_BAR_WIDTH_PERCENT } = WATERFALL_CONSTANTS;
+  const isNarrowBar = item.percentWidth <= NARROW_BAR_THRESHOLD;
+  const isNearRightEdge = item.percentStart + item.percentWidth > RIGHT_EDGE_THRESHOLD;
 
   return (
     <div
@@ -674,18 +701,18 @@ function WaterfallRow({ item, isHighlighted, onClick, onToggleCollapse }: Waterf
         <div
           className={cn(
             "absolute top-1/2 -translate-y-1/2 rounded border-l-4",
-            getSpanLevelColor(level as SpanLevel),
-            getSpanLevelBorder(level as SpanLevel)
+            getSpanLevelColor(level),
+            getSpanLevelBorder(level)
           )}
           style={{
             left: `${item.percentStart}%`,
-            width: `${Math.max(item.percentWidth, 0.5)}%`,
+            width: `${Math.max(item.percentWidth, MIN_BAR_WIDTH_PERCENT)}%`,
             height: WATERFALL.BAR_HEIGHT,
             minWidth: WATERFALL.MIN_BAR_WIDTH,
           }}
         >
           {/* Duration label inside bar */}
-          {item.duration && item.percentWidth > 5 && (
+          {item.duration && !isNarrowBar && (
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white font-mono">
               {formatDuration(item.duration)}
             </span>
@@ -693,14 +720,14 @@ function WaterfallRow({ item, isHighlighted, onClick, onToggleCollapse }: Waterf
         </div>
 
         {/* Duration label outside bar (for narrow bars) */}
-        {item.duration && item.percentWidth <= 5 && (
+        {item.duration && isNarrowBar && (
           <span
             className={cn(
               "absolute top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono whitespace-nowrap",
-              item.percentStart + item.percentWidth > 85 ? "mr-1" : "ml-1"
+              isNearRightEdge ? "mr-1" : "ml-1"
             )}
             style={
-              item.percentStart + item.percentWidth > 85
+              isNearRightEdge
                 ? { right: `${100 - item.percentStart}%` }
                 : { left: `${item.percentStart + item.percentWidth}%` }
             }
@@ -725,4 +752,4 @@ function WaterfallRow({ item, isHighlighted, onClick, onToggleCollapse }: Waterf
       )}
     </div>
   );
-}
+});
