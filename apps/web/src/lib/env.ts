@@ -1,13 +1,9 @@
-import { config } from "dotenv";
-import { resolve } from "path";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-// Load .env from monorepo root (cross-platform: works on Windows, macOS, Linux)
-// This runs before createEnv validates the environment variables
-config({ path: resolve(process.cwd(), "../../.env") });
-// Also try loading from current directory for when running from root via turbo
-config({ path: resolve(process.cwd(), ".env") });
+// Environment variables are injected by Doppler at runtime.
+// Run commands with: doppler run -- <command>
+// See: docs/specs/issue-104-doppler-secret-management.md
 
 export const env = createEnv({
   /**

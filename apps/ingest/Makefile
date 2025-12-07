@@ -1,4 +1,4 @@
-.PHONY: build run test lint clean proto
+.PHONY: build run test lint clean proto dev dev-no-doppler
 
 # Variables
 BINARY_NAME=ingest
@@ -8,22 +8,25 @@ GO=go
 build:
 	$(GO) build -o bin/$(BINARY_NAME) ./cmd/ingest
 
-# Run the service (loads .env from root)
+# Run the service with Doppler secrets
 run:
-	@set -a && source ../../.env && set +a && $(GO) run ./cmd/ingest
+	doppler run -- $(GO) run ./cmd/ingest
 
-# Run with hot reload (requires air: go install github.com/air-verse/air@latest)
-# Loads environment variables from root .env
+# Run with hot reload using Doppler (requires air: go install github.com/air-verse/air@latest)
 dev:
+	doppler run -- air
+
+# Run with hot reload WITHOUT Doppler (fallback, loads from .env)
+dev-no-doppler:
 	@set -a && source ../../.env && set +a && air
 
-# Run tests
+# Run tests with Doppler secrets
 test:
-	$(GO) test -v ./...
+	doppler run -- $(GO) test -v ./...
 
 # Run tests with coverage
 test-coverage:
-	$(GO) test -v -coverprofile=coverage.out ./...
+	doppler run -- $(GO) test -v -coverprofile=coverage.out ./...
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
 # Lint (requires golangci-lint)
@@ -44,6 +47,10 @@ deps:
 docker-build:
 	docker build -t cognobserve-ingest:latest .
 
-# Docker run
+# Docker run with Doppler (requires DOPPLER_TOKEN env var)
 docker-run:
-	docker run -p 8080:8080 --env-file ../../.env cognobserve-ingest:latest
+	docker run -p 8080:8080 -e DOPPLER_TOKEN=${DOPPLER_TOKEN} cognobserve-ingest:latest
+
+# Production run (expects DOPPLER_TOKEN env var to be set)
+run-prod:
+	doppler run -- ./bin/$(BINARY_NAME)
