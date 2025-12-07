@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatDuration, formatTokens, formatCost } from "@/lib/format";
 import { trpc } from "@/lib/trpc/client";
 
 interface TrackedUserDetailPanelProps {
