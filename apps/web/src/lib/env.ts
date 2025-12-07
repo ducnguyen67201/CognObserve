@@ -1,5 +1,13 @@
+import { config } from "dotenv";
+import { resolve } from "path";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+
+// Load .env from monorepo root (cross-platform: works on Windows, macOS, Linux)
+// This runs before createEnv validates the environment variables
+config({ path: resolve(process.cwd(), "../../.env") });
+// Also try loading from current directory for when running from root via turbo
+config({ path: resolve(process.cwd(), ".env") });
 
 export const env = createEnv({
   /**
