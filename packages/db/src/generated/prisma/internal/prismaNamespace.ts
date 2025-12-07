@@ -403,6 +403,7 @@ export const ModelName = {
   AlertHistory: 'AlertHistory',
   NotificationChannel: 'NotificationChannel',
   AlertChannelLink: 'AlertChannelLink',
+  TrackedUser: 'TrackedUser',
   TraceSession: 'TraceSession'
 } as const
 
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "traceSession"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "trackedUser" | "traceSession"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1829,6 +1830,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TrackedUser: {
+      payload: Prisma.$TrackedUserPayload<ExtArgs>
+      fields: Prisma.TrackedUserFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TrackedUserFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TrackedUserFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>
+        }
+        findFirst: {
+          args: Prisma.TrackedUserFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TrackedUserFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>
+        }
+        findMany: {
+          args: Prisma.TrackedUserFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>[]
+        }
+        create: {
+          args: Prisma.TrackedUserCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>
+        }
+        createMany: {
+          args: Prisma.TrackedUserCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TrackedUserCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>[]
+        }
+        delete: {
+          args: Prisma.TrackedUserDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>
+        }
+        update: {
+          args: Prisma.TrackedUserUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>
+        }
+        deleteMany: {
+          args: Prisma.TrackedUserDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TrackedUserUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TrackedUserUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>[]
+        }
+        upsert: {
+          args: Prisma.TrackedUserUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedUserPayload>
+        }
+        aggregate: {
+          args: Prisma.TrackedUserAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTrackedUser>
+        }
+        groupBy: {
+          args: Prisma.TrackedUserGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackedUserGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TrackedUserCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackedUserCountAggregateOutputType> | number
+        }
+      }
+    }
     TraceSession: {
       payload: Prisma.$TraceSessionPayload<ExtArgs>
       fields: Prisma.TraceSessionFieldRefs
@@ -2072,6 +2147,7 @@ export const TraceScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
   sessionId: 'sessionId',
+  userId: 'userId',
   name: 'name',
   timestamp: 'timestamp',
   metadata: 'metadata'
@@ -2217,10 +2293,27 @@ export const AlertChannelLinkScalarFieldEnum = {
 export type AlertChannelLinkScalarFieldEnum = (typeof AlertChannelLinkScalarFieldEnum)[keyof typeof AlertChannelLinkScalarFieldEnum]
 
 
+export const TrackedUserScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  externalId: 'externalId',
+  name: 'name',
+  email: 'email',
+  metadata: 'metadata',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TrackedUserScalarFieldEnum = (typeof TrackedUserScalarFieldEnum)[keyof typeof TrackedUserScalarFieldEnum]
+
+
 export const TraceSessionScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
   externalId: 'externalId',
+  userId: 'userId',
   name: 'name',
   metadata: 'metadata',
   createdAt: 'createdAt',
@@ -2598,6 +2691,7 @@ export type GlobalOmitConfig = {
   alertHistory?: Prisma.AlertHistoryOmit
   notificationChannel?: Prisma.NotificationChannelOmit
   alertChannelLink?: Prisma.AlertChannelLinkOmit
+  trackedUser?: Prisma.TrackedUserOmit
   traceSession?: Prisma.TraceSessionOmit
 }
 

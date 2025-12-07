@@ -70,6 +70,7 @@ export const ModelName = {
   AlertHistory: 'AlertHistory',
   NotificationChannel: 'NotificationChannel',
   AlertChannelLink: 'AlertChannelLink',
+  TrackedUser: 'TrackedUser',
   TraceSession: 'TraceSession'
 } as const
 
@@ -219,6 +220,7 @@ export const TraceScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
   sessionId: 'sessionId',
+  userId: 'userId',
   name: 'name',
   timestamp: 'timestamp',
   metadata: 'metadata'
@@ -364,10 +366,27 @@ export const AlertChannelLinkScalarFieldEnum = {
 export type AlertChannelLinkScalarFieldEnum = (typeof AlertChannelLinkScalarFieldEnum)[keyof typeof AlertChannelLinkScalarFieldEnum]
 
 
+export const TrackedUserScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  externalId: 'externalId',
+  name: 'name',
+  email: 'email',
+  metadata: 'metadata',
+  firstSeenAt: 'firstSeenAt',
+  lastSeenAt: 'lastSeenAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TrackedUserScalarFieldEnum = (typeof TrackedUserScalarFieldEnum)[keyof typeof TrackedUserScalarFieldEnum]
+
+
 export const TraceSessionScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
   externalId: 'externalId',
+  userId: 'userId',
   name: 'name',
   metadata: 'metadata',
   createdAt: 'createdAt',

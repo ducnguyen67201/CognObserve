@@ -13,6 +13,7 @@ export type {
   SpanEndOptions,
   SpanLevel,
   TokenUsage,
+  UserInfo,
 } from './types';
 
 // Observe types

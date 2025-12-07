@@ -151,9 +151,24 @@ export class Transport {
    * Format trace data for the ingest API
    */
   private formatPayload(trace: TraceData): IngestRequest {
+    // Build user object for ingest (excludes 'id' as it goes in user_id)
+    const user = trace.user
+      ? {
+          name: trace.user.name,
+          email: trace.user.email,
+          ...Object.fromEntries(
+            Object.entries(trace.user).filter(
+              ([key]) => !['id', 'name', 'email'].includes(key)
+            )
+          ),
+        }
+      : undefined;
+
     return {
       trace_id: trace.id,
       session_id: trace.sessionId ?? undefined,
+      user_id: trace.userId ?? undefined,
+      user: user,
       name: trace.name,
       metadata: trace.metadata ?? undefined,
       spans: trace.spans.map((span) => ({

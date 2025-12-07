@@ -2,12 +2,21 @@ package model
 
 import "time"
 
+// UserInfo represents end-user information for tracking
+type UserInfo struct {
+	Name     *string        `json:",omitempty"`
+	Email    *string        `json:",omitempty"`
+	Metadata map[string]any `json:",omitempty"`
+}
+
 // Trace represents a trace in the system
 // These are internal models - proto types are used for API layer
 type Trace struct {
 	ID        string
 	ProjectID string
-	SessionID *string // External session ID for grouping conversations
+	SessionID *string   // External session ID for grouping conversations
+	UserID    *string   // External user ID for tracking end-users
+	User      *UserInfo // Optional user metadata
 	Name      string
 	Timestamp time.Time
 	Metadata  map[string]any

@@ -2,11 +2,20 @@ import Redis from "ioredis";
 
 import { QUEUE_KEYS, safeJsonParse } from "@cognobserve/shared";
 
+// User info from SDK/Ingest
+export interface QueueUserData {
+  Name?: string;
+  Email?: string;
+  [key: string]: unknown;
+}
+
 // Raw trace data from the queue (matches Go ingest service output)
 export interface QueueTraceData {
   ID: string;
   ProjectID: string;
   SessionID?: string; // External session ID for grouping conversations
+  UserID?: string; // External user ID for tracking end-users
+  User?: QueueUserData; // Optional user metadata
   Name: string;
   Timestamp: string;
   Metadata?: Record<string, unknown>;

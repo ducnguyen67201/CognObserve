@@ -11,11 +11,20 @@ import (
 	"github.com/cognobserve/ingest/internal/model"
 )
 
+// UserInfoInput represents user information in the request
+type UserInfoInput struct {
+	Name     *string        `json:"name,omitempty"`
+	Email    *string        `json:"email,omitempty"`
+	Metadata map[string]any `json:"metadata,omitempty"`
+}
+
 // IngestTraceRequest represents the incoming trace request
 // This mirrors the proto definition but uses JSON-friendly types
 type IngestTraceRequest struct {
 	TraceID   *string           `json:"trace_id,omitempty"`
 	SessionID *string           `json:"session_id,omitempty"` // External session ID for conversations
+	UserID    *string           `json:"user_id,omitempty"`    // External user ID for tracking end-users
+	User      *UserInfoInput    `json:"user,omitempty"`       // Optional user metadata
 	Name      string            `json:"name"`
 	Metadata  map[string]any    `json:"metadata,omitempty"`
 	Spans     []IngestSpanInput `json:"spans"`
@@ -79,11 +88,23 @@ func (h *Handler) IngestTrace(w http.ResponseWriter, r *http.Request) {
 		traceID = *req.TraceID
 	}
 
+	// Convert user info if provided
+	var userInfo *model.UserInfo
+	if req.User != nil {
+		userInfo = &model.UserInfo{
+			Name:     req.User.Name,
+			Email:    req.User.Email,
+			Metadata: req.User.Metadata,
+		}
+	}
+
 	// Convert to internal model
 	trace := &model.Trace{
 		ID:        traceID,
 		ProjectID: projectID,
 		SessionID: req.SessionID,
+		UserID:    req.UserID,
+		User:      userInfo,
 		Name:      req.Name,
 		Timestamp: time.Now().UTC(),
 		Metadata:  req.Metadata,

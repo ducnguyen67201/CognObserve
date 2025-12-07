@@ -1,6 +1,7 @@
 /**
- * Seed script to create mock sessions with traces and spans for UI testing
+ * Seed script to create mock sessions with traces, spans, AND USERS for UI testing
  * Creates 200-300 sessions, each with 2-10 traces and 1-5 spans per trace
+ * Creates 30-50 tracked users linked to sessions and traces
  */
 
 import dotenv from "dotenv";
@@ -12,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 // Dynamic import after env is loaded
-const { prisma } = await import("./index.js");
+const { prisma, Prisma } = await import("./index.js");
 
 // Constants for realistic data generation
 const SESSION_PREFIXES = [
@@ -66,6 +67,21 @@ const MODELS = [
 
 const SPAN_LEVELS = ["DEBUG", "DEFAULT", "WARNING", "ERROR"] as const;
 
+// User data for realistic profiles
+const FIRST_NAMES = [
+  "James", "Emma", "Oliver", "Sophia", "William", "Ava", "Benjamin", "Isabella",
+  "Lucas", "Mia", "Henry", "Charlotte", "Alexander", "Amelia", "Daniel", "Harper",
+  "Matthew", "Evelyn", "Sebastian", "Abigail", "Jack", "Emily", "Aiden", "Elizabeth",
+];
+
+const LAST_NAMES = [
+  "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+  "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
+];
+
+const EMAIL_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "company.com", "enterprise.io"];
+const PLANS = ["free", "starter", "pro", "enterprise"];
+
 // Utility functions
 const randomInt = (min: number, max: number): number =>
   Math.floor(Math.random() * (max - min + 1)) + min;
@@ -78,8 +94,41 @@ const randomFloat = (min: number, max: number): number =>
 const generateExternalId = (): string =>
   `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+const generateExternalUserId = (): string =>
+  `user_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+
 const hoursAgo = (hours: number): Date =>
   new Date(Date.now() - hours * 60 * 60 * 1000);
+
+interface TrackedUserData {
+  id?: string;
+  externalId: string;
+  name: string;
+  email: string;
+  metadata: Record<string, unknown>;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+}
+
+function generateUserData(): Omit<TrackedUserData, 'id'> {
+  const firstName = randomChoice(FIRST_NAMES);
+  const lastName = randomChoice(LAST_NAMES);
+  const name = `${firstName} ${lastName}`;
+  const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${randomChoice(EMAIL_DOMAINS)}`;
+  const firstSeenHoursAgo = randomInt(48, 720);
+
+  return {
+    externalId: generateExternalUserId(),
+    name,
+    email,
+    metadata: {
+      plan: randomChoice(PLANS),
+      source: randomChoice(["organic", "referral", "paid", "social"]),
+    },
+    firstSeenAt: hoursAgo(firstSeenHoursAgo),
+    lastSeenAt: hoursAgo(randomInt(0, firstSeenHoursAgo - 1)),
+  };
+}
 
 async function main() {
   console.log("Seeding sessions data...\n");
@@ -100,10 +149,13 @@ async function main() {
   const existingSessionCount = await prisma.traceSession.count({
     where: { projectId: project.id },
   });
+  const existingUserCount = await prisma.trackedUser.count({
+    where: { projectId: project.id },
+  });
 
-  if (existingSessionCount > 0) {
-    console.log(`Found ${existingSessionCount} existing sessions.`);
-    console.log("Deleting existing sessions, traces, and spans...\n");
+  if (existingSessionCount > 0 || existingUserCount > 0) {
+    console.log(`Found ${existingSessionCount} existing sessions, ${existingUserCount} users.`);
+    console.log("Deleting existing sessions, traces, spans, and users...\n");
   }
 
   // Delete existing data (cascade will handle related records)
@@ -115,6 +167,34 @@ async function main() {
   await prisma.trace.deleteMany({
     where: { projectId: project.id, sessionId: null },
   });
+
+  // Delete existing tracked users
+  await prisma.trackedUser.deleteMany({
+    where: { projectId: project.id },
+  });
+
+  // Create 30-50 tracked users first
+  const userCount = randomInt(30, 50);
+  console.log(`Creating ${userCount} tracked users...\n`);
+
+  const createdUsers: { id: string; name: string }[] = [];
+  for (let i = 0; i < userCount; i++) {
+    const userData = generateUserData();
+    const user = await prisma.trackedUser.create({
+      data: {
+        projectId: project.id,
+        externalId: userData.externalId,
+        name: userData.name,
+        email: userData.email,
+        metadata: userData.metadata as object,
+        firstSeenAt: userData.firstSeenAt,
+        lastSeenAt: userData.lastSeenAt,
+      },
+      select: { id: true, name: true },
+    });
+    createdUsers.push({ id: user.id, name: user.name ?? "Unknown" });
+  }
+  console.log(`Created ${createdUsers.length} users.\n`);
 
   // Generate 200-300 sessions
   const sessionCount = randomInt(200, 300);
@@ -142,6 +222,9 @@ async function main() {
       version: `v${randomInt(1, 3)}.${randomInt(0, 9)}.${randomInt(0, 20)}`,
     };
 
+    // 70% of sessions have a user
+    const sessionUser = Math.random() < 0.7 ? randomChoice(createdUsers) : null;
+
     // Create session
     const session = await prisma.traceSession.create({
       data: {
@@ -151,6 +234,7 @@ async function main() {
         metadata: sessionMetadata,
         createdAt: sessionCreatedAt,
         updatedAt: sessionCreatedAt,
+        ...(sessionUser && { userId: sessionUser.id }),
       },
     });
 
@@ -184,6 +268,8 @@ async function main() {
           name: randomChoice(TRACE_NAMES),
           timestamp: traceTimestamp,
           metadata: traceMetadata,
+          // Link trace to same user as session
+          ...(sessionUser && { userId: sessionUser.id }),
         },
       });
 
@@ -263,7 +349,7 @@ async function main() {
             output,
             metadata: spanMetadata,
             model,
-            modelParameters: model ? { temperature: 0.7, maxTokens: 4096 } : null,
+            modelParameters: model ? { temperature: 0.7, maxTokens: 4096 } : undefined,
             promptTokens,
             completionTokens,
             totalTokens: spanTotalTokens,
@@ -296,8 +382,25 @@ async function main() {
 
   console.log("\nDone! Seeding complete.\n");
 
+  // Count users with sessions/traces
+  const usersWithSessions = await prisma.trackedUser.count({
+    where: {
+      projectId: project.id,
+      sessions: { some: {} },
+    },
+  });
+  const usersWithTraces = await prisma.trackedUser.count({
+    where: {
+      projectId: project.id,
+      traces: { some: {} },
+    },
+  });
+
   // Print summary
   console.log("=== Summary ===");
+  console.log(`Tracked users created: ${createdUsers.length}`);
+  console.log(`  - Users with sessions: ${usersWithSessions}`);
+  console.log(`  - Users with traces: ${usersWithTraces}`);
   console.log(`Sessions created: ${sessionCount}`);
   console.log(`Traces created: ${totalTraces}`);
   console.log(`Spans created: ${totalSpans}`);
@@ -320,6 +423,23 @@ async function main() {
   for (const session of sampleSessions) {
     console.log(
       `  - ${session.name} (${session._count.traces} traces) - ${session.updatedAt.toISOString()}`
+    );
+  }
+
+  // Show sample users
+  const sampleUsers = await prisma.trackedUser.findMany({
+    where: { projectId: project.id },
+    include: {
+      _count: { select: { sessions: true, traces: true } },
+    },
+    orderBy: { lastSeenAt: "desc" },
+    take: 5,
+  });
+
+  console.log("\n=== Recent Users ===");
+  for (const user of sampleUsers) {
+    console.log(
+      `  - ${user.name} (${user._count.sessions} sessions, ${user._count.traces} traces) - ${user.email}`
     );
   }
 }

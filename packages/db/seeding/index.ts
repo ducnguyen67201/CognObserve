@@ -27,7 +27,7 @@ const SEEDS: Record<string, { name: string; description: string; fn: () => Promi
   },
   traces: {
     name: "traces",
-    description: "Sample traces with LLM spans, errors, and warnings",
+    description: "Full hierarchy: Users → Sessions → Traces → Spans (with LLM calls)",
     fn: seedTraces,
   },
 };

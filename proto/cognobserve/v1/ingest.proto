@@ -8,6 +8,13 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "cognobserve/v1/common.proto";
 
+// User information for tracking end-users
+message UserInfo {
+  optional string name = 1;
+  optional string email = 2;
+  optional google.protobuf.Struct metadata = 3;
+}
+
 // Request to ingest a trace with spans
 message IngestTraceRequest {
   // Trace information
@@ -17,6 +24,13 @@ message IngestTraceRequest {
 
   // Spans to ingest
   repeated IngestSpan spans = 4;
+
+  // Session tracking (for multi-turn conversations)
+  optional string session_id = 5;
+
+  // User tracking (end-users of AI applications)
+  optional string user_id = 6;
+  optional UserInfo user = 7;
 }
 
 // Span data for ingestion

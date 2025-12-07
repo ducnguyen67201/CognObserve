@@ -1,6 +1,6 @@
 import { Span } from './span';
 import { generateId } from './utils/id';
-import type { TraceOptions, SpanOptions, TraceData } from './types';
+import type { TraceOptions, SpanOptions, TraceData, UserInfo } from './types';
 
 /**
  * Represents a complete trace containing multiple spans
@@ -9,6 +9,8 @@ export class Trace {
   readonly id: string;
   readonly name: string;
   readonly sessionId: string | null;
+  readonly userId: string | null;
+  readonly user: UserInfo | null;
   readonly timestamp: Date;
   readonly metadata: Record<string, unknown> | null;
 
@@ -21,6 +23,8 @@ export class Trace {
     this.id = options.id ?? generateId();
     this.name = options.name;
     this.sessionId = options.sessionId ?? null;
+    this.userId = options.userId ?? options.user?.id ?? null;
+    this.user = options.user ?? null;
     this.timestamp = new Date();
     this.metadata = options.metadata ?? null;
     this._onEnd = onEnd ?? null;
@@ -120,6 +124,8 @@ export class Trace {
       id: this.id,
       name: this.name,
       sessionId: this.sessionId,
+      userId: this.userId,
+      user: this.user,
       timestamp: this.timestamp,
       metadata: this.metadata,
       spans: Array.from(this._spans.values()).map((s) => s.toData()),

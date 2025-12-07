@@ -156,6 +156,7 @@ model Project {
   apiKeys       ApiKey[]
   traces        Trace[]
   traceSessions TraceSession[]
+  trackedUsers  TrackedUser[]
   members       ProjectMember[]
   costSummary   CostDailySummary[]
   alerts        Alert[]
@@ -200,6 +201,8 @@ model Trace {
   project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   sessionId String?
   session   TraceSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  userId    String?
+  user      TrackedUser?  @relation(fields: [userId], references: [id], onDelete: SetNull)
   name      String
   timestamp DateTime      @default(now())
   metadata  Json?
@@ -211,6 +214,7 @@ model Trace {
   @@index([projectId])
   @@index([timestamp])
   @@index([sessionId])
+  @@index([userId])
 }
 
 model Span {
@@ -448,19 +452,44 @@ model AlertChannelLink {
 // Tracking Models (Sessions & User Tracking)
 // ============================================================
 
+model TrackedUser {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  externalId  String   // User's ID from their system (required)
+  name        String?  // Display name
+  email       String?  // User email (for lookup)
+  metadata    Json?    // Custom attributes (plan, company, etc.)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions TraceSession[]
+  traces   Trace[]
+
+  @@unique([projectId, externalId])
+  @@index([projectId, lastSeenAt(sort: Desc)])
+  @@index([projectId, email])
+  @@map("tracked_users")
+}
+
 model TraceSession {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   projectId  String
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  externalId String?  // User-provided session ID
-  name       String?  // Optional display name
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  externalId String?      // User-provided session ID
+  userId     String?      // Link to TrackedUser
+  user       TrackedUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name       String?      // Optional display name
   metadata   Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   traces Trace[]
 
   @@unique([projectId, externalId])
   @@index([projectId, createdAt(sort: Desc)])
+  @@index([userId])
   @@map("trace_sessions")
 }
