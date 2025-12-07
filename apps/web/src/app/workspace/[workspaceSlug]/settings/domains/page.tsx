@@ -138,11 +138,11 @@ export default function WorkspaceSettingsDomainsPage() {
     },
   });
 
-  const form = useForm<AddDomainInput>({
+  const form = useForm({
     resolver: zodResolver(addDomainSchema),
     defaultValues: {
       domain: "",
-      role: "MEMBER",
+      role: "MEMBER" as const,
     },
   });
 

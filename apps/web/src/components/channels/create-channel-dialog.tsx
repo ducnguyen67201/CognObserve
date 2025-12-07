@@ -91,7 +91,7 @@ export function CreateChannelDialog({
     return "DISCORD";
   }, [availableProviders]);
 
-  const form = useForm<CreateChannelInput>({
+  const form = useForm({
     resolver: zodResolver(createChannelSchema),
     defaultValues: {
       name: "",
