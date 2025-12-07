@@ -2075,6 +2075,11 @@ export const AlertScalarFieldEnum = {
   cooldownMins: 'cooldownMins',
   enabled: 'enabled',
   lastTriggeredAt: 'lastTriggeredAt',
+  severity: 'severity',
+  pendingMins: 'pendingMins',
+  state: 'state',
+  stateChangedAt: 'stateChangedAt',
+  lastEvaluatedAt: 'lastEvaluatedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2102,7 +2107,11 @@ export const AlertHistoryScalarFieldEnum = {
   threshold: 'threshold',
   resolved: 'resolved',
   resolvedAt: 'resolvedAt',
-  notifiedVia: 'notifiedVia'
+  notifiedVia: 'notifiedVia',
+  state: 'state',
+  previousState: 'previousState',
+  sampleCount: 'sampleCount',
+  evaluationMs: 'evaluationMs'
 } as const
 
 export type AlertHistoryScalarFieldEnum = (typeof AlertHistoryScalarFieldEnum)[keyof typeof AlertHistoryScalarFieldEnum]
@@ -2358,6 +2367,34 @@ export type EnumAlertOperatorFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'AlertOperator[]'
  */
 export type ListEnumAlertOperatorFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AlertOperator[]'>
+    
+
+
+/**
+ * Reference to a field of type 'AlertSeverity'
+ */
+export type EnumAlertSeverityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AlertSeverity'>
+    
+
+
+/**
+ * Reference to a field of type 'AlertSeverity[]'
+ */
+export type ListEnumAlertSeverityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AlertSeverity[]'>
+    
+
+
+/**
+ * Reference to a field of type 'AlertState'
+ */
+export type EnumAlertStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AlertState'>
+    
+
+
+/**
+ * Reference to a field of type 'AlertState[]'
+ */
+export type ListEnumAlertStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AlertState[]'>
     
 
 
