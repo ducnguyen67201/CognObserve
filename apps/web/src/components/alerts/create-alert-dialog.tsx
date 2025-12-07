@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,10 +29,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { trpc } from "@/lib/trpc/client";
 import { showError } from "@/lib/errors";
 import { alertToast } from "@/lib/success";
-import { AlertTypeSchema, ALERT_TYPE_LABELS, type AlertType } from "@cognobserve/api/schemas";
+import {
+  AlertTypeSchema,
+  ALERT_TYPE_LABELS,
+  THRESHOLD_PRESETS,
+  type AlertType,
+  type AlertSeverity,
+  type ThresholdPreset,
+} from "@cognobserve/api/schemas";
+import { SeveritySelector } from "./severity-selector";
+import { ThresholdPresetCards } from "./threshold-preset-cards";
 
 interface CreateAlertDialogProps {
   workspaceSlug: string;
@@ -65,6 +80,8 @@ interface CreateAlertFormValues {
   operator: "GREATER_THAN" | "LESS_THAN";
   windowMins: string;
   cooldownMins: string;
+  severity: AlertSeverity;
+  pendingMins: string;
 }
 
 const DEFAULT_VALUES: CreateAlertFormValues = {
@@ -73,7 +90,9 @@ const DEFAULT_VALUES: CreateAlertFormValues = {
   threshold: "5",
   operator: "GREATER_THAN",
   windowMins: "5",
-  cooldownMins: "60",
+  cooldownMins: "",
+  severity: "MEDIUM",
+  pendingMins: "",
 };
 
 export function CreateAlertDialog({
@@ -83,6 +102,8 @@ export function CreateAlertDialog({
   onClose,
 }: CreateAlertDialogProps) {
   const utils = trpc.useUtils();
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<ThresholdPreset | null>("BALANCED");
   const form = useForm<CreateAlertFormValues>({
     defaultValues: DEFAULT_VALUES,
   });
@@ -103,7 +124,8 @@ export function CreateAlertDialog({
     (values: CreateAlertFormValues) => {
       const threshold = parseFloat(values.threshold);
       const windowMins = parseInt(values.windowMins, 10);
-      const cooldownMins = parseInt(values.cooldownMins, 10);
+      const cooldownMins = values.cooldownMins ? parseInt(values.cooldownMins, 10) : undefined;
+      const pendingMins = values.pendingMins ? parseInt(values.pendingMins, 10) : undefined;
 
       if (isNaN(threshold) || threshold < 0) {
         form.setError("threshold", { message: "Must be a positive number" });
@@ -113,8 +135,12 @@ export function CreateAlertDialog({
         form.setError("windowMins", { message: "Must be 1-60" });
         return;
       }
-      if (isNaN(cooldownMins) || cooldownMins < 1 || cooldownMins > 1440) {
+      if (cooldownMins !== undefined && (isNaN(cooldownMins) || cooldownMins < 1 || cooldownMins > 1440)) {
         form.setError("cooldownMins", { message: "Must be 1-1440" });
+        return;
+      }
+      if (pendingMins !== undefined && (isNaN(pendingMins) || pendingMins < 0 || pendingMins > 30)) {
+        form.setError("pendingMins", { message: "Must be 0-30" });
         return;
       }
 
@@ -127,6 +153,8 @@ export function CreateAlertDialog({
         threshold,
         windowMins,
         cooldownMins,
+        severity: values.severity,
+        pendingMins,
       });
     },
     [createMutation, workspaceSlug, projectId, form]
@@ -136,15 +164,43 @@ export function CreateAlertDialog({
     (isOpen: boolean) => {
       if (!isOpen) {
         form.reset();
+        setSelectedPreset("BALANCED");
+        setShowAdvanced(false);
         onClose();
       }
     },
     [form, onClose]
   );
 
+  const handlePresetSelect = useCallback(
+    (preset: ThresholdPreset) => {
+      setSelectedPreset(preset);
+      const alertType = form.getValues("type");
+      const thresholds = THRESHOLD_PRESETS[preset];
+      const threshold =
+        alertType === "ERROR_RATE"
+          ? thresholds.errorRate
+          : alertType === "LATENCY_P50"
+          ? thresholds.latencyP50
+          : alertType === "LATENCY_P95"
+          ? thresholds.latencyP95
+          : thresholds.latencyP99;
+      form.setValue("threshold", threshold.toString());
+    },
+    [form]
+  );
+
+  const handleSeverityChange = useCallback(
+    (severity: AlertSeverity) => {
+      form.setValue("severity", severity);
+    },
+    [form]
+  );
+
   const handleFormSubmit = form.handleSubmit(handleSubmit);
 
   const selectedType = form.watch("type");
+  const selectedSeverity = form.watch("severity");
   const unit = ALERT_TYPES.find((t) => t.value === selectedType)?.unit ?? "";
 
   return (
@@ -173,29 +229,53 @@ export function CreateAlertDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Metric Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select metric type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ALERT_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Metric Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select metric type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ALERT_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="severity"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Severity</FormLabel>
+                    <SeveritySelector
+                      value={selectedSeverity}
+                      onValueChange={handleSeverityChange}
+                      showDefaults={false}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <ThresholdPresetCards
+              selectedPreset={selectedPreset}
+              alertType={selectedType}
+              onSelectPreset={handlePresetSelect}
             />
 
             <div className="grid grid-cols-2 gap-4">
@@ -239,37 +319,80 @@ export function CreateAlertDialog({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="windowMins"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Time Window (minutes)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={1} max={60} {...field} value={field.value ?? ""} />
-                    </FormControl>
-                    <FormDescription>1-60 minutes</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="windowMins"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Time Window (minutes)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={1} max={60} {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormDescription>Evaluate metrics over this window (1-60 minutes)</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="cooldownMins"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cooldown (minutes)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={1} max={1440} {...field} value={field.value ?? ""} />
-                    </FormControl>
-                    <FormDescription>1-1440 minutes</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" type="button" className="w-full justify-between">
+                  Advanced Settings
+                  {showAdvanced ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="pendingMins"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pending Duration (minutes)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={30}
+                            placeholder="Use severity default"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>Condition must persist before firing</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cooldownMins"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cooldown (minutes)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={1440}
+                            placeholder="Use severity default"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>Min time between notifications</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>

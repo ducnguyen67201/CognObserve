@@ -171,6 +171,20 @@ export const alertToast = {
   channelAdded: (provider: string) =>
     toast.success(`${provider} channel added`, { description: "You will receive notifications on this channel." }),
 
-  testSent: () =>
-    toast.success("Test notification sent", { description: "Check your notification channel." }),
+  testSent: (successCount?: number, totalCount?: number) => {
+    if (successCount !== undefined && totalCount !== undefined) {
+      toast.success("Test notifications sent", {
+        description: `${successCount}/${totalCount} channels received the test notification.`,
+      });
+    } else {
+      toast.success("Test notification sent", { description: "Check your notification channel." });
+    }
+  },
+
+  dryRunComplete: (wouldTrigger: boolean, currentValue: number, threshold: number) =>
+    toast.info("Dry run complete", {
+      description: wouldTrigger
+        ? `Alert would trigger. Current value: ${currentValue}, Threshold: ${threshold}`
+        : `Alert would not trigger. Current value: ${currentValue}, Threshold: ${threshold}`,
+    }),
 } as const;

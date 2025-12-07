@@ -1,11 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Bell, Plus, AlertTriangle, Clock, MoreVertical, Trash2 } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
+import {
+  Bell,
+  Plus,
+  AlertTriangle,
+  Clock,
+  MoreVertical,
+  Trash2,
+  Play,
+  FlaskConical,
+  Circle,
+  CircleDot,
+  CircleCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import {
   Sheet,
   SheetContent,
@@ -17,20 +30,31 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { CreateAlertDialog } from "./create-alert-dialog";
 import { AlertHistory } from "./alert-history";
 import { ChannelSelectDropdown } from "./channel-select-dropdown";
+import { SeverityBadge } from "./severity-selector";
 import { showError } from "@/lib/errors";
 import { alertToast } from "@/lib/success";
 import {
   ALERT_TYPE_LABELS,
+  STATE_LABELS,
   type AlertType,
+  type AlertState,
+  type AlertSeverity,
 } from "@cognobserve/api/schemas";
 
 interface AlertsPanelProps {
@@ -44,6 +68,59 @@ const ALERT_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
   LATENCY_P95: Clock,
   LATENCY_P99: Clock,
 };
+
+const STATE_ICONS: Record<AlertState, typeof Circle> = {
+  INACTIVE: Circle,
+  PENDING: CircleDot,
+  FIRING: CircleDot,
+  RESOLVED: CircleCheck,
+};
+
+const STATE_COLORS: Record<AlertState, string> = {
+  INACTIVE: "text-muted-foreground",
+  PENDING: "text-amber-500",
+  FIRING: "text-red-500 animate-pulse",
+  RESOLVED: "text-green-500",
+};
+
+interface StateIndicatorProps {
+  state: AlertState;
+  className?: string;
+}
+
+function StateIndicator({ state, className }: StateIndicatorProps) {
+  const Icon = STATE_ICONS[state] ?? Circle;
+  const color = STATE_COLORS[state] ?? "text-muted-foreground";
+  const label = STATE_LABELS[state] ?? state;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn("flex items-center gap-1", className)}>
+            <Icon className={cn("h-3 w-3", color)} />
+            <span className="text-xs text-muted-foreground">{label}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Alert state: {label}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function calculatePendingProgress(stateChangedAt: Date | null, pendingMins: number): number {
+  if (!stateChangedAt || pendingMins === 0) return 0;
+  const elapsed = (Date.now() - new Date(stateChangedAt).getTime()) / 1000 / 60;
+  return Math.min(100, (elapsed / pendingMins) * 100);
+}
+
+function calculateCooldownProgress(lastTriggeredAt: Date | null, cooldownMins: number): number {
+  if (!lastTriggeredAt) return 100;
+  const elapsed = (Date.now() - new Date(lastTriggeredAt).getTime()) / 1000 / 60;
+  return Math.min(100, (elapsed / cooldownMins) * 100);
+}
 
 export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -72,6 +149,14 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
     onError: showError,
   });
 
+  const testAlertMutation = trpc.alerts.testAlert.useMutation({
+    onSuccess: (result) => {
+      const successCount = result.results.filter((r) => r.success).length;
+      alertToast.testSent(successCount, result.results.length);
+    },
+    onError: showError,
+  });
+
   const handleToggle = useCallback(
     (id: string) => {
       toggleMutation.mutate({ workspaceSlug, id });
@@ -84,6 +169,21 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
       deleteMutation.mutate({ workspaceSlug, id });
     },
     [deleteMutation, workspaceSlug]
+  );
+
+  const handleTestAlert = useCallback(
+    (alertId: string) => {
+      testAlertMutation.mutate({ workspaceSlug, alertId });
+    },
+    [testAlertMutation, workspaceSlug]
+  );
+
+  const handleDryRun = useCallback(
+    (id: string) => {
+      // Dry run opens a modal - handled per-card
+      console.log("Dry run for alert:", id);
+    },
+    []
   );
 
   const handleCloseCreateDialog = useCallback(() => {
@@ -149,6 +249,8 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
                         workspaceSlug={workspaceSlug}
                         onToggle={handleToggle}
                         onDelete={handleDelete}
+                        onTestAlert={handleTestAlert}
+                        onDryRun={handleDryRun}
                       />
                     ))
                   )}
@@ -189,16 +291,24 @@ interface AlertCardProps {
     threshold: number;
     operator: string;
     windowMins: number;
+    cooldownMins: number;
     enabled: boolean;
+    severity: AlertSeverity;
+    state: AlertState;
+    stateChangedAt: Date | null;
+    pendingMins: number;
+    lastTriggeredAt: Date | null;
     channels: Array<{ id: string; provider: string; verified: boolean }>;
     _count: { history: number };
   };
   workspaceSlug: string;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onTestAlert: (id: string) => void;
+  onDryRun: (id: string) => void;
 }
 
-function AlertCard({ alert, workspaceSlug, onToggle, onDelete }: AlertCardProps) {
+function AlertCard({ alert, workspaceSlug, onToggle, onDelete, onTestAlert, onDryRun }: AlertCardProps) {
   const utils = trpc.useUtils();
   const Icon = ALERT_TYPE_ICONS[alert.type] ?? AlertTriangle;
   const thresholdDisplay =
@@ -227,10 +337,15 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete }: AlertCardProps)
     onError: showError,
   });
 
-  const linkedIds = new Set(linkedChannels?.map((c) => c.id) ?? []);
+  const linkedIds = useMemo(
+    () => new Set(linkedChannels?.map((c) => c.id) ?? []),
+    [linkedChannels]
+  );
 
   const handleToggleClick = () => onToggle(alert.id);
   const handleDeleteClick = () => onDelete(alert.id);
+  const handleTestAlertClick = () => onTestAlert(alert.id);
+  const handleDryRunClick = () => onDryRun(alert.id);
 
   const handleChannelToggle = useCallback(
     (channelId: string) => {
@@ -249,11 +364,29 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete }: AlertCardProps)
     provider: c.provider,
   })) ?? [];
 
+  // Calculate progress for pending/cooldown states
+  const pendingProgress = useMemo(
+    () =>
+      alert.state === "PENDING"
+        ? calculatePendingProgress(alert.stateChangedAt, alert.pendingMins)
+        : 0,
+    [alert.state, alert.stateChangedAt, alert.pendingMins]
+  );
+
+  const cooldownProgress = useMemo(
+    () =>
+      alert.state === "FIRING"
+        ? calculateCooldownProgress(alert.lastTriggeredAt, alert.cooldownMins)
+        : 100,
+    [alert.state, alert.lastTriggeredAt, alert.cooldownMins]
+  );
+
   return (
     <div
       className={cn(
         "rounded-lg border p-4 space-y-4",
-        !alert.enabled ? "opacity-60 bg-muted/50" : "bg-card"
+        !alert.enabled ? "opacity-60 bg-muted/50" : "bg-card",
+        alert.state === "FIRING" && "border-red-500/50"
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -271,15 +404,19 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete }: AlertCardProps)
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h4 className="font-medium">{alert.name}</h4>
+              <SeverityBadge severity={alert.severity} className="text-xs" />
               {!alert.enabled && (
                 <Badge variant="secondary" className="text-xs">
                   Disabled
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              {ALERT_TYPE_LABELS[alert.type]} {operatorDisplay} {thresholdDisplay}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                {ALERT_TYPE_LABELS[alert.type]} {operatorDisplay} {thresholdDisplay}
+              </p>
+              <StateIndicator state={alert.state} />
+            </div>
             <p className="text-xs text-muted-foreground">
               Window: {alert.windowMins}min
               {alert._count.history > 0 && (
@@ -300,6 +437,15 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete }: AlertCardProps)
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleTestAlertClick}>
+                <Play className="mr-2 h-4 w-4" />
+                Test Alert
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDryRunClick}>
+                <FlaskConical className="mr-2 h-4 w-4" />
+                Dry Run
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleDeleteClick} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -308,6 +454,32 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete }: AlertCardProps)
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Pending Progress Bar */}
+      {alert.state === "PENDING" && alert.pendingMins > 0 && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-amber-600">Pending confirmation...</span>
+            <span className="text-muted-foreground">
+              {Math.round(pendingProgress)}% ({alert.pendingMins}min threshold)
+            </span>
+          </div>
+          <Progress value={pendingProgress} className="h-1.5 bg-amber-100" />
+        </div>
+      )}
+
+      {/* Cooldown Progress Bar */}
+      {alert.state === "FIRING" && cooldownProgress < 100 && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-red-600">In cooldown...</span>
+            <span className="text-muted-foreground">
+              {Math.round(cooldownProgress)}% ({alert.cooldownMins}min cooldown)
+            </span>
+          </div>
+          <Progress value={cooldownProgress} className="h-1.5 bg-red-100" />
+        </div>
+      )}
 
       <ChannelSelectDropdown
         channels={channels}
