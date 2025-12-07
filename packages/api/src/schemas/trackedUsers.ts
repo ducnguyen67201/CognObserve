@@ -11,7 +11,7 @@ export const TrackedUserInputSchema = z.object({
   /** User email */
   email: z.string().email().optional(),
   /** Custom metadata (plan, company, etc.) */
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type TrackedUserInput = z.infer<typeof TrackedUserInputSchema>;
 
@@ -22,7 +22,7 @@ export const UpdateTrackedUserSchema = z.object({
   id: z.string(),
   name: z.string().max(255).optional(),
   email: z.string().email().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type UpdateTrackedUserInput = z.infer<typeof UpdateTrackedUserSchema>;
 
@@ -56,7 +56,7 @@ export const TrackedUserWithStatsSchema = z.object({
   externalId: z.string(),
   name: z.string().nullable(),
   email: z.string().nullable(),
-  metadata: z.record(z.unknown()).nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
   firstSeenAt: z.date(),
   lastSeenAt: z.date(),
   // Aggregated stats

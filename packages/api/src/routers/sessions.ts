@@ -173,7 +173,7 @@ export const sessionsRouter = createRouter({
         projectId: z.string(),
         externalId: z.string().min(1).max(255).optional(),
         name: z.string().max(255).optional(),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .use(workspaceMiddleware)
@@ -213,7 +213,7 @@ export const sessionsRouter = createRouter({
         workspaceSlug: z.string().min(1),
         id: z.string(),
         name: z.string().max(255).optional(),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .use(workspaceMiddleware)

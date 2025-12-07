@@ -69,9 +69,9 @@ const SpanInputSchema = z.object({
   endTime: z.string().optional(),
   input: z.unknown().optional(),
   output: z.unknown().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   model: z.string().optional(),
-  modelParameters: z.record(z.unknown()).optional(),
+  modelParameters: z.record(z.string(), z.unknown()).optional(),
   promptTokens: z.number().optional(),
   completionTokens: z.number().optional(),
   totalTokens: z.number().optional(),
@@ -88,7 +88,7 @@ const TraceIngestSchema = z.object({
     sessionId: z.string().optional(),
     userId: z.string().optional(),
     user: UserInputSchema,
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
   spans: z.array(SpanInputSchema),
 });
@@ -104,7 +104,7 @@ const ScoreIngestSchema = z.object({
   name: z.string(),
   value: z.union([z.number(), z.string(), z.boolean()]),
   comment: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ============================================================

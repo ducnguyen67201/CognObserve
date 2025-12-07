@@ -525,224 +525,112 @@ export * from "./activities";
 
 **File:** `apps/worker/src/temporal/activities/trace.activities.ts`
 
+> **NOTE:** Activities are READ-ONLY for database. All mutations go through tRPC internal procedures.
+
 ```typescript
 import { prisma } from "@cognobserve/db";
-import { Decimal } from "@cognobserve/db/generated/prisma/runtime/library";
-import type { TraceWorkflowInput, SpanInput } from "../types";
+import { getInternalCaller } from "@/lib/trpc-caller";
+import type { TraceWorkflowInput } from "../types";
 
 /**
- * Persist trace and spans to database (atomic transaction)
+ * Persist trace and spans via internal tRPC.
+ * Temporal activities are read-only - mutations go through tRPC.
  */
 export async function persistTrace(input: TraceWorkflowInput): Promise<string> {
-  const trace = await prisma.$transaction(async (tx) => {
-    // Resolve user if provided
-    let internalUserId: string | null = null;
-    if (input.userId) {
-      const user = await tx.trackedUser.upsert({
-        where: {
-          projectId_externalId: {
-            projectId: input.projectId,
-            externalId: input.userId,
-          },
-        },
-        create: {
-          projectId: input.projectId,
-          externalId: input.userId,
-          name: input.user?.name ?? null,
-          email: input.user?.email ?? null,
-          metadata: input.user ?? {},
-        },
-        update: {
-          lastSeenAt: new Date(),
-          ...(input.user?.name && { name: input.user.name }),
-          ...(input.user?.email && { email: input.user.email }),
-        },
-      });
-      internalUserId = user.id;
-    }
+  console.log(`[Activity:persistTrace] Processing trace: ${input.id}`);
 
-    // Resolve session if provided
-    let internalSessionId: string | null = null;
-    if (input.sessionId) {
-      const session = await tx.traceSession.upsert({
-        where: {
-          projectId_externalId: {
-            projectId: input.projectId,
-            externalId: input.sessionId,
-          },
-        },
-        create: {
-          projectId: input.projectId,
-          externalId: input.sessionId,
-          userId: internalUserId,
-        },
-        update: {
-          updatedAt: new Date(),
-          ...(internalUserId && { userId: internalUserId }),
-        },
-      });
-      internalSessionId = session.id;
-    }
+  const caller = getInternalCaller();
 
-    // Create trace
-    const trace = await tx.trace.create({
-      data: {
-        id: input.id,
-        projectId: input.projectId,
-        name: input.name,
-        timestamp: new Date(input.timestamp),
-        metadata: input.metadata ?? {},
-        sessionId: internalSessionId,
-        userId: internalUserId,
-      },
-    });
-
-    // Create spans
-    if (input.spans.length > 0) {
-      await tx.span.createMany({
-        data: input.spans.map((span) => convertSpan(span, trace.id)),
-      });
-    }
-
-    return trace;
+  const result = await caller.internal.ingestTrace({
+    trace: {
+      id: input.id,
+      projectId: input.projectId,
+      name: input.name,
+      timestamp: input.timestamp,
+      sessionId: input.sessionId,
+      userId: input.userId,
+      user: input.user,
+      metadata: input.metadata,
+    },
+    spans: input.spans.map((span) => ({
+      id: span.id,
+      parentSpanId: span.parentSpanId,
+      name: span.name,
+      startTime: span.startTime,
+      endTime: span.endTime,
+      input: span.input,
+      output: span.output,
+      metadata: span.metadata,
+      model: span.model,
+      modelParameters: span.modelParameters,
+      promptTokens: span.promptTokens,
+      completionTokens: span.completionTokens,
+      totalTokens: span.totalTokens,
+      level: span.level,
+      statusMessage: span.statusMessage,
+    })),
   });
 
-  return trace.id;
-}
-
-function convertSpan(span: SpanInput, traceId: string) {
-  return {
-    id: span.id,
-    traceId,
-    parentSpanId: span.parentSpanId ?? null,
-    name: span.name,
-    startTime: new Date(span.startTime),
-    endTime: span.endTime ? new Date(span.endTime) : null,
-    input: span.input ?? null,
-    output: span.output ?? null,
-    metadata: span.metadata ?? null,
-    model: span.model ?? null,
-    modelParameters: span.modelParameters ?? null,
-    promptTokens: span.promptTokens ?? null,
-    completionTokens: span.completionTokens ?? null,
-    totalTokens: span.totalTokens ?? null,
-    level: span.level ?? "DEFAULT",
-    statusMessage: span.statusMessage ?? null,
-  };
+  console.log(`[Activity:persistTrace] Trace ${input.id} persisted via tRPC`);
+  return result.traceId;
 }
 
 /**
- * Calculate costs for spans with LLM usage
+ * Calculate costs for spans with LLM usage via tRPC.
  */
 export async function calculateTraceCosts(traceId: string): Promise<number> {
-  const spans = await prisma.span.findMany({
-    where: {
-      traceId,
-      model: { not: null },
-      totalTokens: { gt: 0 },
-      totalCost: null,
-    },
-  });
+  console.log(`[Activity:calculateTraceCosts] Calculating costs for trace: ${traceId}`);
 
-  let updatedCount = 0;
+  const caller = getInternalCaller();
+  const result = await caller.internal.calculateTraceCosts({ traceId });
 
-  for (const span of spans) {
-    if (!span.model) continue;
-
-    const pricing = await prisma.modelPricing.findFirst({
-      where: {
-        model: span.model,
-        effectiveFrom: { lte: span.startTime },
-        OR: [{ effectiveTo: null }, { effectiveTo: { gte: span.startTime } }],
-      },
-      orderBy: { effectiveFrom: "desc" },
-    });
-
-    if (!pricing) continue;
-
-    const inputTokens = span.promptTokens ?? 0;
-    const outputTokens = span.completionTokens ?? 0;
-
-    const inputCost = new Decimal(inputTokens)
-      .mul(pricing.inputPricePerMillion)
-      .div(1_000_000);
-    const outputCost = new Decimal(outputTokens)
-      .mul(pricing.outputPricePerMillion)
-      .div(1_000_000);
-    const totalCost = inputCost.add(outputCost);
-
-    await prisma.span.update({
-      where: { id: span.id },
-      data: { inputCost, outputCost, totalCost, pricingId: pricing.id },
-    });
-
-    updatedCount++;
-  }
-
-  return updatedCount;
+  console.log(`[Activity:calculateTraceCosts] Updated costs for ${result.updatedCount} spans`);
+  return result.updatedCount;
 }
 
 /**
- * Update daily cost summary aggregates
+ * Update daily cost summary aggregates via tRPC.
  */
 export async function updateCostSummaries(
   projectId: string,
   dateStr: string
 ): Promise<void> {
-  const date = new Date(dateStr);
-  const dateOnly = date.toISOString().split("T")[0]!;
-  const startOfDay = new Date(dateOnly);
-  const endOfDay = new Date(startOfDay);
-  endOfDay.setDate(endOfDay.getDate() + 1);
+  console.log(`[Activity:updateCostSummaries] Updating summaries for project: ${projectId}`);
 
-  const summaries = await prisma.span.groupBy({
-    by: ["model"],
-    where: {
-      trace: { projectId },
-      startTime: { gte: startOfDay, lt: endOfDay },
-      totalCost: { not: null },
+  const caller = getInternalCaller();
+  await caller.internal.updateCostSummaries({ projectId, date: dateStr });
+
+  console.log(`[Activity:updateCostSummaries] Cost summaries updated via tRPC`);
+}
+
+// ============================================================
+// READ-ONLY HELPER FUNCTIONS (Database reads are allowed)
+// ============================================================
+
+/**
+ * Get trace details for validation (read-only)
+ */
+export async function getTraceDetails(traceId: string): Promise<{
+  id: string;
+  projectId: string;
+  spanCount: number;
+} | null> {
+  const trace = await prisma.trace.findUnique({
+    where: { id: traceId },
+    select: {
+      id: true,
+      projectId: true,
+      _count: { select: { spans: true } },
     },
-    _sum: {
-      promptTokens: true,
-      completionTokens: true,
-      totalTokens: true,
-      inputCost: true,
-      outputCost: true,
-      totalCost: true,
-    },
-    _count: true,
   });
 
-  for (const summary of summaries) {
-    if (!summary.model) continue;
+  if (!trace) return null;
 
-    await prisma.costDailySummary.upsert({
-      where: {
-        projectId_date_model: { projectId, date: startOfDay, model: summary.model },
-      },
-      create: {
-        projectId,
-        date: startOfDay,
-        model: summary.model,
-        inputTokens: BigInt(summary._sum.promptTokens ?? 0),
-        outputTokens: BigInt(summary._sum.completionTokens ?? 0),
-        totalTokens: BigInt(summary._sum.totalTokens ?? 0),
-        inputCost: summary._sum.inputCost ?? new Decimal(0),
-        outputCost: summary._sum.outputCost ?? new Decimal(0),
-        totalCost: summary._sum.totalCost ?? new Decimal(0),
-        spanCount: summary._count,
-      },
-      update: {
-        inputTokens: BigInt(summary._sum.promptTokens ?? 0),
-        outputTokens: BigInt(summary._sum.completionTokens ?? 0),
-        totalTokens: BigInt(summary._sum.totalTokens ?? 0),
-        inputCost: summary._sum.inputCost ?? new Decimal(0),
-        outputCost: summary._sum.outputCost ?? new Decimal(0),
-        totalCost: summary._sum.totalCost ?? new Decimal(0),
-        spanCount: summary._count,
-      },
-    });
-  }
+  return {
+    id: trace.id,
+    projectId: trace.projectId,
+    spanCount: trace._count.spans,
+  };
 }
 ```
 
@@ -750,97 +638,47 @@ export async function updateCostSummaries(
 
 **File:** `apps/worker/src/temporal/activities/score.activities.ts`
 
+> **NOTE:** Activities are READ-ONLY for database. All mutations go through tRPC internal procedures.
+
 ```typescript
 import { prisma } from "@cognobserve/db";
+import { getInternalCaller } from "@/lib/trpc-caller";
 import type { ScoreWorkflowInput } from "../types";
 
-type ScoreDataType = "NUMERIC" | "CATEGORICAL" | "BOOLEAN";
-
-function inferDataType(value: unknown): ScoreDataType {
-  if (typeof value === "number") return "NUMERIC";
-  if (typeof value === "boolean") return "BOOLEAN";
-  return "CATEGORICAL";
-}
-
 /**
- * Persist score to database with ID resolution
+ * Persist score via internal tRPC.
+ * Temporal activities are read-only - mutations go through tRPC.
  */
 export async function persistScore(input: ScoreWorkflowInput): Promise<string> {
-  // Resolve external session ID
-  let internalSessionId: string | null = null;
-  if (input.sessionId) {
-    const session = await prisma.traceSession.findFirst({
-      where: { projectId: input.projectId, externalId: input.sessionId },
-    });
-    internalSessionId = session?.id ?? null;
-  }
+  console.log(`[Activity:persistScore] Processing score: ${input.id}`);
 
-  // Resolve external user ID
-  let internalUserId: string | null = null;
-  if (input.trackedUserId) {
-    const user = await prisma.trackedUser.findFirst({
-      where: { projectId: input.projectId, externalId: input.trackedUserId },
-    });
-    internalUserId = user?.id ?? null;
-  }
+  const caller = getInternalCaller();
+  const result = await caller.internal.ingestScore(input);
 
-  const dataType = inferDataType(input.value);
-
-  const score = await prisma.score.create({
-    data: {
-      id: input.id,
-      projectId: input.projectId,
-      configId: input.configId ?? null,
-      traceId: input.traceId ?? null,
-      spanId: input.spanId ?? null,
-      sessionId: internalSessionId,
-      trackedUserId: internalUserId,
-      name: input.name,
-      dataType,
-      numericValue: dataType === "NUMERIC" ? (input.value as number) : null,
-      categoricalValue: dataType === "CATEGORICAL" ? (input.value as string) : null,
-      booleanValue: dataType === "BOOLEAN" ? (input.value as boolean) : null,
-      source: "SDK",
-      comment: input.comment ?? null,
-      metadata: input.metadata ?? null,
-    },
-  });
-
-  return score.id;
+  console.log(`[Activity:persistScore] Score ${input.id} persisted via tRPC`);
+  return result.scoreId;
 }
 
 /**
- * Validate score against config bounds
+ * Validate score against config bounds via tRPC.
  */
 export async function validateScoreConfig(
   configId: string,
   value: unknown
 ): Promise<{ valid: boolean; error?: string }> {
-  const config = await prisma.scoreConfig.findUnique({ where: { id: configId } });
+  const caller = getInternalCaller();
+  return caller.internal.validateScoreConfig({ configId, value });
+}
 
-  if (!config) return { valid: false, error: "Score config not found" };
-  if (config.isArchived) return { valid: false, error: "Score config is archived" };
+// ============================================================
+// READ-ONLY HELPER FUNCTIONS (Database reads are allowed)
+// ============================================================
 
-  if (config.dataType === "NUMERIC") {
-    if (typeof value !== "number") return { valid: false, error: "Value must be numeric" };
-    if (config.minValue !== null && value < config.minValue)
-      return { valid: false, error: `Value must be >= ${config.minValue}` };
-    if (config.maxValue !== null && value > config.maxValue)
-      return { valid: false, error: `Value must be <= ${config.maxValue}` };
-  }
-
-  if (config.dataType === "CATEGORICAL") {
-    if (typeof value !== "string") return { valid: false, error: "Value must be string" };
-    const categories = config.categories as string[] | null;
-    if (categories && !categories.includes(value))
-      return { valid: false, error: `Value must be one of: ${categories.join(", ")}` };
-  }
-
-  if (config.dataType === "BOOLEAN") {
-    if (typeof value !== "boolean") return { valid: false, error: "Value must be boolean" };
-  }
-
-  return { valid: true };
+/**
+ * Get score config for validation (read-only)
+ */
+export async function getScoreConfig(configId: string) {
+  return prisma.scoreConfig.findUnique({ where: { id: configId } });
 }
 ```
 
@@ -848,13 +686,16 @@ export async function validateScoreConfig(
 
 **File:** `apps/worker/src/temporal/activities/alert.activities.ts`
 
+> **NOTE:** Activities are READ-ONLY for database. All mutations go through tRPC internal procedures.
+
 ```typescript
 import { prisma } from "@cognobserve/db";
-import { env } from "../../lib/env";
+import { getInternalCaller } from "@/lib/trpc-caller";
+import { getMetric } from "@cognobserve/api/lib/alerting";
 import type { AlertEvaluationResult, AlertStateTransition } from "../types";
 
 /**
- * Evaluate alert condition against current metrics
+ * Evaluate alert condition against current metrics (READ-ONLY)
  */
 export async function evaluateAlert(alertId: string): Promise<AlertEvaluationResult> {
   const alert = await prisma.alert.findUnique({
@@ -872,117 +713,36 @@ export async function evaluateAlert(alertId: string): Promise<AlertEvaluationRes
     };
   }
 
-  const windowStart = new Date(Date.now() - alert.windowMins * 60 * 1000);
-  let currentValue = 0;
-  let sampleCount = 0;
-
-  if (alert.type === "ERROR_RATE") {
-    const counts = await prisma.span.groupBy({
-      by: ["level"],
-      where: {
-        trace: { projectId: alert.projectId },
-        startTime: { gte: windowStart },
-      },
-      _count: true,
-    });
-
-    const total = counts.reduce((sum, c) => sum + c._count, 0);
-    const errors = counts.find((c) => c.level === "ERROR")?._count ?? 0;
-    currentValue = total > 0 ? (errors / total) * 100 : 0;
-    sampleCount = total;
-  } else if (alert.type.startsWith("LATENCY_")) {
-    const percentile =
-      alert.type === "LATENCY_P50" ? 0.5 : alert.type === "LATENCY_P95" ? 0.95 : 0.99;
-
-    const spans = await prisma.$queryRaw<Array<{ latency: number }>>`
-      SELECT EXTRACT(EPOCH FROM (end_time - start_time)) * 1000 as latency
-      FROM spans s
-      JOIN traces t ON s.trace_id = t.id
-      WHERE t.project_id = ${alert.projectId}
-        AND s.start_time >= ${windowStart}
-        AND s.end_time IS NOT NULL
-      ORDER BY latency
-    `;
-
-    sampleCount = spans.length;
-    if (sampleCount > 0) {
-      const idx = Math.floor(sampleCount * percentile);
-      currentValue = spans[Math.min(idx, sampleCount - 1)]?.latency ?? 0;
-    }
-  }
+  // Use metrics service for aggregations (read-only)
+  const metric = await getMetric(alert.projectId, alert.type, alert.windowMins);
 
   const conditionMet =
     alert.operator === "GREATER_THAN"
-      ? currentValue > alert.threshold
-      : currentValue < alert.threshold;
+      ? metric.value > alert.threshold
+      : metric.value < alert.threshold;
 
-  await prisma.alert.update({
-    where: { id: alertId },
-    data: { lastEvaluatedAt: new Date() },
-  });
-
-  return { alertId, conditionMet, currentValue, threshold: alert.threshold, sampleCount };
+  return {
+    alertId,
+    conditionMet,
+    currentValue: metric.value,
+    threshold: alert.threshold,
+    sampleCount: metric.sampleCount,
+  };
 }
 
 /**
- * Transition alert state based on evaluation result
+ * Transition alert state via tRPC (mutations go through API)
  */
 export async function transitionAlertState(
   alertId: string,
   conditionMet: boolean
 ): Promise<AlertStateTransition> {
-  const alert = await prisma.alert.findUnique({ where: { id: alertId } });
-  if (!alert) throw new Error(`Alert not found: ${alertId}`);
-
-  const previousState = alert.state;
-  let newState = previousState;
-  let shouldNotify = false;
-
-  const now = new Date();
-  const stateAge = alert.stateChangedAt
-    ? now.getTime() - alert.stateChangedAt.getTime()
-    : Infinity;
-  const pendingMs = alert.pendingMins * 60 * 1000;
-  const cooldownMs = alert.cooldownMins * 60 * 1000;
-
-  // State machine
-  if (conditionMet) {
-    if (previousState === "INACTIVE") newState = "PENDING";
-    else if (previousState === "PENDING" && stateAge >= pendingMs) {
-      newState = "FIRING";
-      shouldNotify = true;
-    } else if (previousState === "RESOLVED") newState = "PENDING";
-    else if (previousState === "FIRING") {
-      const lastNotifyAge = alert.lastTriggeredAt
-        ? now.getTime() - alert.lastTriggeredAt.getTime()
-        : Infinity;
-      shouldNotify = lastNotifyAge >= cooldownMs;
-    }
-  } else {
-    if (previousState === "FIRING") {
-      newState = "RESOLVED";
-      shouldNotify = true;
-    } else if (previousState === "PENDING" || previousState === "RESOLVED") {
-      newState = "INACTIVE";
-    }
-  }
-
-  if (newState !== previousState || shouldNotify) {
-    await prisma.alert.update({
-      where: { id: alertId },
-      data: {
-        state: newState,
-        ...(newState !== previousState && { stateChangedAt: now }),
-        ...(shouldNotify && { lastTriggeredAt: now }),
-      },
-    });
-  }
-
-  return { alertId, previousState, newState, shouldNotify };
+  const caller = getInternalCaller();
+  return caller.internal.transitionAlertState({ alertId, conditionMet });
 }
 
 /**
- * Dispatch notification to configured channels
+ * Dispatch notification via tRPC (mutations go through API)
  */
 export async function dispatchNotification(
   alertId: string,
@@ -990,53 +750,41 @@ export async function dispatchNotification(
   value: number,
   threshold: number
 ): Promise<boolean> {
-  const alert = await prisma.alert.findUnique({
+  const caller = getInternalCaller();
+  const result = await caller.internal.dispatchNotification({
+    alertId,
+    state,
+    value,
+    threshold,
+  });
+  return result.sentCount > 0;
+}
+
+// ============================================================
+// READ-ONLY HELPER FUNCTIONS (Database reads are allowed)
+// ============================================================
+
+/**
+ * Get alert with channels for notification (read-only)
+ */
+export async function getAlertWithChannels(alertId: string) {
+  return prisma.alert.findUnique({
     where: { id: alertId },
-    include: { channelLinks: { include: { channel: true } } },
-  });
-
-  if (!alert || alert.channelLinks.length === 0) return true;
-
-  const response = await fetch(`${env.WEB_API_URL}/api/internal/alerts/trigger-batch`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Internal-Secret": env.INTERNAL_API_SECRET,
-    },
-    body: JSON.stringify({
-      items: [
-        {
-          alertId,
-          severity: alert.severity,
-          state,
-          value,
-          threshold,
-          channels: alert.channelLinks.map((l) => ({
-            id: l.channel.id,
-            provider: l.channel.provider,
-            config: l.channel.config,
-          })),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    console.error(`Failed to dispatch notification: ${response.status}`);
-    return false;
-  }
-
-  await prisma.alertHistory.create({
-    data: {
-      alertId,
-      value,
-      threshold,
-      state: state as any,
-      notifiedVia: alert.channelLinks.map((l) => l.channel.provider),
+    include: {
+      project: true,
+      channelLinks: { include: { channel: true } },
     },
   });
+}
 
-  return true;
+/**
+ * Get all enabled alerts for a project (read-only)
+ */
+export async function getEnabledAlerts(projectId: string) {
+  return prisma.alert.findMany({
+    where: { projectId, enabled: true },
+    select: { id: true },
+  });
 }
 ```
 

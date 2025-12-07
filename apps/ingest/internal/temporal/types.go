@@ -56,9 +56,9 @@ type ScoreWorkflowInput struct {
 
 // TraceWorkflowResult matches TypeScript TraceWorkflowResult
 type TraceWorkflowResult struct {
-	TraceID          string `json:"traceId"`
-	SpanCount        int    `json:"spanCount"`
-	CostsCalculated  int    `json:"costsCalculated"`
+	TraceID         string `json:"traceId"`
+	SpanCount       int    `json:"spanCount"`
+	CostsCalculated int    `json:"costsCalculated"`
 }
 
 // ScoreWorkflowResult matches TypeScript ScoreWorkflowResult

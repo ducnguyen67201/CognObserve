@@ -23,7 +23,7 @@ export const CreateChannelSchema = z.object({
   workspaceSlug: z.string().min(1),
   name: ChannelNameSchema,
   provider: ChannelProviderSchema,
-  config: z.record(z.unknown()),
+  config: z.record(z.string(), z.unknown()),
 });
 
 export type CreateChannelInput = z.infer<typeof CreateChannelSchema>;
@@ -35,7 +35,7 @@ export const UpdateChannelSchema = z.object({
   workspaceSlug: z.string().min(1),
   id: z.string().min(1),
   name: ChannelNameSchema.optional(),
-  config: z.record(z.unknown()).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type UpdateChannelInput = z.infer<typeof UpdateChannelSchema>;

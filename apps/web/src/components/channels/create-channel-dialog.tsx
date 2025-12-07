@@ -2,7 +2,7 @@
 
 import { useCallback, ReactNode, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@/lib/form";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import {
@@ -44,12 +44,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const createChannelSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
-  provider: z.string().min(1),
+  provider: z.string().min(1).default("DISCORD"),
   webhookUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
 });
 
-type CreateChannelInput = z.infer<typeof createChannelSchema>;
+type CreateChannelInput = z.output<typeof createChannelSchema>;
 
 interface CreateChannelDialogProps {
   open: boolean;
@@ -91,7 +91,7 @@ export function CreateChannelDialog({
     return "DISCORD";
   }, [availableProviders]);
 
-  const form = useForm({
+  const form = useForm<CreateChannelInput>({
     resolver: zodResolver(createChannelSchema),
     defaultValues: {
       name: "",

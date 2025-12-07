@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@/lib/form";
 import { Loader2, UserPlus, Globe, Check, Plus } from "lucide-react";
 import { z } from "zod";
 import { showError } from "@/lib/errors";
@@ -38,26 +38,33 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
 
-const addMemberSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("user"),
-    value: z.string().email("Please enter a valid email address"),
-    role: z.enum(["ADMIN", "MEMBER"]),
-  }),
-  z.object({
-    type: z.literal("domain"),
-    value: z
-      .string()
-      .min(3, "Domain must be at least 3 characters")
-      .regex(
-        /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i,
-        "Invalid domain format (e.g., example.com)"
-      ),
-    role: z.enum(["ADMIN", "MEMBER"]),
-  }),
-]);
+// Base schema for form handling - validated more specifically in handleSubmit
+const addMemberFormSchema = z.object({
+  type: z.enum(["user", "domain"]),
+  value: z.string().min(1, "This field is required"),
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
 
-type AddMemberInput = z.infer<typeof addMemberSchema>;
+// More specific validation schemas for each type
+const userSchema = z.object({
+  type: z.literal("user"),
+  value: z.string().email("Please enter a valid email address"),
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
+
+const domainSchema = z.object({
+  type: z.literal("domain"),
+  value: z
+    .string()
+    .min(3, "Domain must be at least 3 characters")
+    .regex(
+      /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i,
+      "Invalid domain format (e.g., example.com)"
+    ),
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
+
+type AddMemberFormInput = z.infer<typeof addMemberFormSchema>;
 
 interface AddedItem {
   type: "user" | "domain";
@@ -91,12 +98,12 @@ export function AddMemberDialog({
     },
   });
 
-  const form = useForm({
-    resolver: zodResolver(addMemberSchema),
+  const form = useForm<AddMemberFormInput>({
+    resolver: zodResolver(addMemberFormSchema),
     defaultValues: {
-      type: "user" as const,
+      type: "user",
       value: "",
-      role: "MEMBER" as const,
+      role: "MEMBER",
     },
   });
 
@@ -112,9 +119,15 @@ export function AddMemberDialog({
   );
 
   const handleSubmit = useCallback(
-    async (data: AddMemberInput, closeAfter: boolean) => {
+    async (data: AddMemberFormInput, closeAfter: boolean) => {
       try {
+        // Additional validation based on type
         if (data.type === "user") {
+          const result = userSchema.safeParse(data);
+          if (!result.success) {
+            form.setError("value", { message: "Please enter a valid email address" });
+            return;
+          }
           await inviteMember.mutateAsync({
             workspaceId,
             email: data.value,
@@ -122,6 +135,11 @@ export function AddMemberDialog({
           });
           showSuccess("Member added", `${data.value} has been added to the workspace.`);
         } else {
+          const result = domainSchema.safeParse(data);
+          if (!result.success) {
+            form.setError("value", { message: "Invalid domain format (e.g., example.com)" });
+            return;
+          }
           await createDomain.mutateAsync({
             workspaceId,
             domain: data.value.toLowerCase(),

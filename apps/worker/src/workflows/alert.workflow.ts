@@ -8,7 +8,6 @@
 
 import {
   proxyActivities,
-  sleep,
   condition,
   defineSignal,
   setHandler,

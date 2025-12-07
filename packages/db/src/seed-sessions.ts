@@ -66,6 +66,7 @@ const MODELS = [
 ];
 
 // Span levels are defined in SpanLevel enum from Prisma
+type SpanLevelValue = "DEBUG" | "DEFAULT" | "WARNING" | "ERROR";
 
 // User data for realistic profiles
 const FIRST_NAMES = [
@@ -302,7 +303,7 @@ async function main() {
         if (spanTotalCost) totalCost += spanTotalCost;
 
         // Determine span level (mostly DEFAULT, some errors/warnings)
-        let level: (typeof SPAN_LEVELS)[number] = "DEFAULT";
+        let level: SpanLevelValue = "DEFAULT";
         if (Math.random() < 0.03) level = "ERROR";
         else if (Math.random() < 0.08) level = "WARNING";
         else if (Math.random() < 0.15) level = "DEBUG";
