@@ -1,34 +1,39 @@
 /**
  * Alert Evaluator
  *
- * Worker job that evaluates alerts and sends notifications.
- * Runs on a cron schedule (every 1 minute).
+ * Worker job that evaluates alerts and triggers notifications via web API.
+ * Runs on a cron schedule (every 10 seconds).
  */
 
+import { env } from "@/lib/env";
 import { prisma } from "@cognobserve/db";
-import type { Alert, AlertChannel, Project } from "@cognobserve/db";
+import type { Alert, Project } from "@cognobserve/db";
 import {
-  AlertingAdapter,
   getMetric,
   type AlertPayload,
   type AlertOperator,
   type AlertType,
 } from "@cognobserve/api/lib/alerting";
 
-const EVALUATION_INTERVAL_MS = 60_000; // 1 minute
+const EVALUATION_INTERVAL_MS = 10_000; // 10 seconds
+const INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
-type AlertWithRelations = Alert & {
-  channels: AlertChannel[];
+type AlertWithProject = Alert & {
   project: Pick<Project, "id" | "name" | "workspaceId">;
 };
 
 /**
  * Alert evaluation worker job.
- * Runs every minute to check enabled alerts against thresholds.
+ * Runs every 10 seconds to check enabled alerts against thresholds.
  */
 export class AlertEvaluator {
   private isRunning = false;
   private intervalId?: NodeJS.Timeout;
+  private triggerUrl: string;
+
+  constructor() {
+    this.triggerUrl = `${env.WEB_API_URL}/api/internal/alerts/trigger`;
+  }
 
   /**
    * Start the evaluator loop
@@ -88,7 +93,7 @@ export class AlertEvaluator {
   /**
    * Get alerts that are enabled and not in cooldown
    */
-  private async getEligibleAlerts(): Promise<AlertWithRelations[]> {
+  private async getEligibleAlerts(): Promise<AlertWithProject[]> {
     return prisma.alert.findMany({
       where: {
         enabled: true,
@@ -102,7 +107,6 @@ export class AlertEvaluator {
         ],
       },
       include: {
-        channels: true,
         project: {
           select: { id: true, name: true, workspaceId: true },
         },
@@ -113,11 +117,11 @@ export class AlertEvaluator {
   /**
    * Evaluate a single alert
    */
-  private async evaluateAlert(alert: AlertWithRelations): Promise<void> {
+  private async evaluateAlert(alert: AlertWithProject): Promise<void> {
     try {
       // Check cooldown
       if (alert.lastTriggeredAt) {
-        const cooldownMs = alert.cooldownMins * 60 * 1000;
+        const cooldownMs = alert.cooldownMins * 5 * 1000; // 1 minutes
         const timeSinceLastTrigger =
           Date.now() - alert.lastTriggeredAt.getTime();
         if (timeSinceLastTrigger < cooldownMs) {
@@ -166,50 +170,50 @@ export class AlertEvaluator {
         triggeredAt: new Date().toISOString(),
       };
 
-      // Send notifications
-      const notifiedVia: string[] = [];
-      for (const channel of alert.channels) {
-        try {
-          const adapter = AlertingAdapter(channel.provider);
-          const result = await adapter.send(channel.config, payload);
-
-          if (result.success) {
-            notifiedVia.push(channel.provider);
-            console.log(
-              `AlertEvaluator: Sent notification via ${channel.provider}`
-            );
-          } else {
-            console.error(
-              `AlertEvaluator: Failed to send via ${channel.provider}:`,
-              result.error
-            );
-          }
-        } catch (error) {
-          console.error(
-            `AlertEvaluator: Error sending via ${channel.provider}:`,
-            error
-          );
-        }
-      }
-
-      // Record history and update last triggered
-      await prisma.$transaction([
-        prisma.alertHistory.create({
-          data: {
-            alertId: alert.id,
-            value: metric.value,
-            threshold: alert.threshold,
-            notifiedVia,
-          },
-        }),
-        prisma.alert.update({
-          where: { id: alert.id },
-          data: { lastTriggeredAt: new Date() },
-        }),
-      ]);
+      // Call web API to send notifications
+      await this.triggerAlert(alert.id, payload);
     } catch (error) {
       console.error(
         `AlertEvaluator: Error evaluating alert ${alert.id}:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Call web API to trigger alert notifications
+   */
+  private async triggerAlert(
+    alertId: string,
+    payload: AlertPayload
+  ): Promise<void> {
+    try {
+      const response = await fetch(this.triggerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          [INTERNAL_SECRET_HEADER]: env.INTERNAL_API_SECRET,
+        },
+        body: JSON.stringify({ alertId, payload }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(
+          `AlertEvaluator: Failed to trigger alert ${alertId}:`,
+          error
+        );
+        return;
+      }
+
+      const result = (await response.json()) as { notifiedVia?: string[] };
+      console.log(
+        `AlertEvaluator: Alert triggered successfully - ` +
+          `notified via: ${result.notifiedVia?.join(", ") || "none"}`
+      );
+    } catch (error) {
+      console.error(
+        `AlertEvaluator: Error calling trigger API for ${alertId}:`,
         error
       );
     }

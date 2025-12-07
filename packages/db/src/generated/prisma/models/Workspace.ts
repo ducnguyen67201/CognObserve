@@ -193,6 +193,7 @@ export type WorkspaceWhereInput = {
   members?: Prisma.WorkspaceMemberListRelationFilter
   projects?: Prisma.ProjectListRelationFilter
   allowedDomains?: Prisma.AllowedDomainListRelationFilter
+  notificationChannels?: Prisma.NotificationChannelListRelationFilter
 }
 
 export type WorkspaceOrderByWithRelationInput = {
@@ -205,6 +206,7 @@ export type WorkspaceOrderByWithRelationInput = {
   members?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
   projects?: Prisma.ProjectOrderByRelationAggregateInput
   allowedDomains?: Prisma.AllowedDomainOrderByRelationAggregateInput
+  notificationChannels?: Prisma.NotificationChannelOrderByRelationAggregateInput
 }
 
 export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
@@ -220,6 +222,7 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   members?: Prisma.WorkspaceMemberListRelationFilter
   projects?: Prisma.ProjectListRelationFilter
   allowedDomains?: Prisma.AllowedDomainListRelationFilter
+  notificationChannels?: Prisma.NotificationChannelListRelationFilter
 }, "id" | "slug">
 
 export type WorkspaceOrderByWithAggregationInput = {
@@ -256,6 +259,7 @@ export type WorkspaceCreateInput = {
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateInput = {
@@ -268,6 +272,7 @@ export type WorkspaceUncheckedCreateInput = {
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUpdateInput = {
@@ -280,6 +285,7 @@ export type WorkspaceUpdateInput = {
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateInput = {
@@ -292,6 +298,7 @@ export type WorkspaceUncheckedUpdateInput = {
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyInput = {
@@ -399,6 +406,20 @@ export type WorkspaceUpdateOneRequiredWithoutProjectsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutProjectsInput, Prisma.WorkspaceUpdateWithoutProjectsInput>, Prisma.WorkspaceUncheckedUpdateWithoutProjectsInput>
 }
 
+export type WorkspaceCreateNestedOneWithoutNotificationChannelsInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutNotificationChannelsInput, Prisma.WorkspaceUncheckedCreateWithoutNotificationChannelsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutNotificationChannelsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutNotificationChannelsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutNotificationChannelsInput, Prisma.WorkspaceUncheckedCreateWithoutNotificationChannelsInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutNotificationChannelsInput
+  upsert?: Prisma.WorkspaceUpsertWithoutNotificationChannelsInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutNotificationChannelsInput, Prisma.WorkspaceUpdateWithoutNotificationChannelsInput>, Prisma.WorkspaceUncheckedUpdateWithoutNotificationChannelsInput>
+}
+
 export type WorkspaceCreateWithoutMembersInput = {
   id?: string
   name: string
@@ -408,6 +429,7 @@ export type WorkspaceCreateWithoutMembersInput = {
   updatedAt?: Date | string
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutMembersInput = {
@@ -419,6 +441,7 @@ export type WorkspaceUncheckedCreateWithoutMembersInput = {
   updatedAt?: Date | string
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutMembersInput = {
@@ -446,6 +469,7 @@ export type WorkspaceUpdateWithoutMembersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutMembersInput = {
@@ -457,6 +481,7 @@ export type WorkspaceUncheckedUpdateWithoutMembersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutAllowedDomainsInput = {
@@ -468,6 +493,7 @@ export type WorkspaceCreateWithoutAllowedDomainsInput = {
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutAllowedDomainsInput = {
@@ -479,6 +505,7 @@ export type WorkspaceUncheckedCreateWithoutAllowedDomainsInput = {
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutAllowedDomainsInput = {
@@ -506,6 +533,7 @@ export type WorkspaceUpdateWithoutAllowedDomainsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutAllowedDomainsInput = {
@@ -517,6 +545,7 @@ export type WorkspaceUncheckedUpdateWithoutAllowedDomainsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutProjectsInput = {
@@ -528,6 +557,7 @@ export type WorkspaceCreateWithoutProjectsInput = {
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutProjectsInput = {
@@ -539,6 +569,7 @@ export type WorkspaceUncheckedCreateWithoutProjectsInput = {
   updatedAt?: Date | string
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutProjectsInput = {
@@ -566,6 +597,7 @@ export type WorkspaceUpdateWithoutProjectsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
@@ -576,6 +608,71 @@ export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutNotificationChannelsInput = {
+  id?: string
+  name: string
+  slug: string
+  isPersonal?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutNotificationChannelsInput = {
+  id?: string
+  name: string
+  slug: string
+  isPersonal?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutNotificationChannelsInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutNotificationChannelsInput, Prisma.WorkspaceUncheckedCreateWithoutNotificationChannelsInput>
+}
+
+export type WorkspaceUpsertWithoutNotificationChannelsInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutNotificationChannelsInput, Prisma.WorkspaceUncheckedUpdateWithoutNotificationChannelsInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutNotificationChannelsInput, Prisma.WorkspaceUncheckedCreateWithoutNotificationChannelsInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutNotificationChannelsInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutNotificationChannelsInput, Prisma.WorkspaceUncheckedUpdateWithoutNotificationChannelsInput>
+}
+
+export type WorkspaceUpdateWithoutNotificationChannelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutNotificationChannelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
@@ -588,12 +685,14 @@ export type WorkspaceCountOutputType = {
   members: number
   projects: number
   allowedDomains: number
+  notificationChannels: number
 }
 
 export type WorkspaceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | WorkspaceCountOutputTypeCountMembersArgs
   projects?: boolean | WorkspaceCountOutputTypeCountProjectsArgs
   allowedDomains?: boolean | WorkspaceCountOutputTypeCountAllowedDomainsArgs
+  notificationChannels?: boolean | WorkspaceCountOutputTypeCountNotificationChannelsArgs
 }
 
 /**
@@ -627,6 +726,13 @@ export type WorkspaceCountOutputTypeCountAllowedDomainsArgs<ExtArgs extends runt
   where?: Prisma.AllowedDomainWhereInput
 }
 
+/**
+ * WorkspaceCountOutputType without action
+ */
+export type WorkspaceCountOutputTypeCountNotificationChannelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationChannelWhereInput
+}
+
 
 export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -638,6 +744,7 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
   allowedDomains?: boolean | Prisma.Workspace$allowedDomainsArgs<ExtArgs>
+  notificationChannels?: boolean | Prisma.Workspace$notificationChannelsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workspace"]>
 
@@ -673,6 +780,7 @@ export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   members?: boolean | Prisma.Workspace$membersArgs<ExtArgs>
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
   allowedDomains?: boolean | Prisma.Workspace$allowedDomainsArgs<ExtArgs>
+  notificationChannels?: boolean | Prisma.Workspace$notificationChannelsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkspaceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -684,6 +792,7 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     members: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
     projects: Prisma.$ProjectPayload<ExtArgs>[]
     allowedDomains: Prisma.$AllowedDomainPayload<ExtArgs>[]
+    notificationChannels: Prisma.$NotificationChannelPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1089,6 +1198,7 @@ export interface Prisma__WorkspaceClient<T, Null = never, ExtArgs extends runtim
   members<T extends Prisma.Workspace$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   projects<T extends Prisma.Workspace$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   allowedDomains<T extends Prisma.Workspace$allowedDomainsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$allowedDomainsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AllowedDomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notificationChannels<T extends Prisma.Workspace$notificationChannelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$notificationChannelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1581,6 +1691,30 @@ export type Workspace$allowedDomainsArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.AllowedDomainScalarFieldEnum | Prisma.AllowedDomainScalarFieldEnum[]
+}
+
+/**
+ * Workspace.notificationChannels
+ */
+export type Workspace$notificationChannelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NotificationChannel
+   */
+  select?: Prisma.NotificationChannelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the NotificationChannel
+   */
+  omit?: Prisma.NotificationChannelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationChannelInclude<ExtArgs> | null
+  where?: Prisma.NotificationChannelWhereInput
+  orderBy?: Prisma.NotificationChannelOrderByWithRelationInput | Prisma.NotificationChannelOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationChannelWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationChannelScalarFieldEnum | Prisma.NotificationChannelScalarFieldEnum[]
 }
 
 /**

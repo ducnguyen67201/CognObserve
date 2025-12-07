@@ -24,6 +24,7 @@ import { analyticsRouter } from "./analytics";
 import { domainsRouter } from "./domains";
 import { costsRouter } from "./costs";
 import { alertsRouter } from "./alerts";
+import { channelsRouter } from "./channels";
 // import { usersRouter } from "./users";
 
 /**
@@ -121,12 +122,28 @@ export const appRouter = createRouter({
    * - alerts.delete      - Delete alert
    * - alerts.toggle      - Enable/disable alert
    * - alerts.history     - Get alert history
-   * - alerts.addChannel  - Add notification channel
-   * - alerts.removeChannel - Remove channel
-   * - alerts.testChannel - Test notification channel
+   * - alerts.addChannel  - Add notification channel (legacy)
+   * - alerts.removeChannel - Remove channel (legacy)
+   * - alerts.testChannel - Test notification channel (legacy)
+   * - alerts.linkChannel - Link workspace channel to alert
+   * - alerts.unlinkChannel - Unlink workspace channel from alert
+   * - alerts.getLinkedChannels - Get channels linked to alert
    * - alerts.getProviders - Get available providers
    */
   alerts: alertsRouter,
+
+  /**
+   * Notification Channels
+   * @see ./channels.ts
+   *
+   * - channels.list   - List workspace notification channels
+   * - channels.get    - Get channel details
+   * - channels.create - Create notification channel
+   * - channels.update - Update channel config
+   * - channels.delete - Delete channel
+   * - channels.test   - Test notification channel
+   */
+  channels: channelsRouter,
 
   /**
    * Future modules:
@@ -154,4 +171,5 @@ export {
   domainsRouter,
   costsRouter,
   alertsRouter,
+  channelsRouter,
 };

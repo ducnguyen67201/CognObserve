@@ -36,6 +36,11 @@ export const ChannelProviderSchema = z.enum([
 export type ChannelProvider = z.infer<typeof ChannelProviderSchema>;
 
 /**
+ * All possible channel providers (derived from schema)
+ */
+export const CHANNEL_PROVIDERS = ChannelProviderSchema.options;
+
+/**
  * Provider-specific config schemas
  */
 export const GmailConfigSchema = z.object({

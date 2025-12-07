@@ -1,7 +1,6 @@
 import { env } from "@/lib/env";
 
 import { APP_NAME, APP_VERSION } from "@cognobserve/shared";
-import { initializeAlertingAdapters } from "@cognobserve/api/lib/alerting/init";
 
 import { createQueueConsumer } from "@/queue/consumer";
 import { TraceProcessor } from "@/processors/trace";
@@ -10,8 +9,6 @@ import { AlertEvaluator } from "@/jobs/alert-evaluator";
 console.log(`Starting ${APP_NAME} Worker v${APP_VERSION}`);
 
 async function main() {
-  // Initialize alerting adapters
-  initializeAlertingAdapters();
 
   // Initialize processor
   const traceProcessor = new TraceProcessor();

@@ -13,6 +13,11 @@ import {
   AlertOperatorSchema,
   ChannelProviderSchema,
 } from "../schemas/alerting";
+import {
+  LinkChannelSchema,
+  UnlinkChannelSchema,
+  GetLinkedChannelsSchema,
+} from "../schemas/channels";
 import { AlertingAdapter } from "../lib/alerting";
 import { getAvailableProviders } from "../lib/alerting/init";
 
@@ -398,6 +403,139 @@ export const alertsRouter = createRouter({
   getProviders: protectedProcedure.query(() => {
     return getAvailableProviders();
   }),
+
+  /**
+   * Link a workspace notification channel to an alert
+   */
+  linkChannel: protectedProcedure
+    .input(LinkChannelSchema)
+    .use(workspaceMiddleware)
+    .mutation(async ({ ctx, input }) => {
+      // Verify alert exists and belongs to workspace
+      const alert = await prisma.alert.findFirst({
+        where: {
+          id: input.alertId,
+          project: { workspaceId: ctx.workspace.id },
+        },
+      });
+
+      if (!alert) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Alert not found" });
+      }
+
+      // Verify channel exists and belongs to workspace
+      const channel = await prisma.notificationChannel.findFirst({
+        where: { id: input.channelId, workspaceId: ctx.workspace.id },
+      });
+
+      if (!channel) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Channel not found" });
+      }
+
+      // Atomic create - catch unique constraint violation
+      try {
+        return await prisma.alertChannelLink.create({
+          data: {
+            alertId: input.alertId,
+            channelId: input.channelId,
+          },
+          include: {
+            channel: {
+              select: { id: true, name: true, provider: true, verified: true },
+            },
+          },
+        });
+      } catch (error) {
+        // Prisma unique constraint violation
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          (error as { code: string }).code === "P2002"
+        ) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Channel is already linked to this alert",
+          });
+        }
+        throw error;
+      }
+    }),
+
+  /**
+   * Unlink a workspace notification channel from an alert
+   */
+  unlinkChannel: protectedProcedure
+    .input(UnlinkChannelSchema)
+    .use(workspaceMiddleware)
+    .mutation(async ({ ctx, input }) => {
+      // Verify alert exists and belongs to workspace
+      const alert = await prisma.alert.findFirst({
+        where: {
+          id: input.alertId,
+          project: { workspaceId: ctx.workspace.id },
+        },
+      });
+
+      if (!alert) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Alert not found" });
+      }
+
+      // Atomic delete with compound key - catch if not found
+      try {
+        await prisma.alertChannelLink.delete({
+          where: {
+            alertId_channelId: {
+              alertId: input.alertId,
+              channelId: input.channelId,
+            },
+          },
+        });
+        return { success: true };
+      } catch (error) {
+        // Handle record not found
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          (error as { code: string }).code === "P2025"
+        ) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
+        }
+        throw error;
+      }
+    }),
+
+  /**
+   * Get workspace notification channels linked to an alert
+   */
+  getLinkedChannels: protectedProcedure
+    .input(GetLinkedChannelsSchema)
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }) => {
+      // Verify alert exists and belongs to workspace
+      const alert = await prisma.alert.findUnique({
+        where: { id: input.alertId },
+        include: { project: { select: { workspaceId: true } } },
+      });
+
+      if (!alert) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Alert not found" });
+      }
+
+      if (alert.project.workspaceId !== ctx.workspace.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const links = await prisma.alertChannelLink.findMany({
+        where: { alertId: input.alertId },
+        include: {
+          channel: {
+            select: { id: true, name: true, provider: true, verified: true },
+          },
+        },
+      });
+
+      return links.map((link) => link.channel);
+    }),
 
   /**
    * Get all alert history for a project

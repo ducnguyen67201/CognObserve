@@ -25,6 +25,10 @@ export const env = createEnv({
     // Redis
     REDIS_URL: z.string().default("redis://localhost:6379"),
 
+    // Web API (for internal API calls)
+    WEB_API_URL: z.string().url(),
+    INTERNAL_API_SECRET: z.string().min(32),
+
     // SMTP Configuration (for Gmail adapter)
     SMTP_HOST: z.string().default("smtp.gmail.com"),
     SMTP_PORT: z.coerce.number().default(587),
@@ -41,6 +45,8 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     REDIS_URL: process.env.REDIS_URL,
+    WEB_API_URL: process.env.WEB_API_URL,
+    INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,
     SMTP_USER: process.env.SMTP_USER,

@@ -88,9 +88,10 @@ model Workspace {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  members        WorkspaceMember[]
-  projects       Project[]
-  allowedDomains AllowedDomain[]
+  members              WorkspaceMember[]
+  projects             Project[]
+  allowedDomains       AllowedDomain[]
+  notificationChannels NotificationChannel[]
 
   @@index([slug])
   @@map("workspaces")
@@ -316,21 +317,22 @@ enum ChannelProvider {
 }
 
 model Alert {
-  id              String         @id @default(cuid())
+  id              String             @id @default(cuid())
   projectId       String
-  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project         Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name            String
   type            AlertType
   threshold       Float
-  operator        AlertOperator  @default(GREATER_THAN)
-  windowMins      Int            @default(5)
-  cooldownMins    Int            @default(60)
-  enabled         Boolean        @default(true)
+  operator        AlertOperator      @default(GREATER_THAN)
+  windowMins      Int                @default(5)
+  cooldownMins    Int                @default(60)
+  enabled         Boolean            @default(true)
   lastTriggeredAt DateTime?
-  channels        AlertChannel[]
+  channels        AlertChannel[]     // Legacy - to be deprecated
+  channelLinks    AlertChannelLink[] // New - links to workspace channels
   history         AlertHistory[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@index([projectId])
   @@index([enabled, lastTriggeredAt])
@@ -364,4 +366,40 @@ model AlertHistory {
   @@index([alertId, triggeredAt])
   @@index([triggeredAt])
   @@map("alert_history")
+}
+
+// ============================================================
+// Notification Channels (Workspace-level)
+// ============================================================
+
+model NotificationChannel {
+  id          String          @id @default(cuid())
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String          // User-friendly name: "Engineering Discord", "On-call Email"
+  provider    ChannelProvider
+  config      Json            // Provider-specific config (webhookUrl, email, etc.)
+  verified    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  alertLinks AlertChannelLink[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@map("notification_channels")
+}
+
+model AlertChannelLink {
+  id        String              @id @default(cuid())
+  alertId   String
+  alert     Alert               @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  channelId String
+  channel   NotificationChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now())
+
+  @@unique([alertId, channelId])
+  @@index([alertId])
+  @@index([channelId])
+  @@map("alert_channel_links")
 }
