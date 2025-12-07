@@ -7,9 +7,10 @@ CognObserve is an AI Platform Monitoring & Observability system. It provides tra
 - **Monorepo**: pnpm 9.15 workspaces + Turborepo 2.5
 - **Web**: Next.js 16, React 19, TypeScript 5.7, Tailwind CSS 3.4, shadcn/ui (yellow theme)
 - **Ingest**: Go 1.23 (high-performance ingestion service)
-- **Worker**: Node.js 24+ with TypeScript 5.7
+- **Worker**: Node.js 24+ with TypeScript 5.7 + Temporal SDK
+- **Orchestration**: Temporal (durable workflow engine)
 - **Database**: PostgreSQL with Prisma 7 (Rust-free, ESM)
-- **Cache/Queue**: Redis
+- **Cache**: Redis
 - **Type Sharing**: Protocol Buffers (Buf)
 - **Containerization**: Docker Compose
 - **Linting**: ESLint 9, Prettier 3.4
@@ -25,23 +26,32 @@ CognObserve/
 ├── apps/
 │   ├── web/                     # Next.js dashboard & API
 │   │   └── src/app/
-│   ├── ingest/                  # Go ingestion service (github.com/cognobserve/ingest)
+│   ├── ingest/                  # Go ingestion service
 │   │   ├── cmd/ingest/          # Entry point
 │   │   └── internal/
 │   │       ├── config/          # Configuration
 │   │       ├── handler/         # HTTP handlers
-│   │       ├── model/           # Internal models
-│   │       ├── queue/           # Redis queue producer
+│   │       ├── temporal/        # Temporal client for starting workflows
 │   │       ├── server/          # HTTP server setup
 │   │       └── proto/cognobservev1/  # Generated Go types
-│   └── worker/                  # Background job processing
+│   └── worker/                  # Temporal worker (TypeScript)
+│       └── src/
+│           ├── temporal/        # Temporal config (client, worker, types)
+│           │   └── activities/  # Activity implementations (READ-ONLY)
+│           ├── workflows/       # Workflow definitions
+│           ├── startup/         # Workflow starters on boot
+│           └── lib/             # Utilities (env, trpc-caller)
 ├── packages/
 │   ├── proto/                   # Generated TypeScript types
 │   │   └── src/generated/
+│   ├── api/                     # tRPC routers + schemas
+│   │   └── src/
+│   │       ├── routers/         # tRPC routers (including internal.ts)
+│   │       └── schemas/         # Zod schemas (source of truth)
 │   ├── config-eslint/
 │   ├── config-typescript/
 │   ├── db/                      # Prisma schema & client
-│   └── shared/                  # Shared utilities
+│   └── shared/                  # Shared utilities & constants
 ├── buf.yaml                     # Buf configuration
 ├── buf.gen.yaml                 # Code generation config
 ├── turbo.json
@@ -69,7 +79,7 @@ make proto-breaking
 # Install all dependencies
 make install
 
-# Start databases (PostgreSQL, Redis)
+# Start databases (PostgreSQL, Redis, Temporal)
 make docker-up
 
 # Copy environment file
@@ -78,12 +88,17 @@ cp .env.example .env
 # Generate Prisma client
 pnpm db:generate
 
-# Run TypeScript apps (web, worker)
+# Terminal 1: Run TypeScript apps (web + worker)
 pnpm dev
 
-# Run Go ingest service
+# Terminal 2: Run Go ingest service
 cd apps/ingest && make dev
 ```
+
+### Temporal UI
+- **URL**: http://localhost:8088
+- **Purpose**: Monitor workflows, view execution history, debug failures
+- **Namespace**: `default`
 
 ### Build & Deploy
 ```bash
@@ -98,20 +113,24 @@ cd apps/ingest && make docker-build
 
 ### Data Flow
 ```
-SDK → [Ingest (Go)] → Redis Queue → [Worker (TS)] → PostgreSQL
-                                          ↓
-                                    [Web (Next.js)]
+SDK → [Ingest (Go)] → [Temporal] → [Worker (TS)] → [Web API] → PostgreSQL
+                                                       ↑
+                                                 [Web (Next.js)]
+
+Note: Worker activities are READ-ONLY. All mutations go through Web API.
 ```
 
 ## Services
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Web | 3000 | Dashboard, API |
+| Web | 3000 | Dashboard, API (authoritative for mutations) |
 | Ingest | 8080 | High-throughput trace ingestion |
-| Worker | - | Background jobs, queue processing |
+| Worker | - | Temporal worker (READ-ONLY activities) |
+| Temporal | 7233 | Workflow orchestration |
+| Temporal UI | 8088 | Workflow monitoring dashboard |
 | PostgreSQL | 5432 | Primary database |
-| Redis | 6379 | Queue, cache |
+| Redis | 6379 | Cache (Temporal uses PostgreSQL) |
 
 ## Database Schema
 Core models in `packages/db/prisma/schema.prisma`:
@@ -120,24 +139,33 @@ Core models in `packages/db/prisma/schema.prisma`:
 - **Trace**: Top-level trace for a request/operation
 - **Span**: Individual operations within a trace (LLM calls, etc.)
 
-## Worker Architecture
+## Worker Architecture (Temporal-based)
 
-The worker (`apps/worker/`) handles background processing including trace ingestion and alerting.
+The worker (`apps/worker/`) uses Temporal for durable workflow orchestration. All background processing runs as Temporal workflows with activities.
 
 ### Key Components
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| TraceProcessor | `apps/worker/src/processors/trace.ts` | Processes traces from Redis queue, calculates costs |
-| AlertEvaluator | `apps/worker/src/jobs/alert-evaluator.ts` | State machine for alert evaluation and notification |
-| Alerting Interfaces | `packages/api/src/lib/alerting/interfaces.ts` | IAlertStore, ITriggerQueue, IDispatcher, IScheduler |
-| Alerting Implementations | `packages/api/src/lib/alerting/stores/`, `queues/`, `dispatchers/`, `schedulers/` | Concrete implementations |
+| Temporal Worker | `apps/worker/src/temporal/worker.ts` | Worker factory and lifecycle |
+| Temporal Client | `apps/worker/src/temporal/client.ts` | Client singleton for workflow operations |
+| Workflows | `apps/worker/src/workflows/*.ts` | Workflow definitions (trace, score, alert) |
+| Activities | `apps/worker/src/temporal/activities/*.ts` | Activity implementations (READ-ONLY) |
+| Startup | `apps/worker/src/startup/index.ts` | Auto-starts workflows on boot |
+| Internal Router | `packages/api/src/routers/internal.ts` | tRPC procedures for mutations |
+| tRPC Caller | `apps/worker/src/lib/trpc-caller.ts` | Internal tRPC caller for activities |
 
-### Alert System v2
+### Workflow Types
 
-**Full spec**: `docs/specs/issue-99-alert-system-v2.md`
+| Workflow | File | Purpose | Duration |
+|----------|------|---------|----------|
+| `traceIngestionWorkflow` | `workflows/trace.workflow.ts` | Process trace + spans | Short-lived |
+| `scoreIngestionWorkflow` | `workflows/score.workflow.ts` | Process score | Short-lived |
+| `alertEvaluationWorkflow` | `workflows/alert.workflow.ts` | Evaluate alerts periodically | Long-running |
 
-The alerting system uses a state machine with queue-based batching:
+### Alert System
+
+The alerting system uses a state machine with Temporal for durable evaluation:
 
 ```
 State Machine: INACTIVE → PENDING → FIRING → RESOLVED → INACTIVE
@@ -156,12 +184,246 @@ Notification Rules:
 | MEDIUM | 3 min | 2 hours | Performance |
 | LOW | 5 min | 12 hours | Warnings |
 
-**Key files for alerting context:**
-- Spec: `docs/specs/issue-99-alert-system-v2.md`
-- Evaluator: `apps/worker/src/jobs/alert-evaluator.ts`
-- Interfaces: `packages/api/src/lib/alerting/interfaces.ts`
+**Key files for alerting:**
+- Workflow: `apps/worker/src/workflows/alert.workflow.ts`
+- Activities: `apps/worker/src/temporal/activities/alert.activities.ts`
+- Internal Router: `packages/api/src/routers/internal.ts` (transitionAlertState, dispatchNotification)
 - Schemas: `packages/api/src/schemas/alerting.ts`
-- Batch endpoint: `apps/web/src/app/api/internal/alerts/trigger-batch/route.ts`
+- Adapters: `packages/api/src/lib/alerting/adapters/` (Discord, Gmail)
+
+## Temporal Architecture (CRITICAL)
+
+The worker uses Temporal for durable workflow orchestration. **Temporal activities MUST use tRPC internal procedures for database mutations.**
+
+### The Golden Rule: Activities Use tRPC Internal Caller
+
+**All database mutations MUST go through tRPC internal procedures.** This ensures:
+- Single source of truth for business logic
+- Proper authorization via internal secret
+- Consistent audit trails
+- Type-safe communication
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    TEMPORAL ACTIVITY PATTERN                        │
+└─────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────┐         ┌──────────────────┐
+  │  Temporal Worker │         │   @cognobserve/api│
+  │                  │         │                  │
+  │  ┌────────────┐  │  tRPC   │  ┌────────────┐  │
+  │  │  Activity  │──┼────────▶│  │ internal.  │  │
+  │  │            │  │ direct  │  │ procedure  │  │
+  │  │ READ-ONLY  │  │  call   │  │            │  │
+  │  └────────────┘  │         │  └─────┬──────┘  │
+  │        │         │         │        │         │
+  └────────┼─────────┘         └────────┼─────────┘
+           │ Read only                  │ Mutations
+           ▼                            ▼
+  ┌──────────────────────────────────────────────┐
+  │              PostgreSQL Database              │
+  └──────────────────────────────────────────────┘
+
+ALLOWED in Activities:
+  ✅ Database READS (findUnique, findMany, count, aggregate)
+  ✅ tRPC internal procedure calls (via getInternalCaller())
+  ✅ Pure computations and validations
+
+FORBIDDEN in Activities:
+  ❌ Database WRITES (create, update, delete, upsert)
+  ❌ Direct mutations to any database table
+```
+
+### Calling Internal tRPC Procedures from Activities
+
+The worker has a tRPC caller that can directly invoke internal procedures:
+
+```typescript
+// apps/worker/src/lib/trpc-caller.ts
+import { appRouter, createCallerFactory } from "@cognobserve/api";
+import { env } from "./env";
+
+const createCaller = createCallerFactory(appRouter);
+let _caller: Caller | null = null;
+
+export function getInternalCaller(): Caller {
+  if (!_caller) {
+    _caller = createCaller({
+      session: null,
+      internalSecret: env.INTERNAL_API_SECRET,  // Auth via secret
+    });
+  }
+  return _caller;
+}
+```
+
+### Activity Implementation Pattern
+
+```typescript
+// ❌ BAD - Direct database mutation in activity
+export async function persistTrace(input: TraceWorkflowInput): Promise<string> {
+  // NEVER do this in Temporal activities!
+  const trace = await prisma.trace.create({
+    data: { id: input.id, name: input.name },
+  });
+  return trace.id;
+}
+
+// ✅ GOOD - Call tRPC internal procedure for mutations
+import { getInternalCaller } from "@/lib/trpc-caller";
+
+export async function persistTrace(input: TraceWorkflowInput): Promise<string> {
+  const caller = getInternalCaller();
+  const result = await caller.internal.ingestTrace({
+    trace: {
+      id: input.id,
+      projectId: input.projectId,
+      name: input.name,
+      timestamp: input.timestamp,
+    },
+    spans: input.spans,
+  });
+  return result.traceId;
+}
+
+// ✅ GOOD - Read-only database operations ARE allowed
+export async function getTraceDetails(traceId: string): Promise<TraceDetails | null> {
+  // Read operations are fine in activities
+  return prisma.trace.findUnique({
+    where: { id: traceId },
+    select: { id: true, name: true, projectId: true },
+  });
+}
+```
+
+### Adding New Internal Procedures
+
+When adding new mutations that activities need to call:
+
+1. **Add to `packages/api/src/routers/internal.ts`**:
+```typescript
+export const internalRouter = createRouter({
+  // Uses internalProcedure (requires INTERNAL_API_SECRET)
+  myNewMutation: internalProcedure
+    .input(z.object({ /* schema */ }))
+    .mutation(async ({ input }) => {
+      // Perform database mutation
+      return await prisma.myTable.create({ data: input });
+    }),
+});
+```
+
+2. **Call from activity**:
+```typescript
+export async function myActivity(data: MyInput): Promise<MyResult> {
+  const caller = getInternalCaller();
+  return await caller.internal.myNewMutation(data);
+}
+```
+
+### Available Internal Procedures
+
+| Procedure | Input | Purpose |
+|-----------|-------|---------|
+| `internal.ingestTrace` | `{ trace, spans }` | Persist trace + spans |
+| `internal.calculateTraceCosts` | `{ traceId }` | Calculate span costs |
+| `internal.updateCostSummaries` | `{ projectId, date }` | Update daily summaries |
+| `internal.ingestScore` | `{ id, projectId, ... }` | Persist score |
+| `internal.validateScoreConfig` | `{ configId, value }` | Validate score config |
+| `internal.transitionAlertState` | `{ alertId, conditionMet }` | Transition alert state |
+| `internal.dispatchNotification` | `{ alertId, state, value, threshold }` | Send notifications |
+
+### Workflow Input Types
+
+All workflow inputs are defined in `apps/worker/src/temporal/types.ts`:
+
+```typescript
+// Import from @/temporal (centralized exports)
+import type {
+  TraceWorkflowInput,
+  AlertWorkflowInput,
+  ScoreWorkflowInput
+} from "@/temporal";
+```
+
+### Key Temporal Files
+
+| File | Purpose |
+|------|---------|
+| `apps/worker/src/temporal/index.ts` | Centralized exports (ALWAYS import from here) |
+| `apps/worker/src/temporal/client.ts` | Temporal client singleton |
+| `apps/worker/src/temporal/worker.ts` | Worker factory with bundler config |
+| `apps/worker/src/temporal/types.ts` | Shared workflow/activity types |
+| `apps/worker/src/temporal/activities/*.ts` | Activity implementations (READ-ONLY) |
+| `apps/worker/src/workflows/*.ts` | Workflow definitions |
+| `apps/worker/src/startup/*.ts` | Workflow starters (run on boot) |
+| `apps/worker/src/lib/trpc-caller.ts` | Internal tRPC caller for activities |
+| `apps/ingest/internal/temporal/` | Go Temporal client for starting workflows |
+| `packages/api/src/routers/internal.ts` | Internal tRPC procedures |
+
+### ESM Compatibility Notes
+
+The worker uses ESM. Key considerations:
+
+```typescript
+// apps/worker/src/temporal/worker.ts
+
+// ESM equivalent of __dirname
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Workflows path for Temporal bundler
+const workflowsPath = resolve(__dirname, "../workflows/index.ts");
+
+// Ignore crypto module (used by shared package, not workflows)
+bundlerOptions: {
+  ignoreModules: ["crypto"],
+}
+```
+
+### Adding New Workflows
+
+1. **Create workflow file** in `apps/worker/src/workflows/`:
+```typescript
+// apps/worker/src/workflows/my.workflow.ts
+import { proxyActivities } from "@temporalio/workflow";
+import type * as activities from "../temporal/activities";
+import type { MyWorkflowInput } from "../temporal/types";
+
+const { myActivity } = proxyActivities<typeof activities>({
+  startToCloseTimeout: "30s",
+});
+
+export async function myWorkflow(input: MyWorkflowInput): Promise<void> {
+  await myActivity(input);
+}
+```
+
+2. **Export from workflows index**:
+```typescript
+// apps/worker/src/workflows/index.ts
+export { myWorkflow } from "./my.workflow";
+```
+
+3. **Add input type**:
+```typescript
+// apps/worker/src/temporal/types.ts
+export interface MyWorkflowInput {
+  id: string;
+  // ...
+}
+```
+
+4. **Start from Go ingest service** (if needed):
+```go
+// apps/ingest/internal/temporal/client.go
+func (c *Client) StartMyWorkflow(ctx context.Context, input MyWorkflowInput) (string, error) {
+    // ...
+}
+```
 
 ## Code Style Rules
 
@@ -1337,6 +1599,7 @@ const handleCopy = async (text: string) => {
 | **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |
 | **Frontend** | < 150 lines, logic in hooks, domain folders | Fat components, inline business logic |
 | **Backend** | Thin routers + service files | Business logic in routers |
+| **Temporal** | Activities use `getInternalCaller()` for mutations | Direct DB writes in activities |
 | **Competitors** | Use "industry standard" or "similar platforms" | Name specific competitors |
 
 ### No Competitor Names (STRICT)

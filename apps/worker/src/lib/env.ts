@@ -22,11 +22,7 @@ export const env = createEnv({
     // Database
     DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
 
-    // Redis
-    REDIS_URL: z.string().default("redis://localhost:6379"),
-
-    // Web API (for internal API calls)
-    WEB_API_URL: z.string().url(),
+    // Internal API (for tRPC caller)
     INTERNAL_API_SECRET: z.string().min(32),
 
     // SMTP Configuration (for Gmail adapter)
@@ -35,6 +31,11 @@ export const env = createEnv({
     SMTP_USER: z.string().optional(),
     SMTP_PASS: z.string().optional(),
     SMTP_FROM: z.string().email().optional(),
+
+    // Temporal Configuration (required)
+    TEMPORAL_ADDRESS: z.string().default("localhost:7233"),
+    TEMPORAL_NAMESPACE: z.string().default("default"),
+    TEMPORAL_TASK_QUEUE: z.string().default("cognobserve-tasks"),
   },
 
   /**
@@ -44,14 +45,17 @@ export const env = createEnv({
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
-    REDIS_URL: process.env.REDIS_URL,
-    WEB_API_URL: process.env.WEB_API_URL,
     INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASS: process.env.SMTP_PASS,
     SMTP_FROM: process.env.SMTP_FROM,
+
+    // Temporal Configuration
+    TEMPORAL_ADDRESS: process.env.TEMPORAL_ADDRESS,
+    TEMPORAL_NAMESPACE: process.env.TEMPORAL_NAMESPACE,
+    TEMPORAL_TASK_QUEUE: process.env.TEMPORAL_TASK_QUEUE,
   },
 
   /**

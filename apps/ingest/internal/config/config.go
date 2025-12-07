@@ -19,9 +19,6 @@ type Config struct {
 	Port    string `env:"PORT" envDefault:"8080"`
 	Version string `env:"-"` // Set programmatically
 
-	// Redis
-	RedisURL string `env:"REDIS_URL" envDefault:"redis://localhost:6379"`
-
 	// Web API (for internal validation calls)
 	WebAPIURL string `env:"WEB_API_URL" envDefault:"http://localhost:3000"`
 
@@ -32,6 +29,11 @@ type Config struct {
 	// API Key Configuration (matches web app env)
 	APIKeyPrefix            string `env:"API_KEY_PREFIX" envDefault:"co_sk_"`
 	APIKeyRandomBytesLength int    `env:"API_KEY_RANDOM_BYTES_LENGTH" envDefault:"32"`
+
+	// Temporal Configuration (required - Temporal is the only queue backend)
+	TemporalAddress   string `env:"TEMPORAL_ADDRESS" envDefault:"localhost:7233"`
+	TemporalNamespace string `env:"TEMPORAL_NAMESPACE" envDefault:"default"`
+	TemporalTaskQueue string `env:"TEMPORAL_TASK_QUEUE" envDefault:"cognobserve-tasks"`
 }
 
 // Load parses environment variables into Config struct.

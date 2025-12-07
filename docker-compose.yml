@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -33,6 +31,47 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================================
+  # Temporal Workflow Engine
+  # ============================================================
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: cognobserve-temporal
+    restart: unless-stopped
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=cognobserve
+      - POSTGRES_PWD=cognobserve
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "temporal:7233", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: cognobserve-temporal-ui
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      - temporal
+
+  # ============================================================
   # Ingest service (optional - for full local setup)
   # Uncomment to run ingest in Docker instead of locally
   # ingest:

@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@/lib/form";
 import {
   Loader2,
   Plus,
