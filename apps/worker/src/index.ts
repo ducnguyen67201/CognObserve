@@ -5,16 +5,29 @@ import { APP_NAME, APP_VERSION } from "@cognobserve/shared";
 import { createQueueConsumer } from "@/queue/consumer";
 import { TraceProcessor } from "@/processors/trace";
 import { AlertEvaluator } from "@/jobs/alert-evaluator";
+import {
+  PrismaAlertStore,
+  MemoryTriggerQueue,
+  SimpleDispatcher,
+  IntervalScheduler,
+} from "@cognobserve/api/lib/alerting";
 
 console.log(`Starting ${APP_NAME} Worker v${APP_VERSION}`);
 
 async function main() {
-
   // Initialize processor
   const traceProcessor = new TraceProcessor();
 
-  // Initialize alert evaluator
-  const alertEvaluator = new AlertEvaluator();
+  // Initialize alert evaluator with dependency injection
+  const alertEvaluator = new AlertEvaluator(
+    new PrismaAlertStore(),
+    new MemoryTriggerQueue(),
+    new SimpleDispatcher(
+      `${env.WEB_API_URL}/api/internal/alerts/trigger-batch`,
+      env.INTERNAL_API_SECRET
+    ),
+    new IntervalScheduler()
+  );
   alertEvaluator.start();
 
   // Initialize queue consumer

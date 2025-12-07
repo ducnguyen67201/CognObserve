@@ -195,6 +195,97 @@ export const isValidRole = (role: string): role is ProjectRole => {
 import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
 ```
 
+### Zod for Runtime Validation (CRITICAL)
+**ALWAYS use Zod to validate unknown data at runtime.** This includes API responses, JSON parsing, external data, and anything typed as `unknown`. Never use type assertions (`as`) to bypass TypeScript - validate first.
+
+```typescript
+// ❌ BAD - Type assertion (lies to TypeScript, no runtime safety)
+const response = await fetch("/api/data");
+const data = (await response.json()) as { users: User[] };
+// If API returns different shape, code silently breaks at runtime
+
+// ❌ BAD - Manual type checking (verbose, error-prone, hard to maintain)
+const json: unknown = await response.json();
+if (
+  json !== null &&
+  typeof json === "object" &&
+  "users" in json &&
+  Array.isArray(json.users)
+) {
+  // Still not fully type-safe, easy to miss edge cases
+}
+
+// ✅ GOOD - Zod validation (runtime safety + type inference)
+import { z } from "zod";
+
+const ResponseSchema = z.object({
+  users: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().email(),
+  })),
+});
+
+const json: unknown = await response.json();
+const parsed = ResponseSchema.safeParse(json);
+
+if (parsed.success) {
+  // parsed.data is fully typed as { users: { id: string; name: string; email: string }[] }
+  console.log(parsed.data.users);
+} else {
+  // parsed.error contains detailed validation errors
+  console.error("Invalid response:", parsed.error.issues);
+}
+```
+
+**When to use Zod validation:**
+| Scenario | Use Zod? | Example |
+|----------|----------|---------|
+| API response from external service | ✅ Yes | `fetch()` responses |
+| API response from internal service | ✅ Yes | Worker → Web API calls |
+| JSON.parse() result | ✅ Yes | Parsing stored JSON |
+| WebSocket messages | ✅ Yes | Real-time data |
+| URL query params | ✅ Yes | `searchParams.get()` |
+| Form data (tRPC input) | ✅ Already handled | tRPC validates with schema |
+| Database query results | ❌ No | Prisma types are trustworthy |
+| Internal function params | ❌ No | TypeScript handles this |
+
+**Zod patterns:**
+
+```typescript
+// Define schema once, reuse everywhere
+const UserSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  role: z.enum(["admin", "user"]),
+});
+type User = z.infer<typeof UserSchema>;
+
+// For API responses, define response schemas
+const ApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: UserSchema.optional(),
+  error: z.string().optional(),
+});
+
+// Parse with safeParse (doesn't throw)
+const result = ApiResponseSchema.safeParse(json);
+if (!result.success) {
+  console.error(result.error.flatten());
+  return fallbackValue;
+}
+return result.data;
+
+// Or parse (throws ZodError on failure)
+try {
+  const data = ApiResponseSchema.parse(json);
+} catch (e) {
+  if (e instanceof z.ZodError) {
+    // Handle validation error
+  }
+}
+```
+
 ## Frontend Engineering Best Practices
 
 **Code like a senior frontend engineer.** Write maintainable, performant, and scalable code. Every component, hook, and utility should be crafted with care.
@@ -1197,6 +1288,7 @@ const handleCopy = async (text: string) => {
 | Rule | What to Do | What NOT to Do |
 |------|-----------|----------------|
 | **Types** | Import from `@cognobserve/db`, `@cognobserve/api/schemas`, `@cognobserve/proto` | Duplicate types, import from `@prisma/client` |
+| **Unknown Data** | Use Zod `safeParse()` for API responses, JSON parsing | Type assertions (`as`), manual type checking |
 | **Toasts** | Use `@/lib/errors` and `@/lib/success` | Import `toast` from "sonner" directly |
 | **UI** | Use shadcn/ui from `@/components/ui/` | Write custom CSS for standard elements |
 | **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |

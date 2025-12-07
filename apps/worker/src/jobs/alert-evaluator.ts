@@ -1,54 +1,58 @@
 /**
- * Alert Evaluator
+ * Alert Evaluator v2
  *
- * Worker job that evaluates alerts and triggers notifications via web API.
- * Runs on a cron schedule (every 10 seconds).
+ * Worker job that evaluates alerts using a state machine and queue-based batching.
+ * Uses dependency injection for testability and future extensibility.
+ *
+ * State Machine:
+ *   INACTIVE → PENDING → FIRING → RESOLVED
+ *
+ * Features:
+ * - Pending duration: Condition must persist before firing
+ * - Cooldown: Minimum time between notifications
+ * - Severity-based dispatch: CRITICAL flushes faster than LOW
+ * - Queue-based batching: Reduces API calls
  */
 
-import { env } from "@/lib/env";
-import { prisma } from "@cognobserve/db";
-import type { Alert, Project } from "@cognobserve/db";
-import {
-  getMetric,
-  type AlertPayload,
-  type AlertOperator,
-  type AlertType,
+import type {
+  IAlertStore,
+  ITriggerQueue,
+  IDispatcher,
+  IScheduler,
+  AlertWithProject,
 } from "@cognobserve/api/lib/alerting";
+import {
+  SEVERITY_DEFAULTS,
+  type AlertSeverity,
+  type AlertState,
+  type AlertOperator,
+  type TriggerQueueItem,
+} from "@cognobserve/api/schemas";
 
 // Time constants
-const MS_PER_SECOND = 1_000;
-const SECONDS_PER_MINUTE = 60;
-const MS_PER_MINUTE = MS_PER_SECOND * SECONDS_PER_MINUTE;
+const MS_PER_MINUTE = 60_000;
 
-const EVALUATION_INTERVAL_MS = 10 * MS_PER_SECOND; // 10 seconds
-const MIN_COOLDOWN_MS = 1 * MS_PER_MINUTE; // Minimum 1 minute between triggers
+// Evaluation runs every 10 seconds
+const EVALUATION_INTERVAL_MS = 10_000;
 
-const INTERNAL_SECRET_HEADER = "X-Internal-Secret";
-
-/**
- * Convert minutes to milliseconds
- */
-const minutesToMs = (minutes: number): number => minutes * MS_PER_MINUTE;
-
-type AlertWithProject = Alert & {
-  project: Pick<Project, "id" | "name" | "workspaceId">;
-};
+// Batch size for dispatch
+const DISPATCH_BATCH_SIZE = 100;
 
 /**
- * Alert evaluation worker job.
- * Runs every 10 seconds to check enabled alerts against thresholds.
+ * Alert Evaluator with state machine and queue-based batching
  */
 export class AlertEvaluator {
   private isRunning = false;
-  private intervalId?: NodeJS.Timeout;
-  private triggerUrl: string;
 
-  constructor() {
-    this.triggerUrl = `${env.WEB_API_URL}/api/internal/alerts/trigger`;
-  }
+  constructor(
+    private store: IAlertStore,
+    private queue: ITriggerQueue,
+    private dispatcher: IDispatcher,
+    private scheduler: IScheduler
+  ) {}
 
   /**
-   * Start the evaluator loop
+   * Start the evaluator and dispatch loops
    */
   start(): void {
     if (this.isRunning) {
@@ -57,96 +61,77 @@ export class AlertEvaluator {
     }
 
     this.isRunning = true;
-    console.log("AlertEvaluator started");
+    console.log("AlertEvaluator v2 started");
 
-    // Run immediately, then on interval
-    this.evaluate();
-    this.intervalId = setInterval(
-      () => this.evaluate(),
-      EVALUATION_INTERVAL_MS
+    // Single evaluation loop for all alerts
+    this.scheduler.schedule("evaluate", EVALUATION_INTERVAL_MS, () =>
+      this.evaluateAll()
+    );
+
+    // Severity-based dispatch loops (flush queues at different intervals)
+    this.scheduler.schedule(
+      "dispatch-critical",
+      SEVERITY_DEFAULTS.CRITICAL.flushIntervalMs,
+      () => this.flush("CRITICAL")
+    );
+    this.scheduler.schedule(
+      "dispatch-high",
+      SEVERITY_DEFAULTS.HIGH.flushIntervalMs,
+      () => this.flush("HIGH")
+    );
+    this.scheduler.schedule(
+      "dispatch-medium",
+      SEVERITY_DEFAULTS.MEDIUM.flushIntervalMs,
+      () => this.flush("MEDIUM")
+    );
+    this.scheduler.schedule(
+      "dispatch-low",
+      SEVERITY_DEFAULTS.LOW.flushIntervalMs,
+      () => this.flush("LOW")
     );
   }
 
   /**
-   * Stop the evaluator loop
+   * Stop all scheduled tasks
    */
   stop(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = undefined;
-    }
+    this.scheduler.cancelAll();
     this.isRunning = false;
-    console.log("AlertEvaluator stopped");
+    console.log("AlertEvaluator v2 stopped");
   }
 
   /**
-   * Run a single evaluation cycle
+   * Evaluate all enabled alerts
    */
-  async evaluate(): Promise<void> {
+  private async evaluateAll(): Promise<void> {
     const startTime = Date.now();
-    console.log("AlertEvaluator: Starting evaluation cycle");
 
     try {
-      // Get all enabled alerts not in cooldown
-      const alerts = await this.getEligibleAlerts();
-      console.log(`AlertEvaluator: Found ${alerts.length} eligible alerts`);
+      const alerts = await this.store.getEligibleAlerts();
+      console.log(`AlertEvaluator: Evaluating ${alerts.length} alerts`);
 
       for (const alert of alerts) {
         await this.evaluateAlert(alert);
       }
 
       const duration = Date.now() - startTime;
-      console.log(`AlertEvaluator: Cycle completed in ${duration}ms`);
+      console.log(`AlertEvaluator: Evaluation completed in ${duration}ms`);
     } catch (error) {
       console.error("AlertEvaluator: Error during evaluation", error);
     }
   }
 
   /**
-   * Get alerts that are enabled and potentially ready to evaluate.
-   * Uses MIN_COOLDOWN_MS as a pre-filter to reduce unnecessary processing.
-   * The actual cooldown check happens in evaluateAlert() using alert.cooldownMins.
-   */
-  private async getEligibleAlerts(): Promise<AlertWithProject[]> {
-    return prisma.alert.findMany({
-      where: {
-        enabled: true,
-        OR: [
-          { lastTriggeredAt: null },
-          {
-            lastTriggeredAt: {
-              lt: new Date(Date.now() - MIN_COOLDOWN_MS),
-            },
-          },
-        ],
-      },
-      include: {
-        project: {
-          select: { id: true, name: true, workspaceId: true },
-        },
-      },
-    });
-  }
-
-  /**
-   * Evaluate a single alert
+   * Evaluate a single alert and update its state
    */
   private async evaluateAlert(alert: AlertWithProject): Promise<void> {
+    const evaluationStart = Date.now();
+
     try {
-      // Check cooldown - skip if alert was triggered too recently
-      if (alert.lastTriggeredAt) {
-        const cooldownMs = minutesToMs(alert.cooldownMins);
-        const timeSinceLastTrigger = Date.now() - alert.lastTriggeredAt.getTime();
-
-        if (timeSinceLastTrigger < cooldownMs) {
-          return; // Still in cooldown
-        }
-      }
-
       // Get current metric value
-      const metric = await getMetric(
+      const metric = await this.store.getMetric(
         alert.projectId,
-        alert.type as AlertType,
+        alert.type,
         alert.windowMins
       );
 
@@ -155,37 +140,27 @@ export class AlertEvaluator {
         return;
       }
 
-      // Check threshold
-      const isTriggered = this.checkThreshold(
+      // Check if threshold condition is met
+      const conditionMet = this.checkThreshold(
         metric.value,
         alert.threshold,
-        alert.operator as AlertOperator
+        alert.operator
       );
 
-      if (!isTriggered) {
-        return;
+      // Compute next state based on state machine
+      const newState = this.computeNextState(alert, conditionMet);
+
+      // Only process if state changed
+      if (newState !== alert.state) {
+        await this.transitionState(alert, newState, metric.value, metric.sampleCount);
+      } else {
+        // Just update lastEvaluatedAt
+        await this.store.updateAlertState(alert.id, alert.state, {
+          evaluationMs: Date.now() - evaluationStart,
+          sampleCount: metric.sampleCount,
+          value: metric.value,
+        });
       }
-
-      console.log(
-        `AlertEvaluator: Alert "${alert.name}" triggered - ` +
-          `value=${metric.value.toFixed(2)}, threshold=${alert.threshold}`
-      );
-
-      // Create alert payload
-      const payload: AlertPayload = {
-        alertId: alert.id,
-        alertName: alert.name,
-        projectId: alert.projectId,
-        projectName: alert.project.name,
-        type: alert.type as AlertType,
-        threshold: alert.threshold,
-        actualValue: metric.value,
-        operator: alert.operator as AlertOperator,
-        triggeredAt: new Date().toISOString(),
-      };
-
-      // Call web API to send notifications
-      await this.triggerAlert(alert.id, payload);
     } catch (error) {
       console.error(
         `AlertEvaluator: Error evaluating alert ${alert.id}:`,
@@ -195,42 +170,188 @@ export class AlertEvaluator {
   }
 
   /**
-   * Call web API to trigger alert notifications
+   * State machine: Compute the next state based on current state and condition
+   *
+   * Transitions:
+   *   INACTIVE + condition MET     → PENDING
+   *   PENDING  + condition MET + time >= pendingDuration → FIRING
+   *   PENDING  + condition NOT MET → INACTIVE
+   *   FIRING   + condition MET     → FIRING (check cooldown for re-enqueue)
+   *   FIRING   + condition NOT MET → RESOLVED
+   *   RESOLVED + condition MET     → PENDING
+   *   RESOLVED + condition NOT MET → INACTIVE
    */
-  private async triggerAlert(
-    alertId: string,
-    payload: AlertPayload
-  ): Promise<void> {
-    try {
-      const response = await fetch(this.triggerUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          [INTERNAL_SECRET_HEADER]: env.INTERNAL_API_SECRET,
-        },
-        body: JSON.stringify({ alertId, payload }),
-      });
+  private computeNextState(
+    alert: AlertWithProject,
+    conditionMet: boolean
+  ): AlertState {
+    const currentState = alert.state;
+    const pendingMs = this.getPendingDuration(alert);
 
-      if (!response.ok) {
-        const error = await response.text();
-        console.error(
-          `AlertEvaluator: Failed to trigger alert ${alertId}:`,
-          error
-        );
+    switch (currentState) {
+      case "INACTIVE":
+        return conditionMet ? "PENDING" : "INACTIVE";
+
+      case "PENDING":
+        if (!conditionMet) {
+          return "INACTIVE";
+        }
+        // Check if pending duration has elapsed
+        const pendingDuration = alert.stateChangedAt
+          ? Date.now() - alert.stateChangedAt.getTime()
+          : 0;
+        return pendingDuration >= pendingMs ? "FIRING" : "PENDING";
+
+      case "FIRING":
+        return conditionMet ? "FIRING" : "RESOLVED";
+
+      case "RESOLVED":
+        if (conditionMet) {
+          return "PENDING";
+        }
+        return "INACTIVE";
+
+      default:
+        return "INACTIVE";
+    }
+  }
+
+  /**
+   * Handle state transition and enqueue for notification if needed
+   */
+  private async transitionState(
+    alert: AlertWithProject,
+    newState: AlertState,
+    currentValue: number,
+    sampleCount: number
+  ): Promise<void> {
+    const previousState = alert.state;
+    console.log(`Alert "${alert.name}": ${previousState} → ${newState}`);
+
+    // Update state in database
+    await this.store.updateAlertState(alert.id, newState, {
+      value: currentValue,
+      sampleCount,
+    });
+
+    // Enqueue for notification when transitioning to FIRING
+    if (newState === "FIRING" && previousState !== "FIRING") {
+      await this.enqueueForNotification(alert, currentValue, previousState, newState);
+    }
+
+    // Also check for re-notification when staying in FIRING (cooldown check)
+    if (newState === "FIRING" && previousState === "FIRING") {
+      await this.maybeRenotify(alert, currentValue);
+    }
+
+    // Record history for significant state changes
+    if (this.isSignificantTransition(previousState, newState)) {
+      await this.store.recordHistory({
+        alertId: alert.id,
+        value: currentValue,
+        threshold: alert.threshold,
+        state: newState,
+        previousState,
+        resolved: newState === "RESOLVED",
+        resolvedAt: newState === "RESOLVED" ? new Date() : null,
+        notifiedVia: [], // Will be updated by dispatcher
+        sampleCount,
+      });
+    }
+  }
+
+  /**
+   * Enqueue alert for notification
+   */
+  private async enqueueForNotification(
+    alert: AlertWithProject,
+    currentValue: number,
+    previousState: AlertState,
+    newState: AlertState
+  ): Promise<void> {
+    const item: TriggerQueueItem = {
+      alertId: alert.id,
+      alertName: alert.name,
+      projectId: alert.projectId,
+      projectName: alert.project.name,
+      severity: alert.severity,
+      metricType: alert.type,
+      threshold: alert.threshold,
+      actualValue: currentValue,
+      operator: alert.operator,
+      previousState,
+      newState,
+      queuedAt: new Date(),
+      channelIds: alert.channelLinks.map((link) => link.channelId),
+    };
+
+    await this.queue.enqueue(item);
+    console.log(
+      `Alert "${alert.name}" enqueued for notification (severity: ${alert.severity})`
+    );
+  }
+
+  /**
+   * Check if we should re-notify for an alert that's still firing
+   */
+  private async maybeRenotify(
+    alert: AlertWithProject,
+    currentValue: number
+  ): Promise<void> {
+    const cooldownMs = this.getCooldownDuration(alert);
+    const timeSinceLastTrigger = alert.lastTriggeredAt
+      ? Date.now() - alert.lastTriggeredAt.getTime()
+      : Infinity;
+
+    if (timeSinceLastTrigger >= cooldownMs) {
+      await this.enqueueForNotification(alert, currentValue, "FIRING", "FIRING");
+    }
+  }
+
+  /**
+   * Flush the queue for a specific severity level
+   */
+  private async flush(severity: AlertSeverity): Promise<void> {
+    try {
+      const items = await this.queue.dequeue(severity, DISPATCH_BATCH_SIZE);
+
+      if (items.length === 0) {
         return;
       }
 
-      const result = (await response.json()) as { notifiedVia?: string[] };
-      console.log(
-        `AlertEvaluator: Alert triggered successfully - ` +
-          `notified via: ${result.notifiedVia?.join(", ") || "none"}`
-      );
+      console.log(`Dispatching ${items.length} ${severity} alerts`);
+      const result = await this.dispatcher.dispatch(items);
+
+      if (!result.success) {
+        console.error(
+          `Dispatch failed for ${severity}: ${result.errors?.join(", ")}`
+        );
+      } else {
+        console.log(
+          `Dispatched ${result.sent} ${severity} alerts (${result.failed} failed)`
+        );
+      }
     } catch (error) {
-      console.error(
-        `AlertEvaluator: Error calling trigger API for ${alertId}:`,
-        error
-      );
+      console.error(`Error flushing ${severity} queue:`, error);
     }
+  }
+
+  /**
+   * Get the pending duration in milliseconds for an alert
+   */
+  private getPendingDuration(alert: AlertWithProject): number {
+    const pendingMins =
+      alert.pendingMins ?? SEVERITY_DEFAULTS[alert.severity].pendingMins;
+    return pendingMins * MS_PER_MINUTE;
+  }
+
+  /**
+   * Get the cooldown duration in milliseconds for an alert
+   */
+  private getCooldownDuration(alert: AlertWithProject): number {
+    const cooldownMins =
+      alert.cooldownMins ?? SEVERITY_DEFAULTS[alert.severity].cooldownMins;
+    return cooldownMins * MS_PER_MINUTE;
   }
 
   /**
@@ -249,5 +370,23 @@ export class AlertEvaluator {
       default:
         return false;
     }
+  }
+
+  /**
+   * Check if a state transition is significant enough to record in history
+   */
+  private isSignificantTransition(
+    from: AlertState,
+    to: AlertState
+  ): boolean {
+    // Record when transitioning to FIRING or RESOLVED
+    if (to === "FIRING" || to === "RESOLVED") {
+      return true;
+    }
+    // Record when transitioning from FIRING to any other state
+    if (from === "FIRING") {
+      return true;
+    }
+    return false;
   }
 }

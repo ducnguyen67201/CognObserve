@@ -7,8 +7,18 @@
  * For production at scale, use RateLimitedDispatcher with backoff and circuit breaker.
  */
 
+import { z } from "zod";
 import type { TriggerQueueItem, DispatchResult } from "../../../schemas/alerting";
 import type { IDispatcher } from "../interfaces";
+
+// Response schema from batch trigger endpoint
+const BatchTriggerResponseSchema = z.object({
+  results: z.array(
+    z.object({
+      notifiedVia: z.array(z.string()),
+    })
+  ),
+});
 
 export class SimpleDispatcher implements IDispatcher {
   private triggerUrl: string;
@@ -54,12 +64,13 @@ export class SimpleDispatcher implements IDispatcher {
         };
       }
 
-      const result = await response.json();
+      const json: unknown = await response.json();
+      const parsed = BatchTriggerResponseSchema.safeParse(json);
 
-      // Count successes and failures from the response
-      const sent = result.results?.filter(
-        (r: { notifiedVia?: string[] }) => r.notifiedVia && r.notifiedVia.length > 0
-      ).length ?? items.length;
+      // Count successes based on channels notified
+      const sent = parsed.success
+        ? parsed.data.results.filter((r) => r.notifiedVia.length > 0).length
+        : items.length; // Assume success if response format unexpected
       const failed = items.length - sent;
 
       return {
