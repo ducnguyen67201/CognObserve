@@ -57,12 +57,10 @@ export class IntervalScheduler implements IScheduler {
       }
     };
 
-    // Run immediately
-    wrappedTask();
-
-    // Then schedule on interval
+    // Schedule on interval
     const intervalId = setInterval(wrappedTask, intervalMs);
 
+    // Store task BEFORE running immediately (wrappedTask checks this.tasks.get)
     this.tasks.set(name, {
       intervalId,
       intervalMs,
@@ -70,6 +68,9 @@ export class IntervalScheduler implements IScheduler {
     });
 
     console.log(`Scheduled task "${name}" every ${intervalMs}ms`);
+
+    // Run immediately after storing
+    wrappedTask();
   }
 
   /**
