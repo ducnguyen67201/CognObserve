@@ -13,6 +13,7 @@ import {
   Circle,
   CircleDot,
   CircleCheck,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,7 @@ import {
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { CreateAlertDialog } from "./create-alert-dialog";
+import { EditAlertDialog } from "./edit-alert-dialog";
 import { AlertHistory } from "./alert-history";
 import { ChannelSelectDropdown } from "./channel-select-dropdown";
 import { SeverityBadge } from "./severity-selector";
@@ -122,10 +124,23 @@ function calculateCooldownProgress(lastTriggeredAt: Date | null, cooldownMins: n
   return Math.min(100, (elapsed / cooldownMins) * 100);
 }
 
+type AlertForEdit = {
+  id: string;
+  name: string;
+  type: AlertType;
+  threshold: number;
+  operator: "GREATER_THAN" | "LESS_THAN";
+  windowMins: number;
+  cooldownMins: number;
+  severity: AlertSeverity;
+  pendingMins: number;
+};
+
 export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("alerts");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<AlertForEdit | null>(null);
 
   const utils = trpc.useUtils();
   const { data: alerts, isLoading } = trpc.alerts.list.useQuery(
@@ -185,6 +200,14 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
     },
     []
   );
+
+  const handleEdit = useCallback((alert: AlertForEdit) => {
+    setEditingAlert(alert);
+  }, []);
+
+  const handleCloseEditDialog = useCallback(() => {
+    setEditingAlert(null);
+  }, []);
 
   const handleCloseCreateDialog = useCallback(() => {
     setIsCreateOpen(false);
@@ -251,6 +274,7 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
                         onDelete={handleDelete}
                         onTestAlert={handleTestAlert}
                         onDryRun={handleDryRun}
+                        onEdit={handleEdit}
                       />
                     ))
                   )}
@@ -279,6 +303,15 @@ export function AlertsPanel({ workspaceSlug, projectId }: AlertsPanelProps) {
         open={isCreateOpen}
         onClose={handleCloseCreateDialog}
       />
+
+      {editingAlert && (
+        <EditAlertDialog
+          workspaceSlug={workspaceSlug}
+          alert={editingAlert}
+          open={!!editingAlert}
+          onClose={handleCloseEditDialog}
+        />
+      )}
     </>
   );
 }
@@ -306,9 +339,10 @@ interface AlertCardProps {
   onDelete: (id: string) => void;
   onTestAlert: (id: string) => void;
   onDryRun: (id: string) => void;
+  onEdit: (alert: AlertForEdit) => void;
 }
 
-function AlertCard({ alert, workspaceSlug, onToggle, onDelete, onTestAlert, onDryRun }: AlertCardProps) {
+function AlertCard({ alert, workspaceSlug, onToggle, onDelete, onTestAlert, onDryRun, onEdit }: AlertCardProps) {
   const utils = trpc.useUtils();
   const Icon = ALERT_TYPE_ICONS[alert.type] ?? AlertTriangle;
   const thresholdDisplay =
@@ -346,6 +380,17 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete, onTestAlert, onDr
   const handleDeleteClick = () => onDelete(alert.id);
   const handleTestAlertClick = () => onTestAlert(alert.id);
   const handleDryRunClick = () => onDryRun(alert.id);
+  const handleEditClick = () => onEdit({
+    id: alert.id,
+    name: alert.name,
+    type: alert.type,
+    threshold: alert.threshold,
+    operator: alert.operator as "GREATER_THAN" | "LESS_THAN",
+    windowMins: alert.windowMins,
+    cooldownMins: alert.cooldownMins,
+    severity: alert.severity,
+    pendingMins: alert.pendingMins,
+  });
 
   const handleChannelToggle = useCallback(
     (channelId: string) => {
@@ -437,6 +482,10 @@ function AlertCard({ alert, workspaceSlug, onToggle, onDelete, onTestAlert, onDr
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleEditClick}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleTestAlertClick}>
                 <Play className="mr-2 h-4 w-4" />
                 Test Alert
