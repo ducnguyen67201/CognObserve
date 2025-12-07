@@ -40,6 +40,7 @@ import { alertToast } from "@/lib/success";
 import {
   AlertTypeSchema,
   ALERT_TYPE_LABELS,
+  THRESHOLD_PRESETS,
   type AlertType,
   type AlertSeverity,
 } from "@cognobserve/api/schemas";
@@ -195,7 +196,6 @@ export function EditAlertDialog({
   const handlePresetSelect = useCallback(
     (preset: ThresholdPreset) => {
       setSelectedPreset(preset);
-      const { THRESHOLD_PRESETS } = require("@cognobserve/api/schemas");
       const alertType = form.getValues("type");
       const thresholds = THRESHOLD_PRESETS[preset];
       const threshold =
