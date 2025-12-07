@@ -9,6 +9,8 @@ dist/
 out/
 
 # Environment files
+# NOTE: Use Doppler for secret management. See doppler.yaml
+# Local .env files should NOT contain secrets after Doppler migration
 .env
 .env.local
 .env.*.local

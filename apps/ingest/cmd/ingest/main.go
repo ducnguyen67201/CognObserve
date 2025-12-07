@@ -11,8 +11,11 @@ import (
 	"github.com/cognobserve/ingest/internal/config"
 	"github.com/cognobserve/ingest/internal/server"
 	"github.com/cognobserve/ingest/internal/temporal"
-	"github.com/joho/godotenv"
 )
+
+// Environment variables are injected by Doppler at runtime.
+// Run with: doppler run -- go run ./cmd/ingest
+// See: docs/specs/issue-104-doppler-secret-management.md
 
 func main() {
 	// Setup structured logging
@@ -20,10 +23,6 @@ func main() {
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
-
-	// Load .env file from root directory (development only)
-	// In production, env vars are injected directly
-	_ = godotenv.Load("../../.env")
 
 	// Load configuration
 	cfg, err := config.Load()

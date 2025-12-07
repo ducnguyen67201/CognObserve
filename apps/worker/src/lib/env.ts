@@ -1,10 +1,6 @@
-// Load .env from project root (Next.js does this automatically, worker needs manual load)
-import { config } from "dotenv";
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "../../../../.env") });
+// Environment variables are injected by Doppler at runtime.
+// Run commands with: doppler run -- <command>
+// See: docs/specs/issue-104-doppler-secret-management.md
 
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
