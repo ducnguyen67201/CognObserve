@@ -123,7 +123,7 @@ export class TraceProcessor {
       return null;
     }
 
-    // Upsert: create if not exists, update timestamp and userId if exists
+    // Upsert: create if not exists, update timestamp if exists
     const session = await prisma.traceSession.upsert({
       where: {
         projectId_externalId: {
@@ -138,10 +138,17 @@ export class TraceProcessor {
       },
       update: {
         updatedAt: new Date(),
-        // Link to user if provided and not already linked
-        ...(userId && { userId }),
       },
+      select: { id: true, userId: true },
     });
+
+    // Link session to user if not already linked
+    if (userId && !session.userId) {
+      await prisma.traceSession.update({
+        where: { id: session.id },
+        data: { userId },
+      });
+    }
 
     return session.id;
   }

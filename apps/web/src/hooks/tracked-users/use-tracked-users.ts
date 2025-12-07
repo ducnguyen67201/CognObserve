@@ -60,10 +60,6 @@ export function useTrackedUsers({
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleRefetch = useCallback(() => {
-    refetch();
-  }, [refetch]);
-
   return {
     users,
     isLoading,
@@ -71,6 +67,6 @@ export function useTrackedUsers({
     hasMore: !!hasNextPage,
     loadMore,
     isLoadingMore: isFetchingNextPage,
-    refetch: handleRefetch,
+    refetch,
   };
 }

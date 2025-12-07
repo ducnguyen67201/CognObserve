@@ -52,10 +52,6 @@ function randomChoice<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
-function randomFloat(min: number, max: number): number {
-  return Math.random() * (max - min) + min;
-}
-
 function hoursAgo(hours: number): Date {
   return new Date(Date.now() - hours * 60 * 60 * 1000);
 }
@@ -193,28 +189,23 @@ export async function seedUsers() {
     users.push(generateUser(i));
   }
 
-  // Create users in database
-  let activeCount = 0;
-  let casualCount = 0;
-  let churnedCount = 0;
+  // Create users in database using createMany for better performance
+  await prisma.trackedUser.createMany({
+    data: users.map((user) => ({
+      projectId: project.id,
+      externalId: user.externalId,
+      name: user.name,
+      email: user.email,
+      metadata: user.metadata as Prisma.InputJsonValue,
+      firstSeenAt: user.firstSeenAt,
+      lastSeenAt: user.lastSeenAt,
+    })),
+  });
 
-  for (const user of users) {
-    await prisma.trackedUser.create({
-      data: {
-        projectId: project.id,
-        externalId: user.externalId,
-        name: user.name,
-        email: user.email,
-        metadata: user.metadata as Prisma.InputJsonValue,
-        firstSeenAt: user.firstSeenAt,
-        lastSeenAt: user.lastSeenAt,
-      },
-    });
-
-    if (user.activityType === "active") activeCount++;
-    else if (user.activityType === "casual") casualCount++;
-    else churnedCount++;
-  }
+  // Count activity types
+  const activeCount = users.filter((u) => u.activityType === "active").length;
+  const casualCount = users.filter((u) => u.activityType === "casual").length;
+  const churnedCount = users.filter((u) => u.activityType === "churned").length;
 
   // Link some users to existing sessions
   const createdUsers = await prisma.trackedUser.findMany({

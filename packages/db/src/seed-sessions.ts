@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 // Dynamic import after env is loaded
-const { prisma, Prisma } = await import("./index.js");
+const { prisma } = await import("./index.js");
 
 // Constants for realistic data generation
 const SESSION_PREFIXES = [
@@ -65,7 +65,7 @@ const MODELS = [
   "gemini-1.5-flash",
 ];
 
-const SPAN_LEVELS = ["DEBUG", "DEFAULT", "WARNING", "ERROR"] as const;
+// Span levels are defined in SpanLevel enum from Prisma
 
 // User data for realistic profiles
 const FIRST_NAMES = [

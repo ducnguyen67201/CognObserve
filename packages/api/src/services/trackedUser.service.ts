@@ -184,15 +184,16 @@ export class TrackedUserService {
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    // Get aggregated metrics
-    const metrics = await prisma.span.aggregate({
-      where: { trace: { userId: user.id } },
-      _sum: { totalTokens: true, totalCost: true },
-    });
-
-    const errorCount = await prisma.span.count({
-      where: { trace: { userId: user.id }, level: SpanLevel.ERROR },
-    });
+    // Get aggregated metrics in parallel
+    const [metrics, errorCount] = await Promise.all([
+      prisma.span.aggregate({
+        where: { trace: { userId: user.id } },
+        _sum: { totalTokens: true, totalCost: true },
+      }),
+      prisma.span.count({
+        where: { trace: { userId: user.id }, level: SpanLevel.ERROR },
+      }),
+    ]);
 
     return {
       ...user,
@@ -408,8 +409,12 @@ export class TrackedUserService {
     }
 
     // Merge metadata if provided
+    const existingMetadata =
+      user.metadata && typeof user.metadata === "object" && !Array.isArray(user.metadata)
+        ? (user.metadata as Record<string, unknown>)
+        : {};
     const mergedMetadata = data.metadata
-      ? { ...((user.metadata as object) ?? {}), ...data.metadata }
+      ? { ...existingMetadata, ...data.metadata }
       : undefined;
 
     return prisma.trackedUser.update({

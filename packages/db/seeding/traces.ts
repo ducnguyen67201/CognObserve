@@ -307,7 +307,7 @@ export async function seedTraces() {
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${randomChoice(EMAIL_DOMAINS)}`,
         metadata: { plan: randomChoice(PLANS), source: randomChoice(["organic", "referral", "paid"]) },
         firstSeenAt: hoursAgo(userFirstSeenHoursAgo),
-        lastSeenAt: hoursAgo(randomInt(0, Math.min(userFirstSeenHoursAgo - 1, 168))),
+        lastSeenAt: hoursAgo(randomInt(0, Math.max(0, Math.min(userFirstSeenHoursAgo - 1, 168)))),
       },
     });
     totalUsers++;

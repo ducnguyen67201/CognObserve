@@ -156,10 +156,11 @@ class CognObserveClient {
   startTrace(options: TraceOptions): Trace {
     this.ensureInitialized();
 
-    // Merge global user with trace options (trace options take precedence)
+    // Merge global user with trace options (explicit userId takes precedence)
+    const resolvedUserId = options.userId ?? options.user?.id ?? this.globalUser?.id;
     const mergedOptions: TraceOptions = {
       ...options,
-      userId: options.userId ?? options.user?.id ?? this.globalUser?.id,
+      userId: resolvedUserId,
       user: options.user ?? this.globalUser ?? undefined,
     };
 
