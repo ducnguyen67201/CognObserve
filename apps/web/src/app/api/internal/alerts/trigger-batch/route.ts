@@ -13,10 +13,6 @@ import { env } from "@/lib/env";
 import { AlertingAdapter } from "@cognobserve/api/lib/alerting";
 import { initializeAlertingAdapters } from "@cognobserve/api/lib/alerting/init";
 import {
-  AlertSeveritySchema,
-  AlertStateSchema,
-  AlertTypeSchema,
-  AlertOperatorSchema,
   type ChannelProvider,
   type AlertType,
   type AlertOperator,
@@ -28,6 +24,12 @@ initializeAlertingAdapters();
 
 const INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 const CACHE_CONTROL_NO_STORE = "no-store, no-cache, must-revalidate";
+
+// Define schemas inline to avoid ESM import resolution issues in Next.js
+const AlertSeveritySchema = z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]);
+const AlertStateSchema = z.enum(["INACTIVE", "PENDING", "FIRING", "RESOLVED"]);
+const AlertTypeSchema = z.enum(["ERROR_RATE", "LATENCY_P50", "LATENCY_P95", "LATENCY_P99"]);
+const AlertOperatorSchema = z.enum(["GREATER_THAN", "LESS_THAN"]);
 
 // Schema for batch trigger items (matches TriggerQueueItem from worker)
 const BatchTriggerItemSchema = z.object({
@@ -42,7 +44,7 @@ const BatchTriggerItemSchema = z.object({
   operator: AlertOperatorSchema,
   previousState: AlertStateSchema,
   newState: AlertStateSchema,
-  queuedAt: z.string().datetime(),
+  queuedAt: z.string(),
   channelIds: z.array(z.string()),
 });
 

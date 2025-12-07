@@ -135,8 +135,16 @@ export class AlertEvaluator {
         alert.windowMins
       );
 
+      // Debug logging
+      console.log(
+        `  [${alert.name}] type=${alert.type} window=${alert.windowMins}min ` +
+        `value=${metric.value.toFixed(2)} samples=${metric.sampleCount} ` +
+        `threshold=${alert.threshold} op=${alert.operator} state=${alert.state}`
+      );
+
       // Skip if no samples
       if (metric.sampleCount === 0) {
+        console.log(`  [${alert.name}] No samples in window, skipping`);
         return;
       }
 
@@ -160,6 +168,11 @@ export class AlertEvaluator {
           sampleCount: metric.sampleCount,
           value: metric.value,
         });
+
+        // Check for re-notification when staying in FIRING
+        if (alert.state === "FIRING" && conditionMet) {
+          await this.maybeRenotify(alert, metric.value);
+        }
       }
     } catch (error) {
       console.error(
@@ -200,6 +213,11 @@ export class AlertEvaluator {
         const pendingDuration = alert.stateChangedAt
           ? Date.now() - alert.stateChangedAt.getTime()
           : 0;
+        console.log(
+          `    pendingCheck: stateChangedAt=${alert.stateChangedAt?.toISOString()} ` +
+          `pendingDuration=${pendingDuration}ms pendingMs=${pendingMs}ms ` +
+          `shouldFire=${pendingDuration >= pendingMs}`
+        );
         return pendingDuration >= pendingMs ? "FIRING" : "PENDING";
       }
 
@@ -233,16 +251,12 @@ export class AlertEvaluator {
     await this.store.updateAlertState(alert.id, newState, {
       value: currentValue,
       sampleCount,
+      stateChanged: true,
     });
 
     // Enqueue for notification when transitioning to FIRING
     if (newState === "FIRING" && previousState !== "FIRING") {
       await this.enqueueForNotification(alert, currentValue, previousState, newState);
-    }
-
-    // Also check for re-notification when staying in FIRING (cooldown check)
-    if (newState === "FIRING" && previousState === "FIRING") {
-      await this.maybeRenotify(alert, currentValue);
     }
 
     // Record history for significant state changes

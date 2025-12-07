@@ -60,6 +60,8 @@ export interface StateMetadata {
   evaluationMs?: number;
   sampleCount?: number;
   value?: number;
+  /** If true, this is an actual state transition and stateChangedAt should be updated */
+  stateChanged?: boolean;
 }
 
 /**

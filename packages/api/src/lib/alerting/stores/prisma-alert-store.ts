@@ -89,10 +89,11 @@ export class PrismaAlertStore implements IAlertStore {
       where: { id: alertId },
       data: {
         state,
-        stateChangedAt: now,
         lastEvaluatedAt: now,
+        // Only update stateChangedAt when state actually changed
+        ...(metadata?.stateChanged ? { stateChangedAt: now } : {}),
         // Only update lastTriggeredAt when transitioning to FIRING
-        ...(state === "FIRING" ? { lastTriggeredAt: now } : {}),
+        ...(state === "FIRING" && metadata?.stateChanged ? { lastTriggeredAt: now } : {}),
       },
     });
   }
