@@ -38,10 +38,10 @@ cd apps/ingest && make dev
 
 ## Access
 
-| Service | URL |
-|---------|-----|
-| Dashboard | http://localhost:3000 |
-| Ingest API | http://localhost:8080 |
+| Service      | URL                          |
+| ------------ | ---------------------------- |
+| Dashboard    | http://localhost:3000        |
+| Ingest API   | http://localhost:8080        |
 | Health Check | http://localhost:8080/health |
 
 ## Test It
@@ -58,8 +58,8 @@ curl -X POST http://localhost:8080/v1/traces \
 
 ## Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
-| Traces not appearing | Check worker terminal for errors |
-| Costs showing $0 | Run `pnpm db:seed` to add model pricing |
-| Connection refused | Run `docker-compose ps` to verify databases are running |
+| Issue                | Fix                                                     |
+| -------------------- | ------------------------------------------------------- |
+| Traces not appearing | Check worker terminal for errors                        |
+| Costs showing $0     | Run `pnpm db:seed` to add model pricing                 |
+| Connection refused   | Run `docker-compose ps` to verify databases are running |
