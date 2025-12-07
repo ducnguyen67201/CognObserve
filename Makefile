@@ -24,7 +24,7 @@ doppler-setup: check-doppler
 
 # Verify Doppler can fetch secrets
 doppler-check: check-doppler
-	@doppler run -- printenv NEXTAUTH_SECRET > /dev/null 2>&1 && echo "✅ Doppler secrets accessible" || (echo "❌ Cannot fetch Doppler secrets. Run: doppler login && make doppler-setup" && exit 1)
+	@doppler run -- printenv DATABASE_URL > /dev/null 2>&1 && echo "✅ Doppler secrets accessible" || (echo "❌ Cannot fetch Doppler secrets. Run: doppler login && make doppler-setup" && exit 1)
 
 # ============================================================================
 # GIT HOOKS

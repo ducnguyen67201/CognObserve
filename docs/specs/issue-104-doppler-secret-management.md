@@ -279,34 +279,35 @@ All secrets go into the `cognobserve` project. Each service reads only what it n
 ### 6.1 Root `doppler.yaml`
 
 ```yaml
-# doppler.yaml - Monorepo configuration
+# doppler.yaml - Monorepo configuration (single project approach)
+# All services share one Doppler project for Turbo compatibility
 # Run `doppler setup --no-interactive` to configure
 
 setup:
+  # Root level (for turbo commands)
+  - project: web
+    config: dev_personal
+    path: .
+
   # Web application (Next.js)
-  - project: cognobserve-web
-    config: dev
+  - project: web
+    config: dev_personal
     path: apps/web
 
   # Ingest service (Go)
-  - project: cognobserve-ingest
-    config: dev
+  - project: web
+    config: dev_personal
     path: apps/ingest
 
   # Worker service (Temporal)
-  - project: cognobserve-worker
-    config: dev
+  - project: web
+    config: dev_personal
     path: apps/worker
 
   # Database package (Prisma)
-  - project: cognobserve-shared
-    config: dev
+  - project: web
+    config: dev_personal
     path: packages/db
-
-  # Root level (for turbo commands)
-  - project: cognobserve-shared
-    config: dev
-    path: .
 ```
 
 ### 6.2 Updated `package.json` Scripts
@@ -315,13 +316,13 @@ setup:
 {
   "scripts": {
     "dev": "doppler run -- turbo dev",
-    "dev:web": "doppler run -p cognobserve-web -c dev -- turbo dev --filter=@cognobserve/web",
-    "dev:worker": "doppler run -p cognobserve-worker -c dev -- turbo dev --filter=@cognobserve/worker",
+    "dev:no-doppler": "turbo dev",
     "build": "doppler run -- turbo build",
-    "db:generate": "doppler run -p cognobserve-shared -c dev -- pnpm --filter @cognobserve/db generate",
-    "db:push": "doppler run -p cognobserve-shared -c dev -- pnpm --filter @cognobserve/db push",
-    "db:migrate": "doppler run -p cognobserve-shared -c dev -- pnpm --filter @cognobserve/db migrate",
-    "db:studio": "doppler run -p cognobserve-shared -c dev -- pnpm --filter @cognobserve/db studio"
+    "build:ci": "turbo build",
+    "db:generate": "doppler run -- turbo db:generate",
+    "db:generate:ci": "turbo db:generate",
+    "db:push": "doppler run -- turbo db:push",
+    "db:studio": "doppler run -- pnpm --filter @cognobserve/db db:studio"
   }
 }
 ```
@@ -459,33 +460,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Option A: Use Doppler in CI (requires DOPPLER_TOKEN secret)
       - name: Generate Prisma Client
-        run: doppler run -p cognobserve-shared -c ci -- pnpm db:generate
+        run: doppler run -p web -c ci -- pnpm db:generate
 
       - name: Build
-        run: doppler run -p cognobserve-shared -c ci -- pnpm build
+        run: doppler run -p web -c ci -- pnpm build
 
-      - name: Test Web
-        run: doppler run -p cognobserve-web -c ci -- pnpm --filter @cognobserve/web test
+      - name: Test
+        run: doppler run -p web -c ci -- pnpm test
 
-      - name: Test Ingest
-        working-directory: apps/ingest
-        run: doppler run -p cognobserve-ingest -c ci -- go test ./...
+      # Option B: Use :ci scripts (no Doppler needed, env vars set in workflow)
+      # - name: Generate Prisma Client
+      #   run: pnpm db:generate:ci
+      # - name: Build
+      #   run: pnpm build:ci
 ```
 
 ### 8.2 Service Token Setup
 
-Create service tokens in Doppler Dashboard:
+Create service tokens in Doppler Dashboard (single project approach):
 
 | Token Name | Project | Config | GitHub Secret |
 |------------|---------|--------|---------------|
-| CI Token | cognobserve-shared | ci | `DOPPLER_TOKEN_CI` |
-| Web Staging | cognobserve-web | stg | `DOPPLER_TOKEN_WEB_STG` |
-| Web Production | cognobserve-web | prd | `DOPPLER_TOKEN_WEB_PRD` |
-| Ingest Staging | cognobserve-ingest | stg | `DOPPLER_TOKEN_INGEST_STG` |
-| Ingest Production | cognobserve-ingest | prd | `DOPPLER_TOKEN_INGEST_PRD` |
-| Worker Staging | cognobserve-worker | stg | `DOPPLER_TOKEN_WORKER_STG` |
-| Worker Production | cognobserve-worker | prd | `DOPPLER_TOKEN_WORKER_PRD` |
+| CI Token | web | ci | `DOPPLER_TOKEN` |
+| Staging | web | stg | `DOPPLER_TOKEN_STG` |
+| Production | web | prd | `DOPPLER_TOKEN_PRD` |
 
 ---
 
