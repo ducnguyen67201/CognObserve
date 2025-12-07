@@ -9,3 +9,4 @@ export * from "./traces";
 export * from "./cost";
 export * from "./alerting";
 export * from "./channels";
+export * from "./sessions";

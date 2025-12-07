@@ -70,3 +70,4 @@ export type {
   TokenUsagePoint,
   ModelUsage,
 } from "./routers/analytics";
+export type { SessionWithStats } from "./schemas/sessions";

@@ -8,6 +8,7 @@ import type { TraceOptions, SpanOptions, TraceData } from './types';
 export class Trace {
   readonly id: string;
   readonly name: string;
+  readonly sessionId: string | null;
   readonly timestamp: Date;
   readonly metadata: Record<string, unknown> | null;
 
@@ -19,6 +20,7 @@ export class Trace {
   constructor(options: TraceOptions, onEnd?: (data: TraceData) => void) {
     this.id = options.id ?? generateId();
     this.name = options.name;
+    this.sessionId = options.sessionId ?? null;
     this.timestamp = new Date();
     this.metadata = options.metadata ?? null;
     this._onEnd = onEnd ?? null;
@@ -117,6 +119,7 @@ export class Trace {
     return {
       id: this.id,
       name: this.name,
+      sessionId: this.sessionId,
       timestamp: this.timestamp,
       metadata: this.metadata,
       spans: Array.from(this._spans.values()).map((s) => s.toData()),

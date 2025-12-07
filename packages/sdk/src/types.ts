@@ -67,6 +67,8 @@ export interface TraceOptions {
   name: string;
   /** Optional custom trace ID */
   id?: string;
+  /** Optional session ID for grouping multi-turn conversations */
+  sessionId?: string;
   /** Optional metadata */
   metadata?: Record<string, unknown>;
 }
@@ -125,6 +127,7 @@ export interface SpanData {
 export interface TraceData {
   id: string;
   name: string;
+  sessionId: string | null;
   timestamp: Date;
   metadata: Record<string, unknown> | null;
   spans: SpanData[];
@@ -135,6 +138,7 @@ export interface TraceData {
  */
 export interface IngestRequest {
   trace_id?: string;
+  session_id?: string;
   name: string;
   metadata?: Record<string, unknown>;
   spans: IngestSpan[];

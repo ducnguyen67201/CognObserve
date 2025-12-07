@@ -43,6 +43,8 @@ export const TraceFiltersSchema = z.object({
   timeRange: TimeRangeSchema.optional(),
   /** Custom date range (when timeRange is "custom") */
   customRange: CustomDateRangeSchema.optional(),
+  /** Filter by session ID */
+  sessionId: z.string().optional(),
 });
 
 export type TraceFilters = z.infer<typeof TraceFiltersSchema>;

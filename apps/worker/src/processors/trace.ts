@@ -20,8 +20,11 @@ export class TraceProcessor {
   async process(data: QueueTraceData): Promise<void> {
     console.log(`Processing trace: ${data.ID} with ${data.Spans.length} spans`);
 
+    // Resolve session if external session ID provided
+    const sessionId = await this.resolveSessionId(data.ProjectID, data.SessionID);
+
     // Convert queue data to Prisma format
-    const traceInput = this.convertTrace(data);
+    const traceInput = this.convertTrace(data, sessionId);
     const spanInputs = data.Spans.map((span) => this.convertSpan(span));
 
     // Use transaction to ensure atomicity
@@ -39,10 +42,42 @@ export class TraceProcessor {
       }
     });
 
-    console.log(`Trace ${data.ID} persisted successfully`);
+    console.log(`Trace ${data.ID} persisted successfully${sessionId ? ` (session: ${sessionId})` : ""}`);
 
     // Calculate and update costs for billable spans
     await this.calculateCosts(data);
+  }
+
+  /**
+   * Resolve or create a TraceSession from external session ID.
+   * Uses upsert to atomically find or create the session.
+   */
+  private async resolveSessionId(
+    projectId: string,
+    externalSessionId: string | undefined
+  ): Promise<string | null> {
+    if (!externalSessionId) {
+      return null;
+    }
+
+    // Upsert: create if not exists, update timestamp if exists
+    const session = await prisma.traceSession.upsert({
+      where: {
+        projectId_externalId: {
+          projectId,
+          externalId: externalSessionId,
+        },
+      },
+      create: {
+        projectId,
+        externalId: externalSessionId,
+      },
+      update: {
+        updatedAt: new Date(),
+      },
+    });
+
+    return session.id;
   }
 
   /**
@@ -285,7 +320,7 @@ export class TraceProcessor {
   /**
    * Convert queue trace data to Prisma create input
    */
-  private convertTrace(data: QueueTraceData): Prisma.TraceCreateInput {
+  private convertTrace(data: QueueTraceData, sessionId: string | null): Prisma.TraceCreateInput {
     return {
       id: data.ID,
       name: data.Name,
@@ -294,6 +329,11 @@ export class TraceProcessor {
       project: {
         connect: { id: data.ProjectID },
       },
+      ...(sessionId && {
+        session: {
+          connect: { id: sessionId },
+        },
+      }),
     };
   }
 

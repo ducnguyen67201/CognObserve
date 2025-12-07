@@ -6,6 +6,7 @@ import { QUEUE_KEYS, safeJsonParse } from "@cognobserve/shared";
 export interface QueueTraceData {
   ID: string;
   ProjectID: string;
+  SessionID?: string; // External session ID for grouping conversations
   Name: string;
   Timestamp: string;
   Metadata?: Record<string, unknown>;

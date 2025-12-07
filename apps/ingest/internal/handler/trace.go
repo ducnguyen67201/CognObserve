@@ -14,10 +14,11 @@ import (
 // IngestTraceRequest represents the incoming trace request
 // This mirrors the proto definition but uses JSON-friendly types
 type IngestTraceRequest struct {
-	TraceID  *string           `json:"trace_id,omitempty"`
-	Name     string            `json:"name"`
-	Metadata map[string]any    `json:"metadata,omitempty"`
-	Spans    []IngestSpanInput `json:"spans"`
+	TraceID   *string           `json:"trace_id,omitempty"`
+	SessionID *string           `json:"session_id,omitempty"` // External session ID for conversations
+	Name      string            `json:"name"`
+	Metadata  map[string]any    `json:"metadata,omitempty"`
+	Spans     []IngestSpanInput `json:"spans"`
 }
 
 // IngestSpanInput represents a span in the request
@@ -82,6 +83,7 @@ func (h *Handler) IngestTrace(w http.ResponseWriter, r *http.Request) {
 	trace := &model.Trace{
 		ID:        traceID,
 		ProjectID: projectID,
+		SessionID: req.SessionID,
 		Name:      req.Name,
 		Timestamp: time.Now().UTC(),
 		Metadata:  req.Metadata,

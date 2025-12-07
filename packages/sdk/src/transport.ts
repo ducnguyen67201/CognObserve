@@ -153,6 +153,7 @@ export class Transport {
   private formatPayload(trace: TraceData): IngestRequest {
     return {
       trace_id: trace.id,
+      session_id: trace.sessionId ?? undefined,
       name: trace.name,
       metadata: trace.metadata ?? undefined,
       spans: trace.spans.map((span) => ({

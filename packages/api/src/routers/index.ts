@@ -20,6 +20,7 @@ import { apiKeysRouter } from "./apiKeys";
 import { workspacesRouter } from "./workspaces";
 import { projectsRouter } from "./projects";
 import { tracesRouter } from "./traces";
+import { sessionsRouter } from "./sessions";
 import { analyticsRouter } from "./analytics";
 import { domainsRouter } from "./domains";
 import { costsRouter } from "./costs";
@@ -80,6 +81,19 @@ export const appRouter = createRouter({
    * - traces.get  - Get a single trace with spans
    */
   traces: tracesRouter,
+
+  /**
+   * Sessions management (multi-turn conversations)
+   * @see ./sessions.ts
+   *
+   * - sessions.list     - List sessions with stats
+   * - sessions.get      - Get session with traces
+   * - sessions.create   - Create session manually
+   * - sessions.update   - Update session name/metadata
+   * - sessions.delete   - Delete session
+   * - sessions.timeline - Get ordered traces
+   */
+  sessions: sessionsRouter,
 
   /**
    * Analytics
@@ -167,6 +181,7 @@ export {
   workspacesRouter,
   projectsRouter,
   tracesRouter,
+  sessionsRouter,
   analyticsRouter,
   domainsRouter,
   costsRouter,

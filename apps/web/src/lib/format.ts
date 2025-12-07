@@ -33,3 +33,19 @@ export const formatTimestamp = (timestamp: string): string => {
   const date = new Date(timestamp);
   return date.toLocaleString();
 };
+
+/**
+ * Formats a cost value to a human-readable currency string.
+ * - $0.00 for zero
+ * - $X.XK for >= 1000
+ * - $X.XX for >= 1
+ * - $X.XXX for >= 0.01
+ * - $X.XXXX for < 0.01
+ */
+export const formatCost = (cost: number): string => {
+  if (cost === 0) return "$0.00";
+  if (cost >= 1000) return `$${(cost / 1000).toFixed(1)}K`;
+  if (cost >= 1) return `$${cost.toFixed(2)}`;
+  if (cost >= 0.01) return `$${cost.toFixed(3)}`;
+  return `$${cost.toFixed(4)}`;
+};

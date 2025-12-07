@@ -11,6 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx seeding/index.ts",
+    "db:seed-sessions": "tsx src/seed-sessions.ts",
+    "db:seed-alerts": "tsx src/seed-alert-history.ts",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
   },

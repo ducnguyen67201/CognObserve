@@ -69,7 +69,8 @@ export const ModelName = {
   AlertChannel: 'AlertChannel',
   AlertHistory: 'AlertHistory',
   NotificationChannel: 'NotificationChannel',
-  AlertChannelLink: 'AlertChannelLink'
+  AlertChannelLink: 'AlertChannelLink',
+  TraceSession: 'TraceSession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -217,6 +218,7 @@ export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof 
 export const TraceScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
+  sessionId: 'sessionId',
   name: 'name',
   timestamp: 'timestamp',
   metadata: 'metadata'
@@ -360,6 +362,19 @@ export const AlertChannelLinkScalarFieldEnum = {
 } as const
 
 export type AlertChannelLinkScalarFieldEnum = (typeof AlertChannelLinkScalarFieldEnum)[keyof typeof AlertChannelLinkScalarFieldEnum]
+
+
+export const TraceSessionScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  externalId: 'externalId',
+  name: 'name',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraceSessionScalarFieldEnum = (typeof TraceSessionScalarFieldEnum)[keyof typeof TraceSessionScalarFieldEnum]
 
 
 export const SortOrder = {
