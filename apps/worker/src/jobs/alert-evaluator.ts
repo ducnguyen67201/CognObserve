@@ -192,7 +192,7 @@ export class AlertEvaluator {
       case "INACTIVE":
         return conditionMet ? "PENDING" : "INACTIVE";
 
-      case "PENDING":
+      case "PENDING": {
         if (!conditionMet) {
           return "INACTIVE";
         }
@@ -201,6 +201,7 @@ export class AlertEvaluator {
           ? Date.now() - alert.stateChangedAt.getTime()
           : 0;
         return pendingDuration >= pendingMs ? "FIRING" : "PENDING";
+      }
 
       case "FIRING":
         return conditionMet ? "FIRING" : "RESOLVED";
