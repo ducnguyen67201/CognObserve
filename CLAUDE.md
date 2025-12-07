@@ -120,6 +120,49 @@ Core models in `packages/db/prisma/schema.prisma`:
 - **Trace**: Top-level trace for a request/operation
 - **Span**: Individual operations within a trace (LLM calls, etc.)
 
+## Worker Architecture
+
+The worker (`apps/worker/`) handles background processing including trace ingestion and alerting.
+
+### Key Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| TraceProcessor | `apps/worker/src/processors/trace.ts` | Processes traces from Redis queue, calculates costs |
+| AlertEvaluator | `apps/worker/src/jobs/alert-evaluator.ts` | State machine for alert evaluation and notification |
+| Alerting Interfaces | `packages/api/src/lib/alerting/interfaces.ts` | IAlertStore, ITriggerQueue, IDispatcher, IScheduler |
+| Alerting Implementations | `packages/api/src/lib/alerting/stores/`, `queues/`, `dispatchers/`, `schedulers/` | Concrete implementations |
+
+### Alert System v2
+
+**Full spec**: `docs/specs/issue-99-alert-system-v2.md`
+
+The alerting system uses a state machine with queue-based batching:
+
+```
+State Machine: INACTIVE → PENDING → FIRING → RESOLVED → INACTIVE
+
+Notification Rules:
+- PENDING → FIRING: First notification sent
+- FIRING → FIRING: Re-notify only if cooldown passed (5min for CRITICAL)
+- All other transitions: No notification
+```
+
+**Severity-based timing:**
+| Severity | Pending Duration | Cooldown | Use Case |
+|----------|------------------|----------|----------|
+| CRITICAL | 1 min | 5 min | System down |
+| HIGH | 2 min | 30 min | Degradation |
+| MEDIUM | 3 min | 2 hours | Performance |
+| LOW | 5 min | 12 hours | Warnings |
+
+**Key files for alerting context:**
+- Spec: `docs/specs/issue-99-alert-system-v2.md`
+- Evaluator: `apps/worker/src/jobs/alert-evaluator.ts`
+- Interfaces: `packages/api/src/lib/alerting/interfaces.ts`
+- Schemas: `packages/api/src/schemas/alerting.ts`
+- Batch endpoint: `apps/web/src/app/api/internal/alerts/trigger-batch/route.ts`
+
 ## Code Style Rules
 
 ### No Inline Functions

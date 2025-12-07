@@ -1,7 +1,7 @@
 # Engineering Specification: Alert System v2
 
 **Issue:** #99 - Configure Alert Cooldown Periods & Threshold Presets
-**Status:** Draft
+**Status:** Implemented (Testing)
 **Last Updated:** 2025-12-07
 
 ---
@@ -144,6 +144,108 @@ STATE TRANSITION TABLE
 │  RESOLVED       │  MET               │  PENDING          │  Start pending timer     │
 └─────────────────┴────────────────────┴───────────────────┴──────────────────────────┘
 ```
+
+### Notification Logic
+
+**When are notifications sent?**
+
+| State Transition | Notification Sent? | Notes |
+|------------------|-------------------|-------|
+| INACTIVE → PENDING | ❌ No | Just waiting, condition might be transient |
+| PENDING → FIRING | ✅ **YES** | First notification when alert fires |
+| FIRING → FIRING (staying) | ✅ Only if cooldown passed | Re-notification for ongoing issues |
+| FIRING → RESOLVED | ❌ No | Condition no longer met |
+| RESOLVED → PENDING | ❌ No | Alert recurring, starts pending again |
+| RESOLVED → INACTIVE | ❌ No | Back to normal |
+
+**Key Concepts:**
+
+1. **First Fire Notification**: Sent immediately when transitioning PENDING → FIRING
+2. **Re-Notification**: Only sent if alert stays in FIRING AND cooldown has passed
+3. **No Spam**: Cooldown prevents multiple notifications during an ongoing incident
+
+### Detailed Timeline Example
+
+```
+CRITICAL Alert: Error Rate > 5% (1 min pending, 5 min cooldown)
+═════════════════════════════════════════════════════════════════════════════
+
+T+0:00    Error rate spikes to 8%
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: INACTIVE → PENDING                                   │
+          │  Action: Start pending timer                                 │
+          │  Notification: ❌ None (waiting to confirm it's not a blip) │
+          └──────────────────────────────────────────────────────────────┘
+
+T+0:30    Error rate still at 8% (30 seconds elapsed)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: PENDING (stays)                                      │
+          │  Pending Progress: 50% (30s / 60s)                          │
+          │  Notification: ❌ None (still waiting)                       │
+          └──────────────────────────────────────────────────────────────┘
+
+T+1:00    Error rate still at 8% (60 seconds elapsed = pending duration met)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: PENDING → FIRING                                     │
+          │  Action: Enqueue for dispatch                               │
+          │  Notification: ✅ SENT (Discord, Gmail)                      │
+          │  lastTriggeredAt: T+1:00                                     │
+          └──────────────────────────────────────────────────────────────┘
+
+T+2:00    Error rate still at 7% (above threshold)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: FIRING (stays)                                       │
+          │  Cooldown: 4 min remaining (5 min - 1 min elapsed)          │
+          │  Notification: ❌ None (cooldown active)                     │
+          └──────────────────────────────────────────────────────────────┘
+
+T+4:00    Error rate still at 6% (above threshold)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: FIRING (stays)                                       │
+          │  Cooldown: 2 min remaining                                   │
+          │  Notification: ❌ None (cooldown active)                     │
+          └──────────────────────────────────────────────────────────────┘
+
+T+6:00    Error rate still at 6% (cooldown expired: 5 min since T+1:00)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: FIRING (stays)                                       │
+          │  Cooldown: EXPIRED                                           │
+          │  Notification: ✅ RE-SENT (reminder that issue persists)     │
+          │  lastTriggeredAt: T+6:00                                     │
+          └──────────────────────────────────────────────────────────────┘
+
+T+8:00    Error rate drops to 3% (below threshold)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: FIRING → RESOLVED                                    │
+          │  Action: Mark as resolved                                    │
+          │  Notification: ❌ None                                       │
+          │  Duration: 7 minutes (from T+1:00 to T+8:00)                 │
+          └──────────────────────────────────────────────────────────────┘
+
+T+9:00    Error rate stays at 2% (below threshold)
+          ┌──────────────────────────────────────────────────────────────┐
+          │  State: RESOLVED → INACTIVE                                  │
+          │  Action: Reset, ready for next incident                     │
+          │  Notification: ❌ None                                       │
+          └──────────────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════════════════════
+SUMMARY: 2 notifications sent over 8 minutes (not 48 notifications every 10s!)
+═════════════════════════════════════════════════════════════════════════════
+```
+
+**What happens if error rate spikes again later?**
+
+```
+T+20:00   Error rate spikes to 10% again
+          State: INACTIVE → PENDING (fresh cycle starts)
+
+T+21:00   Still at 10% (pending duration met)
+          State: PENDING → FIRING
+          Notification: ✅ SENT (new incident)
+```
+
+The alert goes through the full cycle again: INACTIVE → PENDING → FIRING → RESOLVED → INACTIVE
 
 ### Severity-Based Configuration
 
