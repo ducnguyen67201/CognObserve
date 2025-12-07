@@ -12,7 +12,16 @@ import { validateInternalSecret } from "@cognobserve/shared";
 import { env } from "@/lib/env";
 import { AlertingAdapter } from "@cognobserve/api/lib/alerting";
 import { initializeAlertingAdapters } from "@cognobserve/api/lib/alerting/init";
-import { type ChannelProvider } from "@cognobserve/api/schemas";
+import {
+  AlertSeveritySchema,
+  AlertStateSchema,
+  AlertTypeSchema,
+  AlertOperatorSchema,
+  type ChannelProvider,
+  type AlertType,
+  type AlertOperator,
+  type AlertState,
+} from "@cognobserve/api/schemas";
 
 // Initialize alerting adapters on module load
 initializeAlertingAdapters();
@@ -26,13 +35,13 @@ const BatchTriggerItemSchema = z.object({
   alertName: z.string(),
   projectId: z.string(),
   projectName: z.string(),
-  severity: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]),
-  metricType: z.enum(["ERROR_RATE", "LATENCY_P50", "LATENCY_P95", "LATENCY_P99"]),
+  severity: AlertSeveritySchema,
+  metricType: AlertTypeSchema,
   threshold: z.number(),
   actualValue: z.number(),
-  operator: z.enum(["GREATER_THAN", "LESS_THAN"]),
-  previousState: z.enum(["INACTIVE", "PENDING", "FIRING", "RESOLVED"]),
-  newState: z.enum(["INACTIVE", "PENDING", "FIRING", "RESOLVED"]),
+  operator: AlertOperatorSchema,
+  previousState: AlertStateSchema,
+  newState: AlertStateSchema,
   queuedAt: z.string().datetime(),
   channelIds: z.array(z.string()),
 });
@@ -146,10 +155,10 @@ async function processAlertNotification(
     alertName: item.alertName,
     projectId: item.projectId,
     projectName: item.projectName,
-    type: item.metricType,
+    type: item.metricType as AlertType,
     threshold: item.threshold,
     actualValue: item.actualValue,
-    operator: item.operator,
+    operator: item.operator as AlertOperator,
     triggeredAt: item.queuedAt,
   };
 
@@ -184,8 +193,8 @@ async function processAlertNotification(
           alertId: item.alertId,
           value: item.actualValue,
           threshold: item.threshold,
-          state: item.newState,
-          previousState: item.previousState,
+          state: item.newState as AlertState,
+          previousState: item.previousState as AlertState,
           notifiedVia,
         },
       }),

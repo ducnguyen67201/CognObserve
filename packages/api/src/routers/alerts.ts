@@ -662,7 +662,7 @@ export const alertsRouter = createRouter({
               projectName: alert.project.name,
               type: alert.type,
               threshold: alert.threshold,
-              actualValue: alert.threshold * 1.1, // Simulate slightly over threshold
+              actualValue: alert.operator === "GREATER_THAN" ? alert.threshold * 1.1 : alert.threshold * 0.9, // Simulate threshold breach
               operator: alert.operator,
               triggeredAt: new Date().toISOString(),
             });
@@ -724,7 +724,7 @@ export const alertsRouter = createRouter({
 
       // Calculate pending progress if applicable
       let pendingProgress = 0;
-      if (alert.state === "PENDING" && alert.stateChangedAt) {
+      if (alert.state === "PENDING" && alert.stateChangedAt && alert.pendingMins > 0) {
         const pendingMs = alert.pendingMins * 60_000;
         const elapsed = Date.now() - alert.stateChangedAt.getTime();
         pendingProgress = Math.min(100, (elapsed / pendingMs) * 100);
