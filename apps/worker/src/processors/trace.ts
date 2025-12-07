@@ -99,9 +99,9 @@ export class TraceProcessor {
         lastSeenAt: new Date(),
       },
       update: {
-        // Only update name/email if provided (don't overwrite with undefined)
-        ...(userMetadata?.Name && { name: userMetadata.Name }),
-        ...(userMetadata?.Email && { email: userMetadata.Email }),
+        // Only update name/email if non-empty (empty strings are treated as "no update")
+        ...(userMetadata?.Name?.trim() && { name: userMetadata.Name.trim() }),
+        ...(userMetadata?.Email?.trim() && { email: userMetadata.Email.trim() }),
         lastSeenAt: new Date(),
       },
     });
