@@ -402,7 +402,8 @@ export const ModelName = {
   AlertChannel: 'AlertChannel',
   AlertHistory: 'AlertHistory',
   NotificationChannel: 'NotificationChannel',
-  AlertChannelLink: 'AlertChannelLink'
+  AlertChannelLink: 'AlertChannelLink',
+  TraceSession: 'TraceSession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "traceSession"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1828,6 +1829,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TraceSession: {
+      payload: Prisma.$TraceSessionPayload<ExtArgs>
+      fields: Prisma.TraceSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TraceSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TraceSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.TraceSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TraceSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>
+        }
+        findMany: {
+          args: Prisma.TraceSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>[]
+        }
+        create: {
+          args: Prisma.TraceSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>
+        }
+        createMany: {
+          args: Prisma.TraceSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TraceSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.TraceSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>
+        }
+        update: {
+          args: Prisma.TraceSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.TraceSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TraceSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TraceSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.TraceSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraceSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.TraceSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTraceSession>
+        }
+        groupBy: {
+          args: Prisma.TraceSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TraceSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TraceSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TraceSessionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1996,6 +2071,7 @@ export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof 
 export const TraceScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
+  sessionId: 'sessionId',
   name: 'name',
   timestamp: 'timestamp',
   metadata: 'metadata'
@@ -2139,6 +2215,19 @@ export const AlertChannelLinkScalarFieldEnum = {
 } as const
 
 export type AlertChannelLinkScalarFieldEnum = (typeof AlertChannelLinkScalarFieldEnum)[keyof typeof AlertChannelLinkScalarFieldEnum]
+
+
+export const TraceSessionScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  externalId: 'externalId',
+  name: 'name',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraceSessionScalarFieldEnum = (typeof TraceSessionScalarFieldEnum)[keyof typeof TraceSessionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2509,6 +2598,7 @@ export type GlobalOmitConfig = {
   alertHistory?: Prisma.AlertHistoryOmit
   notificationChannel?: Prisma.NotificationChannelOmit
   alertChannelLink?: Prisma.AlertChannelLinkOmit
+  traceSession?: Prisma.TraceSessionOmit
 }
 
 /* Types for Logging */

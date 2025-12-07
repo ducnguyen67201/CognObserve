@@ -22,6 +22,8 @@ export interface TraceListItem {
   primaryType: SpanType;
   inputPreview: string | null;
   outputPreview: string | null;
+  sessionId: string | null;
+  sessionName: string | null;
 }
 
 /**
@@ -104,6 +106,8 @@ export interface TraceDetail {
   timestamp: string;
   metadata: unknown;
   spans: SpanItem[];
+  sessionId: string | null;
+  sessionName: string | null;
 }
 
 export interface SpanItem {
@@ -285,6 +289,11 @@ export const tracesRouter = createRouter({
             some: { model: { in: filters.models } },
           };
         }
+
+        // Session filter
+        if (filters.sessionId) {
+          where.sessionId = filters.sessionId;
+        }
       }
 
       const traces = await withQueryTimeout(
@@ -297,6 +306,13 @@ export const tracesRouter = createRouter({
             id: true,
             name: true,
             timestamp: true,
+            sessionId: true,
+            session: {
+              select: {
+                name: true,
+                externalId: true,
+              },
+            },
             spans: {
               select: {
                 name: true,
@@ -381,6 +397,8 @@ export const tracesRouter = createRouter({
           primaryType,
           inputPreview,
           outputPreview,
+          sessionId: trace.sessionId,
+          sessionName: trace.session?.name ?? trace.session?.externalId ?? null,
         };
       });
 
@@ -426,6 +444,13 @@ export const tracesRouter = createRouter({
           name: true,
           timestamp: true,
           metadata: true,
+          sessionId: true,
+          session: {
+            select: {
+              name: true,
+              externalId: true,
+            },
+          },
           spans: {
             orderBy: { startTime: "asc" },
             select: {
@@ -460,6 +485,8 @@ export const tracesRouter = createRouter({
         name: trace.name,
         timestamp: trace.timestamp.toISOString(),
         metadata: trace.metadata,
+        sessionId: trace.sessionId,
+        sessionName: trace.session?.name ?? trace.session?.externalId ?? null,
         spans: trace.spans.map((span) => {
           const spanStartTime = span.startTime.getTime();
           const spanEndTime = span.endTime?.getTime() ?? null;

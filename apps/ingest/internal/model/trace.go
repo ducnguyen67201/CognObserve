@@ -7,6 +7,7 @@ import "time"
 type Trace struct {
 	ID        string
 	ProjectID string
+	SessionID *string // External session ID for grouping conversations
 	Name      string
 	Timestamp time.Time
 	Metadata  map[string]any

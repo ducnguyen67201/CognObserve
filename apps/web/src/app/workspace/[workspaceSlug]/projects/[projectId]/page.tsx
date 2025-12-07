@@ -1,32 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useCallback } from "react";
+import { ArrowLeft, Activity, MessagesSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc/client";
 import { useWorkspaceUrl } from "@/hooks/use-workspace-url";
 import { TracesTable } from "@/components/traces/traces-table";
+import { SessionsTable } from "@/components/sessions/sessions-table";
 import { AlertsPanel } from "@/components/alerts/alerts-panel";
+
+type ProjectTab = "traces" | "sessions";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ workspaceSlug: string; projectId: string }>();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { workspaceSlug, workspaceUrl } = useWorkspaceUrl();
   const projectId = params.projectId;
+
+  const currentTab = (searchParams.get("tab") as ProjectTab) || "traces";
 
   const { data: project, isLoading: isLoadingProject } =
     trpc.projects.get.useQuery(
       { workspaceSlug: workspaceSlug ?? "", projectId },
       { enabled: !!workspaceSlug && !!projectId }
     );
+
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      router.push(url.pathname + url.search);
+    },
+    [router]
+  );
 
   if (isLoadingProject) {
     return (
@@ -85,21 +96,33 @@ export default function ProjectDetailPage() {
         <AlertsPanel workspaceSlug={workspaceSlug ?? ""} projectId={projectId} />
       </div>
 
-      {/* Traces Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Traces</CardTitle>
-          <CardDescription>
-            Recent traces from your AI application.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Tabs */}
+      <Tabs value={currentTab} onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="traces" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Traces
+          </TabsTrigger>
+          <TabsTrigger value="sessions" className="gap-2">
+            <MessagesSquare className="h-4 w-4" />
+            Sessions
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="traces" className="mt-4">
           <TracesTable
             workspaceSlug={workspaceSlug ?? ""}
             projectId={projectId}
           />
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="sessions" className="mt-4">
+          <SessionsTable
+            workspaceSlug={workspaceSlug ?? ""}
+            projectId={projectId}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

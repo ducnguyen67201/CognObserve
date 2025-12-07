@@ -112,3 +112,8 @@ export type NotificationChannel = Prisma.NotificationChannelModel
  * 
  */
 export type AlertChannelLink = Prisma.AlertChannelLinkModel
+/**
+ * Model TraceSession
+ * 
+ */
+export type TraceSession = Prisma.TraceSessionModel

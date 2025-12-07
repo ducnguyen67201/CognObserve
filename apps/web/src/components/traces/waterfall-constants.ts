@@ -28,7 +28,12 @@ export const TIME_SCALE_INTERVALS = [
   { threshold: 5000, interval: 500, format: (ms: number) => `${ms}ms` },
   { threshold: 10000, interval: 1000, format: (ms: number) => `${ms / 1000}s` },
   { threshold: 60000, interval: 5000, format: (ms: number) => `${ms / 1000}s` },
-  { threshold: Infinity, interval: 10000, format: (ms: number) => `${ms / 1000}s` },
+  { threshold: 300000, interval: 30000, format: (ms: number) => `${ms / 1000}s` }, // 5min: 30s intervals
+  { threshold: 600000, interval: 60000, format: (ms: number) => `${Math.floor(ms / 60000)}m` }, // 10min: 1m intervals
+  { threshold: 1800000, interval: 300000, format: (ms: number) => `${Math.floor(ms / 60000)}m` }, // 30min: 5m intervals
+  { threshold: 3600000, interval: 600000, format: (ms: number) => `${Math.floor(ms / 60000)}m` }, // 1hr: 10m intervals
+  { threshold: 7200000, interval: 900000, format: (ms: number) => `${Math.floor(ms / 60000)}m` }, // 2hr: 15m intervals
+  { threshold: Infinity, interval: 1800000, format: (ms: number) => `${Math.floor(ms / 60000)}m` }, // >2hr: 30m intervals
 ] as const;
 
 /**
