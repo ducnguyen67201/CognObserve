@@ -1,17 +1,17 @@
 package handler
 
 import (
-	"github.com/cognobserve/ingest/internal/queue"
+	"github.com/cognobserve/ingest/internal/temporal"
 )
 
 // Handler holds dependencies for HTTP handlers
 type Handler struct {
-	producer queue.Producer
+	temporalClient *temporal.Client
 }
 
-// New creates a new Handler
-func New(producer queue.Producer) *Handler {
+// New creates a new Handler with Temporal client
+func New(temporalClient *temporal.Client) *Handler {
 	return &Handler{
-		producer: producer,
+		temporalClient: temporalClient,
 	}
 }
