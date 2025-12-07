@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { ArrowLeft, Activity, MessagesSquare } from "lucide-react";
+import { ArrowLeft, Activity, MessagesSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,9 +11,10 @@ import { trpc } from "@/lib/trpc/client";
 import { useWorkspaceUrl } from "@/hooks/use-workspace-url";
 import { TracesTable } from "@/components/traces/traces-table";
 import { SessionsTable } from "@/components/sessions/sessions-table";
+import { TrackedUsersTable } from "@/components/tracked-users/tracked-users-table";
 import { AlertsPanel } from "@/components/alerts/alerts-panel";
 
-type ProjectTab = "traces" | "sessions";
+type ProjectTab = "traces" | "sessions" | "users";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ workspaceSlug: string; projectId: string }>();
@@ -107,6 +108,10 @@ export default function ProjectDetailPage() {
             <MessagesSquare className="h-4 w-4" />
             Sessions
           </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-4 w-4" />
+            Users
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="traces" className="mt-4">
@@ -118,6 +123,13 @@ export default function ProjectDetailPage() {
 
         <TabsContent value="sessions" className="mt-4">
           <SessionsTable
+            workspaceSlug={workspaceSlug ?? ""}
+            projectId={projectId}
+          />
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-4">
+          <TrackedUsersTable
             workspaceSlug={workspaceSlug ?? ""}
             projectId={projectId}
           />

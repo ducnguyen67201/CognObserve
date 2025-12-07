@@ -1,7 +1,7 @@
 import { prisma, Prisma, SpanLevel } from "@cognobserve/db";
 import { calculateSpanCost } from "@cognobserve/api/lib/cost";
 
-import type { QueueTraceData, QueueSpanData } from "@/queue/consumer";
+import type { QueueTraceData, QueueSpanData, QueueUserData } from "@/queue/consumer";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -20,11 +20,14 @@ export class TraceProcessor {
   async process(data: QueueTraceData): Promise<void> {
     console.log(`Processing trace: ${data.ID} with ${data.Spans.length} spans`);
 
-    // Resolve session if external session ID provided
-    const sessionId = await this.resolveSessionId(data.ProjectID, data.SessionID);
+    // Resolve user first (needed for session linking)
+    const userId = await this.resolveUserId(data.ProjectID, data.UserID, data.User);
+
+    // Resolve session if external session ID provided (with userId for linking)
+    const sessionId = await this.resolveSessionId(data.ProjectID, data.SessionID, userId);
 
     // Convert queue data to Prisma format
-    const traceInput = this.convertTrace(data, sessionId);
+    const traceInput = this.convertTrace(data, sessionId, userId);
     const spanInputs = data.Spans.map((span) => this.convertSpan(span));
 
     // Use transaction to ensure atomicity
@@ -42,19 +45,79 @@ export class TraceProcessor {
       }
     });
 
-    console.log(`Trace ${data.ID} persisted successfully${sessionId ? ` (session: ${sessionId})` : ""}`);
+    const context = [
+      sessionId ? `session: ${sessionId}` : null,
+      userId ? `user: ${userId}` : null,
+    ].filter(Boolean).join(", ");
+    console.log(`Trace ${data.ID} persisted successfully${context ? ` (${context})` : ""}`);
 
     // Calculate and update costs for billable spans
     await this.calculateCosts(data);
   }
 
   /**
+   * Resolve or create a TrackedUser from external user ID.
+   * Uses upsert to atomically find or create the user.
+   */
+  private async resolveUserId(
+    projectId: string,
+    externalUserId: string | undefined,
+    userMetadata?: QueueUserData
+  ): Promise<string | null> {
+    if (!externalUserId) {
+      return null;
+    }
+
+    // Filter out Name and Email from metadata to avoid duplication
+    // Name/Email are stored as top-level fields, not in metadata JSON
+    const filteredMetadata = userMetadata
+      ? Object.fromEntries(
+          Object.entries(userMetadata).filter(
+            ([key]) => key !== "Name" && key !== "Email"
+          )
+        )
+      : null;
+
+    // Upsert: create if not exists, update metadata and lastSeenAt if exists
+    const user = await prisma.trackedUser.upsert({
+      where: {
+        projectId_externalId: {
+          projectId,
+          externalId: externalUserId,
+        },
+      },
+      create: {
+        projectId,
+        externalId: externalUserId,
+        name: userMetadata?.Name,
+        email: userMetadata?.Email,
+        metadata:
+          filteredMetadata && Object.keys(filteredMetadata).length > 0
+            ? (filteredMetadata as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+        firstSeenAt: new Date(),
+        lastSeenAt: new Date(),
+      },
+      update: {
+        // Only update name/email if non-empty (empty strings are treated as "no update")
+        ...(userMetadata?.Name?.trim() && { name: userMetadata.Name.trim() }),
+        ...(userMetadata?.Email?.trim() && { email: userMetadata.Email.trim() }),
+        lastSeenAt: new Date(),
+      },
+    });
+
+    return user.id;
+  }
+
+  /**
    * Resolve or create a TraceSession from external session ID.
    * Uses upsert to atomically find or create the session.
+   * Links session to user if userId is provided.
    */
   private async resolveSessionId(
     projectId: string,
-    externalSessionId: string | undefined
+    externalSessionId: string | undefined,
+    userId: string | null
   ): Promise<string | null> {
     if (!externalSessionId) {
       return null;
@@ -71,11 +134,21 @@ export class TraceProcessor {
       create: {
         projectId,
         externalId: externalSessionId,
+        ...(userId && { userId }),
       },
       update: {
         updatedAt: new Date(),
       },
+      select: { id: true, userId: true },
     });
+
+    // Link session to user if not already linked
+    if (userId && !session.userId) {
+      await prisma.traceSession.update({
+        where: { id: session.id },
+        data: { userId },
+      });
+    }
 
     return session.id;
   }
@@ -320,7 +393,11 @@ export class TraceProcessor {
   /**
    * Convert queue trace data to Prisma create input
    */
-  private convertTrace(data: QueueTraceData, sessionId: string | null): Prisma.TraceCreateInput {
+  private convertTrace(
+    data: QueueTraceData,
+    sessionId: string | null,
+    userId: string | null
+  ): Prisma.TraceCreateInput {
     return {
       id: data.ID,
       name: data.Name,
@@ -332,6 +409,11 @@ export class TraceProcessor {
       ...(sessionId && {
         session: {
           connect: { id: sessionId },
+        },
+      }),
+      ...(userId && {
+        user: {
+          connect: { id: userId },
         },
       }),
     };

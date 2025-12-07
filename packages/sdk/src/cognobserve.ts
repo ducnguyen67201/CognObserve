@@ -14,6 +14,7 @@ import type {
   TraceOptions,
   TraceData,
   SpanLevel,
+  UserInfo,
 } from './types';
 
 /**
@@ -25,6 +26,7 @@ class CognObserveClient {
   private initialized = false;
   private shutdownRegistered = false;
   private _observe: ReturnType<typeof createObserve> | null = null;
+  private globalUser: UserInfo | null = null;
 
   /**
    * Initialize the CognObserve SDK
@@ -70,6 +72,37 @@ class CognObserveClient {
 
     // Register shutdown handler
     this.registerShutdownHandler();
+  }
+
+  /**
+   * Set the global user for all subsequent traces
+   *
+   * @example
+   * ```typescript
+   * CognObserve.setUser({
+   *   id: 'user-123',
+   *   name: 'John Doe',
+   *   email: 'john@example.com',
+   * });
+   * ```
+   */
+  setUser(user: UserInfo | null): void {
+    this.globalUser = user;
+
+    if (this.config?.debug) {
+      if (user) {
+        console.log(`[CognObserve] Set global user: ${user.id}`);
+      } else {
+        console.log('[CognObserve] Cleared global user');
+      }
+    }
+  }
+
+  /**
+   * Get the current global user
+   */
+  getUser(): UserInfo | null {
+    return this.globalUser;
   }
 
   /**
@@ -123,12 +156,20 @@ class CognObserveClient {
   startTrace(options: TraceOptions): Trace {
     this.ensureInitialized();
 
+    // Merge global user with trace options (explicit userId takes precedence)
+    const resolvedUserId = options.userId ?? options.user?.id ?? this.globalUser?.id;
+    const mergedOptions: TraceOptions = {
+      ...options,
+      userId: resolvedUserId,
+      user: options.user ?? this.globalUser ?? undefined,
+    };
+
     // Handler for when trace ends
     const handleEnd = (data: TraceData) => {
       this.transport!.enqueue(data);
     };
 
-    const trace = new Trace(options, handleEnd);
+    const trace = new Trace(mergedOptions, handleEnd);
 
     if (this.config!.debug) {
       console.log(
@@ -220,6 +261,7 @@ class CognObserveClient {
     this.transport = null;
     this.config = null;
     this.initialized = false;
+    this.globalUser = null;
 
     if (debug) {
       console.log('[CognObserve] Shutdown complete');

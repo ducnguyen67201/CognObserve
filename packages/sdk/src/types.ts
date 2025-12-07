@@ -27,6 +27,20 @@ export interface TokenUsage {
 }
 
 /**
+ * User info for tracking end-users of your AI application
+ */
+export interface UserInfo {
+  /** Required: Your user's ID */
+  id: string;
+  /** Optional: Display name */
+  name?: string;
+  /** Optional: User email */
+  email?: string;
+  /** Optional: Additional metadata */
+  [key: string]: unknown;
+}
+
+/**
  * Configuration options for CognObserve.init()
  */
 export interface CognObserveConfig {
@@ -69,6 +83,10 @@ export interface TraceOptions {
   id?: string;
   /** Optional session ID for grouping multi-turn conversations */
   sessionId?: string;
+  /** Optional user ID for tracking end-users */
+  userId?: string;
+  /** Optional user info for tracking end-users */
+  user?: UserInfo;
   /** Optional metadata */
   metadata?: Record<string, unknown>;
 }
@@ -128,6 +146,8 @@ export interface TraceData {
   id: string;
   name: string;
   sessionId: string | null;
+  userId: string | null;
+  user: UserInfo | null;
   timestamp: Date;
   metadata: Record<string, unknown> | null;
   spans: SpanData[];
@@ -139,6 +159,12 @@ export interface TraceData {
 export interface IngestRequest {
   trace_id?: string;
   session_id?: string;
+  user_id?: string;
+  user?: {
+    name?: string;
+    email?: string;
+    [key: string]: unknown;
+  };
   name: string;
   metadata?: Record<string, unknown>;
   spans: IngestSpan[];

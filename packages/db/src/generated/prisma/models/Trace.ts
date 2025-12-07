@@ -28,6 +28,7 @@ export type TraceMinAggregateOutputType = {
   id: string | null
   projectId: string | null
   sessionId: string | null
+  userId: string | null
   name: string | null
   timestamp: Date | null
 }
@@ -36,6 +37,7 @@ export type TraceMaxAggregateOutputType = {
   id: string | null
   projectId: string | null
   sessionId: string | null
+  userId: string | null
   name: string | null
   timestamp: Date | null
 }
@@ -44,6 +46,7 @@ export type TraceCountAggregateOutputType = {
   id: number
   projectId: number
   sessionId: number
+  userId: number
   name: number
   timestamp: number
   metadata: number
@@ -55,6 +58,7 @@ export type TraceMinAggregateInputType = {
   id?: true
   projectId?: true
   sessionId?: true
+  userId?: true
   name?: true
   timestamp?: true
 }
@@ -63,6 +67,7 @@ export type TraceMaxAggregateInputType = {
   id?: true
   projectId?: true
   sessionId?: true
+  userId?: true
   name?: true
   timestamp?: true
 }
@@ -71,6 +76,7 @@ export type TraceCountAggregateInputType = {
   id?: true
   projectId?: true
   sessionId?: true
+  userId?: true
   name?: true
   timestamp?: true
   metadata?: true
@@ -153,6 +159,7 @@ export type TraceGroupByOutputType = {
   id: string
   projectId: string
   sessionId: string | null
+  userId: string | null
   name: string
   timestamp: Date
   metadata: runtime.JsonValue | null
@@ -183,11 +190,13 @@ export type TraceWhereInput = {
   id?: Prisma.StringFilter<"Trace"> | string
   projectId?: Prisma.StringFilter<"Trace"> | string
   sessionId?: Prisma.StringNullableFilter<"Trace"> | string | null
+  userId?: Prisma.StringNullableFilter<"Trace"> | string | null
   name?: Prisma.StringFilter<"Trace"> | string
   timestamp?: Prisma.DateTimeFilter<"Trace"> | Date | string
   metadata?: Prisma.JsonNullableFilter<"Trace">
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
   session?: Prisma.XOR<Prisma.TraceSessionNullableScalarRelationFilter, Prisma.TraceSessionWhereInput> | null
+  user?: Prisma.XOR<Prisma.TrackedUserNullableScalarRelationFilter, Prisma.TrackedUserWhereInput> | null
   spans?: Prisma.SpanListRelationFilter
 }
 
@@ -195,11 +204,13 @@ export type TraceOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   sessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   project?: Prisma.ProjectOrderByWithRelationInput
   session?: Prisma.TraceSessionOrderByWithRelationInput
+  user?: Prisma.TrackedUserOrderByWithRelationInput
   spans?: Prisma.SpanOrderByRelationAggregateInput
 }
 
@@ -210,11 +221,13 @@ export type TraceWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TraceWhereInput | Prisma.TraceWhereInput[]
   projectId?: Prisma.StringFilter<"Trace"> | string
   sessionId?: Prisma.StringNullableFilter<"Trace"> | string | null
+  userId?: Prisma.StringNullableFilter<"Trace"> | string | null
   name?: Prisma.StringFilter<"Trace"> | string
   timestamp?: Prisma.DateTimeFilter<"Trace"> | Date | string
   metadata?: Prisma.JsonNullableFilter<"Trace">
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
   session?: Prisma.XOR<Prisma.TraceSessionNullableScalarRelationFilter, Prisma.TraceSessionWhereInput> | null
+  user?: Prisma.XOR<Prisma.TrackedUserNullableScalarRelationFilter, Prisma.TrackedUserWhereInput> | null
   spans?: Prisma.SpanListRelationFilter
 }, "id">
 
@@ -222,6 +235,7 @@ export type TraceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   sessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -237,6 +251,7 @@ export type TraceScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Trace"> | string
   projectId?: Prisma.StringWithAggregatesFilter<"Trace"> | string
   sessionId?: Prisma.StringNullableWithAggregatesFilter<"Trace"> | string | null
+  userId?: Prisma.StringNullableWithAggregatesFilter<"Trace"> | string | null
   name?: Prisma.StringWithAggregatesFilter<"Trace"> | string
   timestamp?: Prisma.DateTimeWithAggregatesFilter<"Trace"> | Date | string
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"Trace">
@@ -249,6 +264,7 @@ export type TraceCreateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   project: Prisma.ProjectCreateNestedOneWithoutTracesInput
   session?: Prisma.TraceSessionCreateNestedOneWithoutTracesInput
+  user?: Prisma.TrackedUserCreateNestedOneWithoutTracesInput
   spans?: Prisma.SpanCreateNestedManyWithoutTraceInput
 }
 
@@ -256,6 +272,7 @@ export type TraceUncheckedCreateInput = {
   id?: string
   projectId: string
   sessionId?: string | null
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -269,6 +286,7 @@ export type TraceUpdateInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   project?: Prisma.ProjectUpdateOneRequiredWithoutTracesNestedInput
   session?: Prisma.TraceSessionUpdateOneWithoutTracesNestedInput
+  user?: Prisma.TrackedUserUpdateOneWithoutTracesNestedInput
   spans?: Prisma.SpanUpdateManyWithoutTraceNestedInput
 }
 
@@ -276,6 +294,7 @@ export type TraceUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -286,6 +305,7 @@ export type TraceCreateManyInput = {
   id?: string
   projectId: string
   sessionId?: string | null
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -302,6 +322,7 @@ export type TraceUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -321,6 +342,7 @@ export type TraceCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   sessionId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
@@ -330,6 +352,7 @@ export type TraceMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   sessionId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
 }
@@ -338,6 +361,7 @@ export type TraceMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   sessionId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
 }
@@ -403,6 +427,48 @@ export type TraceUpdateOneRequiredWithoutSpansNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TraceUpdateToOneWithWhereWithoutSpansInput, Prisma.TraceUpdateWithoutSpansInput>, Prisma.TraceUncheckedUpdateWithoutSpansInput>
 }
 
+export type TraceCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.TraceCreateWithoutUserInput, Prisma.TraceUncheckedCreateWithoutUserInput> | Prisma.TraceCreateWithoutUserInput[] | Prisma.TraceUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.TraceCreateOrConnectWithoutUserInput | Prisma.TraceCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.TraceCreateManyUserInputEnvelope
+  connect?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+}
+
+export type TraceUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.TraceCreateWithoutUserInput, Prisma.TraceUncheckedCreateWithoutUserInput> | Prisma.TraceCreateWithoutUserInput[] | Prisma.TraceUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.TraceCreateOrConnectWithoutUserInput | Prisma.TraceCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.TraceCreateManyUserInputEnvelope
+  connect?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+}
+
+export type TraceUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.TraceCreateWithoutUserInput, Prisma.TraceUncheckedCreateWithoutUserInput> | Prisma.TraceCreateWithoutUserInput[] | Prisma.TraceUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.TraceCreateOrConnectWithoutUserInput | Prisma.TraceCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.TraceUpsertWithWhereUniqueWithoutUserInput | Prisma.TraceUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.TraceCreateManyUserInputEnvelope
+  set?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  disconnect?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  delete?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  connect?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  update?: Prisma.TraceUpdateWithWhereUniqueWithoutUserInput | Prisma.TraceUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.TraceUpdateManyWithWhereWithoutUserInput | Prisma.TraceUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.TraceScalarWhereInput | Prisma.TraceScalarWhereInput[]
+}
+
+export type TraceUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.TraceCreateWithoutUserInput, Prisma.TraceUncheckedCreateWithoutUserInput> | Prisma.TraceCreateWithoutUserInput[] | Prisma.TraceUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.TraceCreateOrConnectWithoutUserInput | Prisma.TraceCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.TraceUpsertWithWhereUniqueWithoutUserInput | Prisma.TraceUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.TraceCreateManyUserInputEnvelope
+  set?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  disconnect?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  delete?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  connect?: Prisma.TraceWhereUniqueInput | Prisma.TraceWhereUniqueInput[]
+  update?: Prisma.TraceUpdateWithWhereUniqueWithoutUserInput | Prisma.TraceUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.TraceUpdateManyWithWhereWithoutUserInput | Prisma.TraceUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.TraceScalarWhereInput | Prisma.TraceScalarWhereInput[]
+}
+
 export type TraceCreateNestedManyWithoutSessionInput = {
   create?: Prisma.XOR<Prisma.TraceCreateWithoutSessionInput, Prisma.TraceUncheckedCreateWithoutSessionInput> | Prisma.TraceCreateWithoutSessionInput[] | Prisma.TraceUncheckedCreateWithoutSessionInput[]
   connectOrCreate?: Prisma.TraceCreateOrConnectWithoutSessionInput | Prisma.TraceCreateOrConnectWithoutSessionInput[]
@@ -451,12 +517,14 @@ export type TraceCreateWithoutProjectInput = {
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   session?: Prisma.TraceSessionCreateNestedOneWithoutTracesInput
+  user?: Prisma.TrackedUserCreateNestedOneWithoutTracesInput
   spans?: Prisma.SpanCreateNestedManyWithoutTraceInput
 }
 
 export type TraceUncheckedCreateWithoutProjectInput = {
   id?: string
   sessionId?: string | null
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -496,6 +564,7 @@ export type TraceScalarWhereInput = {
   id?: Prisma.StringFilter<"Trace"> | string
   projectId?: Prisma.StringFilter<"Trace"> | string
   sessionId?: Prisma.StringNullableFilter<"Trace"> | string | null
+  userId?: Prisma.StringNullableFilter<"Trace"> | string | null
   name?: Prisma.StringFilter<"Trace"> | string
   timestamp?: Prisma.DateTimeFilter<"Trace"> | Date | string
   metadata?: Prisma.JsonNullableFilter<"Trace">
@@ -508,12 +577,14 @@ export type TraceCreateWithoutSpansInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   project: Prisma.ProjectCreateNestedOneWithoutTracesInput
   session?: Prisma.TraceSessionCreateNestedOneWithoutTracesInput
+  user?: Prisma.TrackedUserCreateNestedOneWithoutTracesInput
 }
 
 export type TraceUncheckedCreateWithoutSpansInput = {
   id?: string
   projectId: string
   sessionId?: string | null
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -542,15 +613,63 @@ export type TraceUpdateWithoutSpansInput = {
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   project?: Prisma.ProjectUpdateOneRequiredWithoutTracesNestedInput
   session?: Prisma.TraceSessionUpdateOneWithoutTracesNestedInput
+  user?: Prisma.TrackedUserUpdateOneWithoutTracesNestedInput
 }
 
 export type TraceUncheckedUpdateWithoutSpansInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type TraceCreateWithoutUserInput = {
+  id?: string
+  name: string
+  timestamp?: Date | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  project: Prisma.ProjectCreateNestedOneWithoutTracesInput
+  session?: Prisma.TraceSessionCreateNestedOneWithoutTracesInput
+  spans?: Prisma.SpanCreateNestedManyWithoutTraceInput
+}
+
+export type TraceUncheckedCreateWithoutUserInput = {
+  id?: string
+  projectId: string
+  sessionId?: string | null
+  name: string
+  timestamp?: Date | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  spans?: Prisma.SpanUncheckedCreateNestedManyWithoutTraceInput
+}
+
+export type TraceCreateOrConnectWithoutUserInput = {
+  where: Prisma.TraceWhereUniqueInput
+  create: Prisma.XOR<Prisma.TraceCreateWithoutUserInput, Prisma.TraceUncheckedCreateWithoutUserInput>
+}
+
+export type TraceCreateManyUserInputEnvelope = {
+  data: Prisma.TraceCreateManyUserInput | Prisma.TraceCreateManyUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type TraceUpsertWithWhereUniqueWithoutUserInput = {
+  where: Prisma.TraceWhereUniqueInput
+  update: Prisma.XOR<Prisma.TraceUpdateWithoutUserInput, Prisma.TraceUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.TraceCreateWithoutUserInput, Prisma.TraceUncheckedCreateWithoutUserInput>
+}
+
+export type TraceUpdateWithWhereUniqueWithoutUserInput = {
+  where: Prisma.TraceWhereUniqueInput
+  data: Prisma.XOR<Prisma.TraceUpdateWithoutUserInput, Prisma.TraceUncheckedUpdateWithoutUserInput>
+}
+
+export type TraceUpdateManyWithWhereWithoutUserInput = {
+  where: Prisma.TraceScalarWhereInput
+  data: Prisma.XOR<Prisma.TraceUpdateManyMutationInput, Prisma.TraceUncheckedUpdateManyWithoutUserInput>
 }
 
 export type TraceCreateWithoutSessionInput = {
@@ -559,12 +678,14 @@ export type TraceCreateWithoutSessionInput = {
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   project: Prisma.ProjectCreateNestedOneWithoutTracesInput
+  user?: Prisma.TrackedUserCreateNestedOneWithoutTracesInput
   spans?: Prisma.SpanCreateNestedManyWithoutTraceInput
 }
 
 export type TraceUncheckedCreateWithoutSessionInput = {
   id?: string
   projectId: string
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -600,6 +721,7 @@ export type TraceUpdateManyWithWhereWithoutSessionInput = {
 export type TraceCreateManyProjectInput = {
   id?: string
   sessionId?: string | null
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -611,12 +733,14 @@ export type TraceUpdateWithoutProjectInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   session?: Prisma.TraceSessionUpdateOneWithoutTracesNestedInput
+  user?: Prisma.TrackedUserUpdateOneWithoutTracesNestedInput
   spans?: Prisma.SpanUpdateManyWithoutTraceNestedInput
 }
 
 export type TraceUncheckedUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -626,6 +750,45 @@ export type TraceUncheckedUpdateWithoutProjectInput = {
 export type TraceUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type TraceCreateManyUserInput = {
+  id?: string
+  projectId: string
+  sessionId?: string | null
+  name: string
+  timestamp?: Date | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type TraceUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  project?: Prisma.ProjectUpdateOneRequiredWithoutTracesNestedInput
+  session?: Prisma.TraceSessionUpdateOneWithoutTracesNestedInput
+  spans?: Prisma.SpanUpdateManyWithoutTraceNestedInput
+}
+
+export type TraceUncheckedUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  spans?: Prisma.SpanUncheckedUpdateManyWithoutTraceNestedInput
+}
+
+export type TraceUncheckedUpdateManyWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -634,6 +797,7 @@ export type TraceUncheckedUpdateManyWithoutProjectInput = {
 export type TraceCreateManySessionInput = {
   id?: string
   projectId: string
+  userId?: string | null
   name: string
   timestamp?: Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -645,12 +809,14 @@ export type TraceUpdateWithoutSessionInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   project?: Prisma.ProjectUpdateOneRequiredWithoutTracesNestedInput
+  user?: Prisma.TrackedUserUpdateOneWithoutTracesNestedInput
   spans?: Prisma.SpanUpdateManyWithoutTraceNestedInput
 }
 
 export type TraceUncheckedUpdateWithoutSessionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -660,6 +826,7 @@ export type TraceUncheckedUpdateWithoutSessionInput = {
 export type TraceUncheckedUpdateManyWithoutSessionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -700,11 +867,13 @@ export type TraceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   id?: boolean
   projectId?: boolean
   sessionId?: boolean
+  userId?: boolean
   name?: boolean
   timestamp?: boolean
   metadata?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   session?: boolean | Prisma.Trace$sessionArgs<ExtArgs>
+  user?: boolean | Prisma.Trace$userArgs<ExtArgs>
   spans?: boolean | Prisma.Trace$spansArgs<ExtArgs>
   _count?: boolean | Prisma.TraceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["trace"]>
@@ -713,47 +882,55 @@ export type TraceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   projectId?: boolean
   sessionId?: boolean
+  userId?: boolean
   name?: boolean
   timestamp?: boolean
   metadata?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   session?: boolean | Prisma.Trace$sessionArgs<ExtArgs>
+  user?: boolean | Prisma.Trace$userArgs<ExtArgs>
 }, ExtArgs["result"]["trace"]>
 
 export type TraceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   projectId?: boolean
   sessionId?: boolean
+  userId?: boolean
   name?: boolean
   timestamp?: boolean
   metadata?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   session?: boolean | Prisma.Trace$sessionArgs<ExtArgs>
+  user?: boolean | Prisma.Trace$userArgs<ExtArgs>
 }, ExtArgs["result"]["trace"]>
 
 export type TraceSelectScalar = {
   id?: boolean
   projectId?: boolean
   sessionId?: boolean
+  userId?: boolean
   name?: boolean
   timestamp?: boolean
   metadata?: boolean
 }
 
-export type TraceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "sessionId" | "name" | "timestamp" | "metadata", ExtArgs["result"]["trace"]>
+export type TraceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "sessionId" | "userId" | "name" | "timestamp" | "metadata", ExtArgs["result"]["trace"]>
 export type TraceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   session?: boolean | Prisma.Trace$sessionArgs<ExtArgs>
+  user?: boolean | Prisma.Trace$userArgs<ExtArgs>
   spans?: boolean | Prisma.Trace$spansArgs<ExtArgs>
   _count?: boolean | Prisma.TraceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TraceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   session?: boolean | Prisma.Trace$sessionArgs<ExtArgs>
+  user?: boolean | Prisma.Trace$userArgs<ExtArgs>
 }
 export type TraceIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   session?: boolean | Prisma.Trace$sessionArgs<ExtArgs>
+  user?: boolean | Prisma.Trace$userArgs<ExtArgs>
 }
 
 export type $TracePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -761,12 +938,14 @@ export type $TracePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     project: Prisma.$ProjectPayload<ExtArgs>
     session: Prisma.$TraceSessionPayload<ExtArgs> | null
+    user: Prisma.$TrackedUserPayload<ExtArgs> | null
     spans: Prisma.$SpanPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     projectId: string
     sessionId: string | null
+    userId: string | null
     name: string
     timestamp: Date
     metadata: runtime.JsonValue | null
@@ -1166,6 +1345,7 @@ export interface Prisma__TraceClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   session<T extends Prisma.Trace$sessionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Trace$sessionArgs<ExtArgs>>): Prisma.Prisma__TraceSessionClient<runtime.Types.Result.GetResult<Prisma.$TraceSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.Trace$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Trace$userArgs<ExtArgs>>): Prisma.Prisma__TrackedUserClient<runtime.Types.Result.GetResult<Prisma.$TrackedUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   spans<T extends Prisma.Trace$spansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Trace$spansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SpanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1199,6 +1379,7 @@ export interface TraceFieldRefs {
   readonly id: Prisma.FieldRef<"Trace", 'String'>
   readonly projectId: Prisma.FieldRef<"Trace", 'String'>
   readonly sessionId: Prisma.FieldRef<"Trace", 'String'>
+  readonly userId: Prisma.FieldRef<"Trace", 'String'>
   readonly name: Prisma.FieldRef<"Trace", 'String'>
   readonly timestamp: Prisma.FieldRef<"Trace", 'DateTime'>
   readonly metadata: Prisma.FieldRef<"Trace", 'Json'>
@@ -1614,6 +1795,25 @@ export type Trace$sessionArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    */
   include?: Prisma.TraceSessionInclude<ExtArgs> | null
   where?: Prisma.TraceSessionWhereInput
+}
+
+/**
+ * Trace.user
+ */
+export type Trace$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TrackedUser
+   */
+  select?: Prisma.TrackedUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TrackedUser
+   */
+  omit?: Prisma.TrackedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TrackedUserInclude<ExtArgs> | null
+  where?: Prisma.TrackedUserWhereInput
 }
 
 /**

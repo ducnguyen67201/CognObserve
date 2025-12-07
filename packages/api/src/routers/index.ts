@@ -26,7 +26,7 @@ import { domainsRouter } from "./domains";
 import { costsRouter } from "./costs";
 import { alertsRouter } from "./alerts";
 import { channelsRouter } from "./channels";
-// import { usersRouter } from "./users";
+import { trackedUsersRouter } from "./trackedUsers";
 
 /**
  * Main application router.
@@ -160,9 +160,23 @@ export const appRouter = createRouter({
   channels: channelsRouter,
 
   /**
+   * Tracked Users (end-users of AI applications)
+   * @see ./trackedUsers.ts
+   *
+   * - trackedUsers.list          - List tracked users with stats
+   * - trackedUsers.get           - Get user with sessions
+   * - trackedUsers.getByExternalId - Get user by external ID
+   * - trackedUsers.traces        - Get user's traces
+   * - trackedUsers.analytics     - Get user analytics (daily breakdown)
+   * - trackedUsers.summary       - Get project user summary
+   * - trackedUsers.update        - Update user metadata
+   * - trackedUsers.delete        - Delete tracked user
+   */
+  trackedUsers: trackedUsersRouter,
+
+  /**
    * Future modules:
    *
-   * users: usersRouter,        // User management
    * billing: billingRouter,    // Billing & subscriptions
    */
 });
@@ -187,4 +201,5 @@ export {
   costsRouter,
   alertsRouter,
   channelsRouter,
+  trackedUsersRouter,
 };

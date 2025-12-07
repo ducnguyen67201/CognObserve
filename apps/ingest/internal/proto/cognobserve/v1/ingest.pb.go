@@ -23,6 +23,67 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// User information for tracking end-users
+type UserInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          *string                `protobuf:"bytes,1,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Email         *string                `protobuf:"bytes,2,opt,name=email,proto3,oneof" json:"email,omitempty"`
+	Metadata      *structpb.Struct       `protobuf:"bytes,3,opt,name=metadata,proto3,oneof" json:"metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserInfo) Reset() {
+	*x = UserInfo{}
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserInfo) ProtoMessage() {}
+
+func (x *UserInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
+func (*UserInfo) Descriptor() ([]byte, []int) {
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *UserInfo) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *UserInfo) GetEmail() string {
+	if x != nil && x.Email != nil {
+		return *x.Email
+	}
+	return ""
+}
+
+func (x *UserInfo) GetMetadata() *structpb.Struct {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 // Request to ingest a trace with spans
 type IngestTraceRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -31,14 +92,19 @@ type IngestTraceRequest struct {
 	Name     string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Metadata *structpb.Struct `protobuf:"bytes,3,opt,name=metadata,proto3,oneof" json:"metadata,omitempty"`
 	// Spans to ingest
-	Spans         []*IngestSpan `protobuf:"bytes,4,rep,name=spans,proto3" json:"spans,omitempty"`
+	Spans []*IngestSpan `protobuf:"bytes,4,rep,name=spans,proto3" json:"spans,omitempty"`
+	// Session tracking (for multi-turn conversations)
+	SessionId *string `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3,oneof" json:"session_id,omitempty"`
+	// User tracking (end-users of AI applications)
+	UserId        *string   `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3,oneof" json:"user_id,omitempty"`
+	User          *UserInfo `protobuf:"bytes,7,opt,name=user,proto3,oneof" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *IngestTraceRequest) Reset() {
 	*x = IngestTraceRequest{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[0]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -50,7 +116,7 @@ func (x *IngestTraceRequest) String() string {
 func (*IngestTraceRequest) ProtoMessage() {}
 
 func (x *IngestTraceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[0]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -63,7 +129,7 @@ func (x *IngestTraceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestTraceRequest.ProtoReflect.Descriptor instead.
 func (*IngestTraceRequest) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{0}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *IngestTraceRequest) GetTraceId() string {
@@ -94,6 +160,27 @@ func (x *IngestTraceRequest) GetSpans() []*IngestSpan {
 	return nil
 }
 
+func (x *IngestTraceRequest) GetSessionId() string {
+	if x != nil && x.SessionId != nil {
+		return *x.SessionId
+	}
+	return ""
+}
+
+func (x *IngestTraceRequest) GetUserId() string {
+	if x != nil && x.UserId != nil {
+		return *x.UserId
+	}
+	return ""
+}
+
+func (x *IngestTraceRequest) GetUser() *UserInfo {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 // Span data for ingestion
 type IngestSpan struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
@@ -116,7 +203,7 @@ type IngestSpan struct {
 
 func (x *IngestSpan) Reset() {
 	*x = IngestSpan{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[1]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -128,7 +215,7 @@ func (x *IngestSpan) String() string {
 func (*IngestSpan) ProtoMessage() {}
 
 func (x *IngestSpan) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[1]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +228,7 @@ func (x *IngestSpan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestSpan.ProtoReflect.Descriptor instead.
 func (*IngestSpan) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{1}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *IngestSpan) GetSpanId() string {
@@ -247,7 +334,7 @@ type IngestTraceResponse struct {
 
 func (x *IngestTraceResponse) Reset() {
 	*x = IngestTraceResponse{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[2]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -259,7 +346,7 @@ func (x *IngestTraceResponse) String() string {
 func (*IngestTraceResponse) ProtoMessage() {}
 
 func (x *IngestTraceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[2]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -272,7 +359,7 @@ func (x *IngestTraceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestTraceResponse.ProtoReflect.Descriptor instead.
 func (*IngestTraceResponse) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{2}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *IngestTraceResponse) GetTraceId() string {
@@ -306,7 +393,7 @@ type IngestBatchRequest struct {
 
 func (x *IngestBatchRequest) Reset() {
 	*x = IngestBatchRequest{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[3]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -318,7 +405,7 @@ func (x *IngestBatchRequest) String() string {
 func (*IngestBatchRequest) ProtoMessage() {}
 
 func (x *IngestBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[3]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -331,7 +418,7 @@ func (x *IngestBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestBatchRequest.ProtoReflect.Descriptor instead.
 func (*IngestBatchRequest) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{3}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *IngestBatchRequest) GetTraces() []*IngestTraceRequest {
@@ -353,7 +440,7 @@ type IngestBatchResponse struct {
 
 func (x *IngestBatchResponse) Reset() {
 	*x = IngestBatchResponse{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[4]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -365,7 +452,7 @@ func (x *IngestBatchResponse) String() string {
 func (*IngestBatchResponse) ProtoMessage() {}
 
 func (x *IngestBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[4]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -378,7 +465,7 @@ func (x *IngestBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestBatchResponse.ProtoReflect.Descriptor instead.
 func (*IngestBatchResponse) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{4}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *IngestBatchResponse) GetResults() []*IngestTraceResponse {
@@ -411,7 +498,7 @@ type HealthRequest struct {
 
 func (x *HealthRequest) Reset() {
 	*x = HealthRequest{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[5]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -423,7 +510,7 @@ func (x *HealthRequest) String() string {
 func (*HealthRequest) ProtoMessage() {}
 
 func (x *HealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[5]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -436,7 +523,7 @@ func (x *HealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthRequest.ProtoReflect.Descriptor instead.
 func (*HealthRequest) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{5}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{6}
 }
 
 type HealthResponse struct {
@@ -449,7 +536,7 @@ type HealthResponse struct {
 
 func (x *HealthResponse) Reset() {
 	*x = HealthResponse{}
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[6]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +548,7 @@ func (x *HealthResponse) String() string {
 func (*HealthResponse) ProtoMessage() {}
 
 func (x *HealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cognobserve_v1_ingest_proto_msgTypes[6]
+	mi := &file_cognobserve_v1_ingest_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +561,7 @@ func (x *HealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResponse.ProtoReflect.Descriptor instead.
 func (*HealthResponse) Descriptor() ([]byte, []int) {
-	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{6}
+	return file_cognobserve_v1_ingest_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *HealthResponse) GetStatus() string {
@@ -495,14 +582,29 @@ var File_cognobserve_v1_ingest_proto protoreflect.FileDescriptor
 
 const file_cognobserve_v1_ingest_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcognobserve/v1/ingest.proto\x12\x0ecognobserve.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bcognobserve/v1/common.proto\"\xce\x01\n" +
+	"\x1bcognobserve/v1/ingest.proto\x12\x0ecognobserve.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bcognobserve/v1/common.proto\"\x98\x01\n" +
+	"\bUserInfo\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n" +
+	"\x05email\x18\x02 \x01(\tH\x01R\x05email\x88\x01\x01\x128\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x17.google.protobuf.StructH\x02R\bmetadata\x88\x01\x01B\a\n" +
+	"\x05_nameB\b\n" +
+	"\x06_emailB\v\n" +
+	"\t_metadata\"\xe7\x02\n" +
 	"\x12IngestTraceRequest\x12\x1e\n" +
 	"\btrace_id\x18\x01 \x01(\tH\x00R\atraceId\x88\x01\x01\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x128\n" +
 	"\bmetadata\x18\x03 \x01(\v2\x17.google.protobuf.StructH\x01R\bmetadata\x88\x01\x01\x120\n" +
-	"\x05spans\x18\x04 \x03(\v2\x1a.cognobserve.v1.IngestSpanR\x05spansB\v\n" +
+	"\x05spans\x18\x04 \x03(\v2\x1a.cognobserve.v1.IngestSpanR\x05spans\x12\"\n" +
+	"\n" +
+	"session_id\x18\x05 \x01(\tH\x02R\tsessionId\x88\x01\x01\x12\x1c\n" +
+	"\auser_id\x18\x06 \x01(\tH\x03R\x06userId\x88\x01\x01\x121\n" +
+	"\x04user\x18\a \x01(\v2\x18.cognobserve.v1.UserInfoH\x04R\x04user\x88\x01\x01B\v\n" +
 	"\t_trace_idB\v\n" +
-	"\t_metadata\"\x86\x06\n" +
+	"\t_metadataB\r\n" +
+	"\v_session_idB\n" +
+	"\n" +
+	"\b_user_idB\a\n" +
+	"\x05_user\"\x86\x06\n" +
 	"\n" +
 	"IngestSpan\x12\x1c\n" +
 	"\aspan_id\x18\x01 \x01(\tH\x00R\x06spanId\x88\x01\x01\x12)\n" +
@@ -560,38 +662,41 @@ func file_cognobserve_v1_ingest_proto_rawDescGZIP() []byte {
 	return file_cognobserve_v1_ingest_proto_rawDescData
 }
 
-var file_cognobserve_v1_ingest_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_cognobserve_v1_ingest_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_cognobserve_v1_ingest_proto_goTypes = []any{
-	(*IngestTraceRequest)(nil),    // 0: cognobserve.v1.IngestTraceRequest
-	(*IngestSpan)(nil),            // 1: cognobserve.v1.IngestSpan
-	(*IngestTraceResponse)(nil),   // 2: cognobserve.v1.IngestTraceResponse
-	(*IngestBatchRequest)(nil),    // 3: cognobserve.v1.IngestBatchRequest
-	(*IngestBatchResponse)(nil),   // 4: cognobserve.v1.IngestBatchResponse
-	(*HealthRequest)(nil),         // 5: cognobserve.v1.HealthRequest
-	(*HealthResponse)(nil),        // 6: cognobserve.v1.HealthResponse
-	(*structpb.Struct)(nil),       // 7: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
-	(*TokenUsage)(nil),            // 9: cognobserve.v1.TokenUsage
-	(SpanLevel)(0),                // 10: cognobserve.v1.SpanLevel
+	(*UserInfo)(nil),              // 0: cognobserve.v1.UserInfo
+	(*IngestTraceRequest)(nil),    // 1: cognobserve.v1.IngestTraceRequest
+	(*IngestSpan)(nil),            // 2: cognobserve.v1.IngestSpan
+	(*IngestTraceResponse)(nil),   // 3: cognobserve.v1.IngestTraceResponse
+	(*IngestBatchRequest)(nil),    // 4: cognobserve.v1.IngestBatchRequest
+	(*IngestBatchResponse)(nil),   // 5: cognobserve.v1.IngestBatchResponse
+	(*HealthRequest)(nil),         // 6: cognobserve.v1.HealthRequest
+	(*HealthResponse)(nil),        // 7: cognobserve.v1.HealthResponse
+	(*structpb.Struct)(nil),       // 8: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(*TokenUsage)(nil),            // 10: cognobserve.v1.TokenUsage
+	(SpanLevel)(0),                // 11: cognobserve.v1.SpanLevel
 }
 var file_cognobserve_v1_ingest_proto_depIdxs = []int32{
-	7,  // 0: cognobserve.v1.IngestTraceRequest.metadata:type_name -> google.protobuf.Struct
-	1,  // 1: cognobserve.v1.IngestTraceRequest.spans:type_name -> cognobserve.v1.IngestSpan
-	8,  // 2: cognobserve.v1.IngestSpan.start_time:type_name -> google.protobuf.Timestamp
-	8,  // 3: cognobserve.v1.IngestSpan.end_time:type_name -> google.protobuf.Timestamp
-	7,  // 4: cognobserve.v1.IngestSpan.input:type_name -> google.protobuf.Struct
-	7,  // 5: cognobserve.v1.IngestSpan.output:type_name -> google.protobuf.Struct
-	7,  // 6: cognobserve.v1.IngestSpan.metadata:type_name -> google.protobuf.Struct
-	7,  // 7: cognobserve.v1.IngestSpan.model_parameters:type_name -> google.protobuf.Struct
-	9,  // 8: cognobserve.v1.IngestSpan.usage:type_name -> cognobserve.v1.TokenUsage
-	10, // 9: cognobserve.v1.IngestSpan.level:type_name -> cognobserve.v1.SpanLevel
-	0,  // 10: cognobserve.v1.IngestBatchRequest.traces:type_name -> cognobserve.v1.IngestTraceRequest
-	2,  // 11: cognobserve.v1.IngestBatchResponse.results:type_name -> cognobserve.v1.IngestTraceResponse
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	8,  // 0: cognobserve.v1.UserInfo.metadata:type_name -> google.protobuf.Struct
+	8,  // 1: cognobserve.v1.IngestTraceRequest.metadata:type_name -> google.protobuf.Struct
+	2,  // 2: cognobserve.v1.IngestTraceRequest.spans:type_name -> cognobserve.v1.IngestSpan
+	0,  // 3: cognobserve.v1.IngestTraceRequest.user:type_name -> cognobserve.v1.UserInfo
+	9,  // 4: cognobserve.v1.IngestSpan.start_time:type_name -> google.protobuf.Timestamp
+	9,  // 5: cognobserve.v1.IngestSpan.end_time:type_name -> google.protobuf.Timestamp
+	8,  // 6: cognobserve.v1.IngestSpan.input:type_name -> google.protobuf.Struct
+	8,  // 7: cognobserve.v1.IngestSpan.output:type_name -> google.protobuf.Struct
+	8,  // 8: cognobserve.v1.IngestSpan.metadata:type_name -> google.protobuf.Struct
+	8,  // 9: cognobserve.v1.IngestSpan.model_parameters:type_name -> google.protobuf.Struct
+	10, // 10: cognobserve.v1.IngestSpan.usage:type_name -> cognobserve.v1.TokenUsage
+	11, // 11: cognobserve.v1.IngestSpan.level:type_name -> cognobserve.v1.SpanLevel
+	1,  // 12: cognobserve.v1.IngestBatchRequest.traces:type_name -> cognobserve.v1.IngestTraceRequest
+	3,  // 13: cognobserve.v1.IngestBatchResponse.results:type_name -> cognobserve.v1.IngestTraceResponse
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_cognobserve_v1_ingest_proto_init() }
@@ -602,13 +707,14 @@ func file_cognobserve_v1_ingest_proto_init() {
 	file_cognobserve_v1_common_proto_init()
 	file_cognobserve_v1_ingest_proto_msgTypes[0].OneofWrappers = []any{}
 	file_cognobserve_v1_ingest_proto_msgTypes[1].OneofWrappers = []any{}
+	file_cognobserve_v1_ingest_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cognobserve_v1_ingest_proto_rawDesc), len(file_cognobserve_v1_ingest_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

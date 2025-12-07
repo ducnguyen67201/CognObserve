@@ -10,6 +10,13 @@ import { Struct } from "../../google/protobuf/struct";
 import { Timestamp } from "../../google/protobuf/timestamp";
 import { SpanLevel, spanLevelFromJSON, spanLevelToJSON, spanLevelToNumber, TokenUsage } from "./common";
 
+/** User information for tracking end-users */
+export interface UserInfo {
+  name?: string | undefined;
+  email?: string | undefined;
+  metadata?: { [key: string]: any } | undefined;
+}
+
 /** Request to ingest a trace with spans */
 export interface IngestTraceRequest {
   /** Trace information */
@@ -20,6 +27,13 @@ export interface IngestTraceRequest {
     | undefined;
   /** Spans to ingest */
   spans: IngestSpan[];
+  /** Session tracking (for multi-turn conversations) */
+  sessionId?:
+    | string
+    | undefined;
+  /** User tracking (end-users of AI applications) */
+  userId?: string | undefined;
+  user?: UserInfo | undefined;
 }
 
 /** Span data for ingestion */
@@ -68,8 +82,108 @@ export interface HealthResponse {
   version: string;
 }
 
+function createBaseUserInfo(): UserInfo {
+  return { name: undefined, email: undefined, metadata: undefined };
+}
+
+export const UserInfo: MessageFns<UserInfo> = {
+  encode(message: UserInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== undefined) {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.email !== undefined) {
+      writer.uint32(18).string(message.email);
+    }
+    if (message.metadata !== undefined) {
+      Struct.encode(Struct.wrap(message.metadata), writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UserInfo {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUserInfo();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.metadata = Struct.unwrap(Struct.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UserInfo {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : undefined,
+      email: isSet(object.email) ? globalThis.String(object.email) : undefined,
+      metadata: isObject(object.metadata) ? object.metadata : undefined,
+    };
+  },
+
+  toJSON(message: UserInfo): unknown {
+    const obj: any = {};
+    if (message.name !== undefined) {
+      obj.name = message.name;
+    }
+    if (message.email !== undefined) {
+      obj.email = message.email;
+    }
+    if (message.metadata !== undefined) {
+      obj.metadata = message.metadata;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UserInfo>, I>>(base?: I): UserInfo {
+    return UserInfo.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UserInfo>, I>>(object: I): UserInfo {
+    const message = createBaseUserInfo();
+    message.name = object.name ?? undefined;
+    message.email = object.email ?? undefined;
+    message.metadata = object.metadata ?? undefined;
+    return message;
+  },
+};
+
 function createBaseIngestTraceRequest(): IngestTraceRequest {
-  return { traceId: undefined, name: "", metadata: undefined, spans: [] };
+  return {
+    traceId: undefined,
+    name: "",
+    metadata: undefined,
+    spans: [],
+    sessionId: undefined,
+    userId: undefined,
+    user: undefined,
+  };
 }
 
 export const IngestTraceRequest: MessageFns<IngestTraceRequest> = {
@@ -85,6 +199,15 @@ export const IngestTraceRequest: MessageFns<IngestTraceRequest> = {
     }
     for (const v of message.spans) {
       IngestSpan.encode(v!, writer.uint32(34).fork()).join();
+    }
+    if (message.sessionId !== undefined) {
+      writer.uint32(42).string(message.sessionId);
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(50).string(message.userId);
+    }
+    if (message.user !== undefined) {
+      UserInfo.encode(message.user, writer.uint32(58).fork()).join();
     }
     return writer;
   },
@@ -128,6 +251,30 @@ export const IngestTraceRequest: MessageFns<IngestTraceRequest> = {
           message.spans.push(IngestSpan.decode(reader, reader.uint32()));
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.sessionId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.user = UserInfo.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -143,6 +290,9 @@ export const IngestTraceRequest: MessageFns<IngestTraceRequest> = {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       metadata: isObject(object.metadata) ? object.metadata : undefined,
       spans: globalThis.Array.isArray(object?.spans) ? object.spans.map((e: any) => IngestSpan.fromJSON(e)) : [],
+      sessionId: isSet(object.sessionId) ? globalThis.String(object.sessionId) : undefined,
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
+      user: isSet(object.user) ? UserInfo.fromJSON(object.user) : undefined,
     };
   },
 
@@ -160,6 +310,15 @@ export const IngestTraceRequest: MessageFns<IngestTraceRequest> = {
     if (message.spans?.length) {
       obj.spans = message.spans.map((e) => IngestSpan.toJSON(e));
     }
+    if (message.sessionId !== undefined) {
+      obj.sessionId = message.sessionId;
+    }
+    if (message.userId !== undefined) {
+      obj.userId = message.userId;
+    }
+    if (message.user !== undefined) {
+      obj.user = UserInfo.toJSON(message.user);
+    }
     return obj;
   },
 
@@ -172,6 +331,9 @@ export const IngestTraceRequest: MessageFns<IngestTraceRequest> = {
     message.name = object.name ?? "";
     message.metadata = object.metadata ?? undefined;
     message.spans = object.spans?.map((e) => IngestSpan.fromPartial(e)) || [];
+    message.sessionId = object.sessionId ?? undefined;
+    message.userId = object.userId ?? undefined;
+    message.user = (object.user !== undefined && object.user !== null) ? UserInfo.fromPartial(object.user) : undefined;
     return message;
   },
 };

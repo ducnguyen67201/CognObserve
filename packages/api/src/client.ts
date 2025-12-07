@@ -71,3 +71,4 @@ export type {
   ModelUsage,
 } from "./routers/analytics";
 export type { SessionWithStats } from "./schemas/sessions";
+export type { TrackedUserWithStats, TrackedUserAnalytics, TrackedUserSummary } from "./schemas/trackedUsers";
