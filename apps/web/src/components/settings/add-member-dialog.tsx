@@ -91,12 +91,12 @@ export function AddMemberDialog({
     },
   });
 
-  const form = useForm<AddMemberInput>({
+  const form = useForm({
     resolver: zodResolver(addMemberSchema),
     defaultValues: {
-      type: "user",
+      type: "user" as const,
       value: "",
-      role: "MEMBER",
+      role: "MEMBER" as const,
     },
   });
 

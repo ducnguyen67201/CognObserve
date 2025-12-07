@@ -25,8 +25,8 @@ type IngestSpanInput struct {
 	SpanID          *string          `json:"span_id,omitempty"`
 	ParentSpanID    *string          `json:"parent_span_id,omitempty"`
 	Name            string           `json:"name"`
-	StartTime       time.Time        `json:"start_time"`
-	EndTime         *time.Time       `json:"end_time,omitempty"`
+	StartTime       *time.Time       `json:"start_time,omitempty"` // Defaults to now if not provided
+	EndTime         *time.Time       `json:"end_time,omitempty"`   // Defaults to now if not provided
 	Input           map[string]any   `json:"input,omitempty"`
 	Output          map[string]any   `json:"output,omitempty"`
 	Metadata        map[string]any   `json:"metadata,omitempty"`
@@ -89,6 +89,7 @@ func (h *Handler) IngestTrace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spanIDs := make([]string, 0, len(req.Spans))
+	now := time.Now().UTC()
 	for _, s := range req.Spans {
 		spanID := generateID()
 		if s.SpanID != nil && *s.SpanID != "" {
@@ -96,13 +97,27 @@ func (h *Handler) IngestTrace(w http.ResponseWriter, r *http.Request) {
 		}
 		spanIDs = append(spanIDs, spanID)
 
+		// Default start_time to now if not provided
+		startTime := now
+		if s.StartTime != nil {
+			startTime = *s.StartTime
+		}
+
+		// Default end_time to now if not provided
+		var endTime *time.Time
+		if s.EndTime != nil {
+			endTime = s.EndTime
+		} else {
+			endTime = &now
+		}
+
 		span := model.Span{
 			ID:              spanID,
 			TraceID:         traceID,
 			ParentSpanID:    s.ParentSpanID,
 			Name:            s.Name,
-			StartTime:       s.StartTime,
-			EndTime:         s.EndTime,
+			StartTime:       startTime,
+			EndTime:         endTime,
 			Input:           s.Input,
 			Output:          s.Output,
 			Metadata:        s.Metadata,

@@ -4,6 +4,7 @@
  * This file MUST be imported before any routes that use api-key functions.
  */
 import { setApiKeyConfig } from "@cognobserve/shared";
+import { initializeAlertingAdapters } from "./lib/alerting/init";
 
 // Initialize API key config from environment variables
 // These are validated and have defaults in the web app's env.ts
@@ -14,3 +15,6 @@ setApiKeyConfig({
     process.env.API_KEY_BASE62_CHARSET ||
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
 });
+
+// Initialize alerting adapters (Discord, Gmail, etc.)
+initializeAlertingAdapters();

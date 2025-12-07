@@ -67,7 +67,9 @@ export const ModelName = {
   CostDailySummary: 'CostDailySummary',
   Alert: 'Alert',
   AlertChannel: 'AlertChannel',
-  AlertHistory: 'AlertHistory'
+  AlertHistory: 'AlertHistory',
+  NotificationChannel: 'NotificationChannel',
+  AlertChannelLink: 'AlertChannelLink'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -325,6 +327,30 @@ export const AlertHistoryScalarFieldEnum = {
 } as const
 
 export type AlertHistoryScalarFieldEnum = (typeof AlertHistoryScalarFieldEnum)[keyof typeof AlertHistoryScalarFieldEnum]
+
+
+export const NotificationChannelScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  name: 'name',
+  provider: 'provider',
+  config: 'config',
+  verified: 'verified',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationChannelScalarFieldEnum = (typeof NotificationChannelScalarFieldEnum)[keyof typeof NotificationChannelScalarFieldEnum]
+
+
+export const AlertChannelLinkScalarFieldEnum = {
+  id: 'id',
+  alertId: 'alertId',
+  channelId: 'channelId',
+  createdAt: 'createdAt'
+} as const
+
+export type AlertChannelLinkScalarFieldEnum = (typeof AlertChannelLinkScalarFieldEnum)[keyof typeof AlertChannelLinkScalarFieldEnum]
 
 
 export const SortOrder = {

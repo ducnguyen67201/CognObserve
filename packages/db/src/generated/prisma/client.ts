@@ -124,3 +124,13 @@ export type AlertChannel = Prisma.AlertChannelModel
  * 
  */
 export type AlertHistory = Prisma.AlertHistoryModel
+/**
+ * Model NotificationChannel
+ * 
+ */
+export type NotificationChannel = Prisma.NotificationChannelModel
+/**
+ * Model AlertChannelLink
+ * 
+ */
+export type AlertChannelLink = Prisma.AlertChannelLinkModel
