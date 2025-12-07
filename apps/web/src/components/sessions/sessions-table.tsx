@@ -22,21 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useSessions } from "@/hooks/sessions/use-sessions";
-import { formatDuration, formatTokens } from "@/lib/format";
+import { formatDuration, formatTokens, formatCost } from "@/lib/format";
 import type { SessionWithStats } from "@cognobserve/api/client";
 import { cn } from "@/lib/utils";
 import { SessionDetailPanel } from "./session-detail-panel";
 
-/**
- * Format cost as currency
- */
-const formatCost = (cost: number): string => {
-  if (cost === 0) return "$0.00";
-  if (cost >= 1000) return `$${(cost / 1000).toFixed(1)}K`;
-  if (cost >= 1) return `$${cost.toFixed(2)}`;
-  if (cost >= 0.01) return `$${cost.toFixed(3)}`;
-  return `$${cost.toFixed(4)}`;
-};
+/** Skeleton row indices for loading state */
+const SKELETON_ROWS = [0, 1, 2, 3, 4] as const;
 
 interface SessionsTableProps {
   workspaceSlug: string;
@@ -267,7 +259,7 @@ function SessionsTableSkeleton() {
           <TableHead className="w-[150px]">Last Active</TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>{[0, 1, 2, 3, 4].map(renderSkeletonRow)}</TableBody>
+      <TableBody>{SKELETON_ROWS.map(renderSkeletonRow)}</TableBody>
     </Table>
   );
 }
