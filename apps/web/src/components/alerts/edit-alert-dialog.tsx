@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,14 +43,24 @@ import {
   THRESHOLD_PRESETS,
   type AlertType,
   type AlertSeverity,
-  type ThresholdPreset,
 } from "@cognobserve/api/schemas";
 import { SeveritySelector } from "./severity-selector";
 import { ThresholdPresetCards } from "./threshold-preset-cards";
+import type { ThresholdPreset } from "@cognobserve/api/schemas";
 
-interface CreateAlertDialogProps {
+interface EditAlertDialogProps {
   workspaceSlug: string;
-  projectId: string;
+  alert: {
+    id: string;
+    name: string;
+    type: AlertType;
+    threshold: number;
+    operator: "GREATER_THAN" | "LESS_THAN";
+    windowMins: number;
+    cooldownMins: number;
+    severity: AlertSeverity;
+    pendingMins: number;
+  };
   open: boolean;
   onClose: () => void;
 }
@@ -73,7 +83,7 @@ const OPERATORS = [
   { value: "LESS_THAN", label: "Less than (<)" },
 ] as const;
 
-interface CreateAlertFormValues {
+interface EditAlertFormValues {
   name: string;
   type: AlertType;
   threshold: string;
@@ -84,35 +94,50 @@ interface CreateAlertFormValues {
   pendingMins: string;
 }
 
-const DEFAULT_VALUES: CreateAlertFormValues = {
-  name: "",
-  type: "ERROR_RATE",
-  threshold: "5",
-  operator: "GREATER_THAN",
-  windowMins: "5",
-  cooldownMins: "",
-  severity: "MEDIUM",
-  pendingMins: "",
-};
-
-export function CreateAlertDialog({
+export function EditAlertDialog({
   workspaceSlug,
-  projectId,
+  alert,
   open,
   onClose,
-}: CreateAlertDialogProps) {
+}: EditAlertDialogProps) {
   const utils = trpc.useUtils();
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<ThresholdPreset | null>("BALANCED");
-  const form = useForm<CreateAlertFormValues>({
-    defaultValues: DEFAULT_VALUES,
+  const [selectedPreset, setSelectedPreset] = useState<ThresholdPreset | null>(null);
+
+  const form = useForm<EditAlertFormValues>({
+    defaultValues: {
+      name: alert.name,
+      type: alert.type,
+      threshold: alert.threshold.toString(),
+      operator: alert.operator,
+      windowMins: alert.windowMins.toString(),
+      cooldownMins: alert.cooldownMins.toString(),
+      severity: alert.severity,
+      pendingMins: alert.pendingMins.toString(),
+    },
   });
 
-  const createMutation = trpc.alerts.create.useMutation({
+  // Reset form when alert changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: alert.name,
+        type: alert.type,
+        threshold: alert.threshold.toString(),
+        operator: alert.operator,
+        windowMins: alert.windowMins.toString(),
+        cooldownMins: alert.cooldownMins.toString(),
+        severity: alert.severity,
+        pendingMins: alert.pendingMins.toString(),
+      });
+      setSelectedPreset(null);
+    }
+  }, [alert, open, form]);
+
+  const updateMutation = trpc.alerts.update.useMutation({
     onSuccess: (_, variables) => {
       utils.alerts.list.invalidate();
-      alertToast.created(variables.name);
-      form.reset();
+      alertToast.updated(variables.name);
       onClose();
     },
     onError: (error) => {
@@ -121,7 +146,7 @@ export function CreateAlertDialog({
   });
 
   const handleSubmit = useCallback(
-    (values: CreateAlertFormValues) => {
+    (values: EditAlertFormValues) => {
       const threshold = parseFloat(values.threshold);
       const windowMins = parseInt(values.windowMins, 10);
       const cooldownMins = values.cooldownMins ? parseInt(values.cooldownMins, 10) : undefined;
@@ -144,32 +169,28 @@ export function CreateAlertDialog({
         return;
       }
 
-      createMutation.mutate({
+      updateMutation.mutate({
         workspaceSlug,
-        projectId,
+        id: alert.id,
         name: values.name,
-        type: values.type,
-        operator: values.operator,
         threshold,
+        operator: values.operator,
         windowMins,
         cooldownMins,
         severity: values.severity,
         pendingMins,
       });
     },
-    [createMutation, workspaceSlug, projectId, form]
+    [updateMutation, workspaceSlug, alert.id, form]
   );
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
       if (!isOpen) {
-        form.reset();
-        setSelectedPreset("BALANCED");
-        setShowAdvanced(false);
         onClose();
       }
     },
-    [form, onClose]
+    [onClose]
   );
 
   const handlePresetSelect = useCallback(
@@ -207,9 +228,9 @@ export function CreateAlertDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create Alert</DialogTitle>
+          <DialogTitle>Edit Alert</DialogTitle>
           <DialogDescription>
-            Set up an alert to get notified when a metric exceeds your threshold.
+            Modify the alert configuration and thresholds.
           </DialogDescription>
         </DialogHeader>
 
@@ -236,7 +257,7 @@ export function CreateAlertDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Metric Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select value={field.value} disabled>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select metric type" />
@@ -250,6 +271,7 @@ export function CreateAlertDialog({
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormDescription className="text-xs">Cannot be changed</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -398,8 +420,8 @@ export function CreateAlertDialog({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create Alert"}
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

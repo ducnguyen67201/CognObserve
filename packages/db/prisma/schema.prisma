@@ -316,6 +316,20 @@ enum ChannelProvider {
   WEBHOOK
 }
 
+enum AlertSeverity {
+  CRITICAL // P1 - System down, data loss
+  HIGH     // P2 - Service degradation
+  MEDIUM   // P3 - Performance issues
+  LOW      // P4 - Warnings, capacity
+}
+
+enum AlertState {
+  INACTIVE // Condition not met
+  PENDING  // Condition met, waiting for pendingDuration
+  FIRING   // Alert triggered, notifications sent
+  RESOLVED // Was firing, now recovered
+}
+
 model Alert {
   id              String             @id @default(cuid())
   projectId       String
@@ -328,6 +342,18 @@ model Alert {
   cooldownMins    Int                @default(60)
   enabled         Boolean            @default(true)
   lastTriggeredAt DateTime?
+
+  // Severity-based configuration
+  severity        AlertSeverity      @default(MEDIUM)
+
+  // Timing configuration (pendingMins = condition must persist before firing)
+  pendingMins     Int                @default(2)
+
+  // State tracking
+  state           AlertState         @default(INACTIVE)
+  stateChangedAt  DateTime?
+  lastEvaluatedAt DateTime?
+
   channels        AlertChannel[]     // Legacy - to be deprecated
   channelLinks    AlertChannelLink[] // New - links to workspace channels
   history         AlertHistory[]
@@ -336,6 +362,8 @@ model Alert {
 
   @@index([projectId])
   @@index([enabled, lastTriggeredAt])
+  @@index([enabled, severity])
+  @@index([state, enabled])
   @@map("alerts")
 }
 
@@ -353,15 +381,23 @@ model AlertChannel {
 }
 
 model AlertHistory {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   alertId     String
-  alert       Alert     @relation(fields: [alertId], references: [id], onDelete: Cascade)
-  triggeredAt DateTime  @default(now())
+  alert       Alert        @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  triggeredAt DateTime     @default(now())
   value       Float
   threshold   Float
-  resolved    Boolean   @default(false)
+  resolved    Boolean      @default(false)
   resolvedAt  DateTime?
   notifiedVia String[]
+
+  // State tracking
+  state         AlertState?
+  previousState AlertState?
+
+  // Evaluation metadata
+  sampleCount  Int?
+  evaluationMs Int?
 
   @@index([alertId, triggeredAt])
   @@index([triggeredAt])

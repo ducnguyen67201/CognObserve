@@ -16,6 +16,27 @@ export { getMetric, getAllMetrics } from "./metrics-service";
 // Re-export schemas and types
 export * from "../../schemas/alerting";
 
+// ============================================================
+// Alert System v2 - Interfaces & Implementations
+// ============================================================
+
+// Re-export interfaces
+export type {
+  IAlertStore,
+  ITriggerQueue,
+  IDispatcher,
+  IScheduler,
+  AlertWithProject,
+  StateMetadata,
+  AlertHistoryEntry,
+} from "./interfaces";
+
+// Re-export implementations (TODAY)
+export { PrismaAlertStore } from "./stores/prisma-alert-store";
+export { MemoryTriggerQueue } from "./queues/memory-queue";
+export { SimpleDispatcher } from "./dispatchers/simple-dispatcher";
+export { IntervalScheduler } from "./schedulers/interval-scheduler";
+
 import type { ChannelProvider } from "../../schemas/alerting";
 import type { IAlertingAdapter } from "./adapter";
 import { AdapterRegistry } from "./registry";

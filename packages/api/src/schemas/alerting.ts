@@ -24,6 +24,33 @@ export const AlertOperatorSchema = z.enum(["GREATER_THAN", "LESS_THAN"]);
 export type AlertOperator = z.infer<typeof AlertOperatorSchema>;
 
 /**
+ * Alert severity levels - determines timing configuration
+ */
+export const AlertSeveritySchema = z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]);
+export type AlertSeverity = z.infer<typeof AlertSeveritySchema>;
+
+/**
+ * Alert states - lifecycle state machine
+ */
+export const AlertStateSchema = z.enum([
+  "INACTIVE",
+  "PENDING",
+  "FIRING",
+  "RESOLVED",
+]);
+export type AlertState = z.infer<typeof AlertStateSchema>;
+
+/**
+ * Threshold presets - predefined thresholds for common use cases
+ */
+export const ThresholdPresetSchema = z.enum([
+  "AGGRESSIVE",
+  "BALANCED",
+  "CONSERVATIVE",
+]);
+export type ThresholdPreset = z.infer<typeof ThresholdPresetSchema>;
+
+/**
  * Channel providers - notification channels
  */
 export const ChannelProviderSchema = z.enum([
@@ -141,3 +168,150 @@ export function formatAlertValue(type: AlertType, value: number): string {
 export function getOperatorSymbol(operator: AlertOperator): string {
   return operator === "GREATER_THAN" ? ">" : "<";
 }
+
+// ============================================================
+// Severity & Preset Configuration Constants
+// ============================================================
+
+/**
+ * Severity-based timing defaults
+ *
+ * - cooldownMins: Minimum time between notifications
+ * - pendingMins: Condition must persist before firing
+ * - evalIntervalMs: How often to evaluate this severity level
+ * - flushIntervalMs: How often to flush the dispatch queue
+ */
+export const SEVERITY_DEFAULTS: Record<
+  AlertSeverity,
+  {
+    cooldownMins: number;
+    pendingMins: number;
+    evalIntervalMs: number;
+    flushIntervalMs: number;
+  }
+> = {
+  CRITICAL: {
+    cooldownMins: 5,
+    pendingMins: 1,
+    evalIntervalMs: 10_000,
+    flushIntervalMs: 10_000,
+  },
+  HIGH: {
+    cooldownMins: 30,
+    pendingMins: 2,
+    evalIntervalMs: 30_000,
+    flushIntervalMs: 30_000,
+  },
+  MEDIUM: {
+    cooldownMins: 120,
+    pendingMins: 3,
+    evalIntervalMs: 60_000,
+    flushIntervalMs: 60_000,
+  },
+  LOW: {
+    cooldownMins: 720,
+    pendingMins: 5,
+    evalIntervalMs: 300_000,
+    flushIntervalMs: 300_000,
+  },
+} as const;
+
+/**
+ * Threshold presets - industry-standard defaults
+ *
+ * - AGGRESSIVE: Quick detection, more alerts (dev/staging)
+ * - BALANCED: Recommended for production
+ * - CONSERVATIVE: Reduce noise (high-traffic)
+ */
+export const THRESHOLD_PRESETS: Record<
+  ThresholdPreset,
+  {
+    errorRate: number;
+    latencyP50: number;
+    latencyP95: number;
+    latencyP99: number;
+  }
+> = {
+  AGGRESSIVE: {
+    errorRate: 1,
+    latencyP50: 100,
+    latencyP95: 500,
+    latencyP99: 1000,
+  },
+  BALANCED: {
+    errorRate: 5,
+    latencyP50: 200,
+    latencyP95: 1000,
+    latencyP99: 2000,
+  },
+  CONSERVATIVE: {
+    errorRate: 10,
+    latencyP50: 500,
+    latencyP95: 2000,
+    latencyP99: 5000,
+  },
+} as const;
+
+/**
+ * Severity labels for UI display
+ */
+export const SEVERITY_LABELS: Record<AlertSeverity, string> = {
+  CRITICAL: "Critical (P1)",
+  HIGH: "High (P2)",
+  MEDIUM: "Medium (P3)",
+  LOW: "Low (P4)",
+};
+
+/**
+ * State labels for UI display
+ */
+export const STATE_LABELS: Record<AlertState, string> = {
+  INACTIVE: "Inactive",
+  PENDING: "Pending",
+  FIRING: "Firing",
+  RESOLVED: "Resolved",
+};
+
+/**
+ * Preset labels for UI display
+ */
+export const PRESET_LABELS: Record<ThresholdPreset, string> = {
+  AGGRESSIVE: "Aggressive",
+  BALANCED: "Balanced",
+  CONSERVATIVE: "Conservative",
+};
+
+// ============================================================
+// Queue Item Schema (for batch dispatch)
+// ============================================================
+
+/**
+ * Trigger queue item - enqueued when alert transitions to FIRING
+ */
+export const TriggerQueueItemSchema = z.object({
+  alertId: z.string(),
+  alertName: z.string(),
+  projectId: z.string(),
+  projectName: z.string(),
+  severity: AlertSeveritySchema,
+  metricType: AlertTypeSchema,
+  threshold: z.number(),
+  actualValue: z.number(),
+  operator: AlertOperatorSchema,
+  previousState: AlertStateSchema,
+  newState: AlertStateSchema,
+  queuedAt: z.date(),
+  channelIds: z.array(z.string()),
+});
+export type TriggerQueueItem = z.infer<typeof TriggerQueueItemSchema>;
+
+/**
+ * Dispatch result - returned from IDispatcher
+ */
+export const DispatchResultSchema = z.object({
+  success: z.boolean(),
+  sent: z.number(),
+  failed: z.number(),
+  errors: z.array(z.string()).optional(),
+});
+export type DispatchResult = z.infer<typeof DispatchResultSchema>;

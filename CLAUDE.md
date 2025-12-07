@@ -120,6 +120,49 @@ Core models in `packages/db/prisma/schema.prisma`:
 - **Trace**: Top-level trace for a request/operation
 - **Span**: Individual operations within a trace (LLM calls, etc.)
 
+## Worker Architecture
+
+The worker (`apps/worker/`) handles background processing including trace ingestion and alerting.
+
+### Key Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| TraceProcessor | `apps/worker/src/processors/trace.ts` | Processes traces from Redis queue, calculates costs |
+| AlertEvaluator | `apps/worker/src/jobs/alert-evaluator.ts` | State machine for alert evaluation and notification |
+| Alerting Interfaces | `packages/api/src/lib/alerting/interfaces.ts` | IAlertStore, ITriggerQueue, IDispatcher, IScheduler |
+| Alerting Implementations | `packages/api/src/lib/alerting/stores/`, `queues/`, `dispatchers/`, `schedulers/` | Concrete implementations |
+
+### Alert System v2
+
+**Full spec**: `docs/specs/issue-99-alert-system-v2.md`
+
+The alerting system uses a state machine with queue-based batching:
+
+```
+State Machine: INACTIVE → PENDING → FIRING → RESOLVED → INACTIVE
+
+Notification Rules:
+- PENDING → FIRING: First notification sent
+- FIRING → FIRING: Re-notify only if cooldown passed (5min for CRITICAL)
+- All other transitions: No notification
+```
+
+**Severity-based timing:**
+| Severity | Pending Duration | Cooldown | Use Case |
+|----------|------------------|----------|----------|
+| CRITICAL | 1 min | 5 min | System down |
+| HIGH | 2 min | 30 min | Degradation |
+| MEDIUM | 3 min | 2 hours | Performance |
+| LOW | 5 min | 12 hours | Warnings |
+
+**Key files for alerting context:**
+- Spec: `docs/specs/issue-99-alert-system-v2.md`
+- Evaluator: `apps/worker/src/jobs/alert-evaluator.ts`
+- Interfaces: `packages/api/src/lib/alerting/interfaces.ts`
+- Schemas: `packages/api/src/schemas/alerting.ts`
+- Batch endpoint: `apps/web/src/app/api/internal/alerts/trigger-batch/route.ts`
+
 ## Code Style Rules
 
 ### No Inline Functions
@@ -193,6 +236,97 @@ export const isValidRole = (role: string): role is ProjectRole => {
 
 // Client component usage (avoids server-side deps)
 import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
+```
+
+### Zod for Runtime Validation (CRITICAL)
+**ALWAYS use Zod to validate unknown data at runtime.** This includes API responses, JSON parsing, external data, and anything typed as `unknown`. Never use type assertions (`as`) to bypass TypeScript - validate first.
+
+```typescript
+// ❌ BAD - Type assertion (lies to TypeScript, no runtime safety)
+const response = await fetch("/api/data");
+const data = (await response.json()) as { users: User[] };
+// If API returns different shape, code silently breaks at runtime
+
+// ❌ BAD - Manual type checking (verbose, error-prone, hard to maintain)
+const json: unknown = await response.json();
+if (
+  json !== null &&
+  typeof json === "object" &&
+  "users" in json &&
+  Array.isArray(json.users)
+) {
+  // Still not fully type-safe, easy to miss edge cases
+}
+
+// ✅ GOOD - Zod validation (runtime safety + type inference)
+import { z } from "zod";
+
+const ResponseSchema = z.object({
+  users: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().email(),
+  })),
+});
+
+const json: unknown = await response.json();
+const parsed = ResponseSchema.safeParse(json);
+
+if (parsed.success) {
+  // parsed.data is fully typed as { users: { id: string; name: string; email: string }[] }
+  console.log(parsed.data.users);
+} else {
+  // parsed.error contains detailed validation errors
+  console.error("Invalid response:", parsed.error.issues);
+}
+```
+
+**When to use Zod validation:**
+| Scenario | Use Zod? | Example |
+|----------|----------|---------|
+| API response from external service | ✅ Yes | `fetch()` responses |
+| API response from internal service | ✅ Yes | Worker → Web API calls |
+| JSON.parse() result | ✅ Yes | Parsing stored JSON |
+| WebSocket messages | ✅ Yes | Real-time data |
+| URL query params | ✅ Yes | `searchParams.get()` |
+| Form data (tRPC input) | ✅ Already handled | tRPC validates with schema |
+| Database query results | ❌ No | Prisma types are trustworthy |
+| Internal function params | ❌ No | TypeScript handles this |
+
+**Zod patterns:**
+
+```typescript
+// Define schema once, reuse everywhere
+const UserSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  role: z.enum(["admin", "user"]),
+});
+type User = z.infer<typeof UserSchema>;
+
+// For API responses, define response schemas
+const ApiResponseSchema = z.object({
+  success: z.boolean(),
+  data: UserSchema.optional(),
+  error: z.string().optional(),
+});
+
+// Parse with safeParse (doesn't throw)
+const result = ApiResponseSchema.safeParse(json);
+if (!result.success) {
+  console.error(result.error.flatten());
+  return fallbackValue;
+}
+return result.data;
+
+// Or parse (throws ZodError on failure)
+try {
+  const data = ApiResponseSchema.parse(json);
+} catch (e) {
+  if (e instanceof z.ZodError) {
+    // Handle validation error
+  }
+}
 ```
 
 ## Frontend Engineering Best Practices
@@ -1197,6 +1331,7 @@ const handleCopy = async (text: string) => {
 | Rule | What to Do | What NOT to Do |
 |------|-----------|----------------|
 | **Types** | Import from `@cognobserve/db`, `@cognobserve/api/schemas`, `@cognobserve/proto` | Duplicate types, import from `@prisma/client` |
+| **Unknown Data** | Use Zod `safeParse()` for API responses, JSON parsing | Type assertions (`as`), manual type checking |
 | **Toasts** | Use `@/lib/errors` and `@/lib/success` | Import `toast` from "sonner" directly |
 | **UI** | Use shadcn/ui from `@/components/ui/` | Write custom CSS for standard elements |
 | **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |

@@ -91,7 +91,7 @@ export class TraceProcessor {
           pricingId: cost.pricingId,
           promptTokens: span.Usage?.PromptTokens ?? 0,
           completionTokens: span.Usage?.CompletionTokens ?? 0,
-          startTime: new Date(span.StartTime),
+          startTime: this.parseDate(span.StartTime),
         });
       }
     }
@@ -298,6 +298,21 @@ export class TraceProcessor {
   }
 
   /**
+   * Parse a date string, defaulting to now if invalid or zero time
+   */
+  private parseDate(dateStr: string | undefined | null): Date {
+    if (!dateStr) {
+      return new Date();
+    }
+    const date = new Date(dateStr);
+    // Check for invalid date or Go's zero time (year 1)
+    if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+      return new Date();
+    }
+    return date;
+  }
+
+  /**
    * Convert queue span data to Prisma create input
    */
   private convertSpan(data: QueueSpanData): Prisma.SpanCreateManyInput {
@@ -306,8 +321,8 @@ export class TraceProcessor {
       traceId: data.TraceID,
       parentSpanId: data.ParentSpanID ?? null,
       name: data.Name,
-      startTime: new Date(data.StartTime),
-      endTime: data.EndTime ? new Date(data.EndTime) : null,
+      startTime: this.parseDate(data.StartTime),
+      endTime: data.EndTime ? this.parseDate(data.EndTime) : null,
       input: (data.Input as Prisma.InputJsonValue) ?? Prisma.JsonNull,
       output: (data.Output as Prisma.InputJsonValue) ?? Prisma.JsonNull,
       metadata: (data.Metadata as Prisma.InputJsonValue) ?? Prisma.JsonNull,

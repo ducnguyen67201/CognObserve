@@ -30,12 +30,14 @@ export type AlertAvgAggregateOutputType = {
   threshold: number | null
   windowMins: number | null
   cooldownMins: number | null
+  pendingMins: number | null
 }
 
 export type AlertSumAggregateOutputType = {
   threshold: number | null
   windowMins: number | null
   cooldownMins: number | null
+  pendingMins: number | null
 }
 
 export type AlertMinAggregateOutputType = {
@@ -49,6 +51,11 @@ export type AlertMinAggregateOutputType = {
   cooldownMins: number | null
   enabled: boolean | null
   lastTriggeredAt: Date | null
+  severity: $Enums.AlertSeverity | null
+  pendingMins: number | null
+  state: $Enums.AlertState | null
+  stateChangedAt: Date | null
+  lastEvaluatedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -64,6 +71,11 @@ export type AlertMaxAggregateOutputType = {
   cooldownMins: number | null
   enabled: boolean | null
   lastTriggeredAt: Date | null
+  severity: $Enums.AlertSeverity | null
+  pendingMins: number | null
+  state: $Enums.AlertState | null
+  stateChangedAt: Date | null
+  lastEvaluatedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -79,6 +91,11 @@ export type AlertCountAggregateOutputType = {
   cooldownMins: number
   enabled: number
   lastTriggeredAt: number
+  severity: number
+  pendingMins: number
+  state: number
+  stateChangedAt: number
+  lastEvaluatedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -89,12 +106,14 @@ export type AlertAvgAggregateInputType = {
   threshold?: true
   windowMins?: true
   cooldownMins?: true
+  pendingMins?: true
 }
 
 export type AlertSumAggregateInputType = {
   threshold?: true
   windowMins?: true
   cooldownMins?: true
+  pendingMins?: true
 }
 
 export type AlertMinAggregateInputType = {
@@ -108,6 +127,11 @@ export type AlertMinAggregateInputType = {
   cooldownMins?: true
   enabled?: true
   lastTriggeredAt?: true
+  severity?: true
+  pendingMins?: true
+  state?: true
+  stateChangedAt?: true
+  lastEvaluatedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -123,6 +147,11 @@ export type AlertMaxAggregateInputType = {
   cooldownMins?: true
   enabled?: true
   lastTriggeredAt?: true
+  severity?: true
+  pendingMins?: true
+  state?: true
+  stateChangedAt?: true
+  lastEvaluatedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -138,6 +167,11 @@ export type AlertCountAggregateInputType = {
   cooldownMins?: true
   enabled?: true
   lastTriggeredAt?: true
+  severity?: true
+  pendingMins?: true
+  state?: true
+  stateChangedAt?: true
+  lastEvaluatedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -240,6 +274,11 @@ export type AlertGroupByOutputType = {
   cooldownMins: number
   enabled: boolean
   lastTriggeredAt: Date | null
+  severity: $Enums.AlertSeverity
+  pendingMins: number
+  state: $Enums.AlertState
+  stateChangedAt: Date | null
+  lastEvaluatedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: AlertCountAggregateOutputType | null
@@ -278,6 +317,11 @@ export type AlertWhereInput = {
   cooldownMins?: Prisma.IntFilter<"Alert"> | number
   enabled?: Prisma.BoolFilter<"Alert"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFilter<"Alert"> | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFilter<"Alert"> | number
+  state?: Prisma.EnumAlertStateFilter<"Alert"> | $Enums.AlertState
+  stateChangedAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
+  lastEvaluatedAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Alert"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Alert"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
@@ -297,6 +341,11 @@ export type AlertOrderByWithRelationInput = {
   cooldownMins?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  severity?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  stateChangedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastEvaluatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   project?: Prisma.ProjectOrderByWithRelationInput
@@ -319,6 +368,11 @@ export type AlertWhereUniqueInput = Prisma.AtLeast<{
   cooldownMins?: Prisma.IntFilter<"Alert"> | number
   enabled?: Prisma.BoolFilter<"Alert"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFilter<"Alert"> | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFilter<"Alert"> | number
+  state?: Prisma.EnumAlertStateFilter<"Alert"> | $Enums.AlertState
+  stateChangedAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
+  lastEvaluatedAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Alert"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Alert"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
@@ -338,6 +392,11 @@ export type AlertOrderByWithAggregationInput = {
   cooldownMins?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  severity?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  stateChangedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastEvaluatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AlertCountOrderByAggregateInput
@@ -361,6 +420,11 @@ export type AlertScalarWhereWithAggregatesInput = {
   cooldownMins?: Prisma.IntWithAggregatesFilter<"Alert"> | number
   enabled?: Prisma.BoolWithAggregatesFilter<"Alert"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
+  severity?: Prisma.EnumAlertSeverityWithAggregatesFilter<"Alert"> | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntWithAggregatesFilter<"Alert"> | number
+  state?: Prisma.EnumAlertStateWithAggregatesFilter<"Alert"> | $Enums.AlertState
+  stateChangedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
+  lastEvaluatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Alert"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Alert"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Alert"> | Date | string
 }
@@ -375,6 +439,11 @@ export type AlertCreateInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
@@ -394,6 +463,11 @@ export type AlertUncheckedCreateInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
@@ -411,6 +485,11 @@ export type AlertUpdateInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
@@ -430,6 +509,11 @@ export type AlertUncheckedUpdateInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
@@ -448,6 +532,11 @@ export type AlertCreateManyInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -462,6 +551,11 @@ export type AlertUpdateManyMutationInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -477,6 +571,11 @@ export type AlertUncheckedUpdateManyInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -502,6 +601,11 @@ export type AlertCountOrderByAggregateInput = {
   cooldownMins?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrder
+  severity?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  stateChangedAt?: Prisma.SortOrder
+  lastEvaluatedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -510,6 +614,7 @@ export type AlertAvgOrderByAggregateInput = {
   threshold?: Prisma.SortOrder
   windowMins?: Prisma.SortOrder
   cooldownMins?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
 }
 
 export type AlertMaxOrderByAggregateInput = {
@@ -523,6 +628,11 @@ export type AlertMaxOrderByAggregateInput = {
   cooldownMins?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrder
+  severity?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  stateChangedAt?: Prisma.SortOrder
+  lastEvaluatedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -538,6 +648,11 @@ export type AlertMinOrderByAggregateInput = {
   cooldownMins?: Prisma.SortOrder
   enabled?: Prisma.SortOrder
   lastTriggeredAt?: Prisma.SortOrder
+  severity?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  stateChangedAt?: Prisma.SortOrder
+  lastEvaluatedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -546,6 +661,7 @@ export type AlertSumOrderByAggregateInput = {
   threshold?: Prisma.SortOrder
   windowMins?: Prisma.SortOrder
   cooldownMins?: Prisma.SortOrder
+  pendingMins?: Prisma.SortOrder
 }
 
 export type AlertScalarRelationFilter = {
@@ -611,6 +727,14 @@ export type EnumAlertOperatorFieldUpdateOperationsInput = {
   set?: $Enums.AlertOperator
 }
 
+export type EnumAlertSeverityFieldUpdateOperationsInput = {
+  set?: $Enums.AlertSeverity
+}
+
+export type EnumAlertStateFieldUpdateOperationsInput = {
+  set?: $Enums.AlertState
+}
+
 export type AlertCreateNestedOneWithoutChannelsInput = {
   create?: Prisma.XOR<Prisma.AlertCreateWithoutChannelsInput, Prisma.AlertUncheckedCreateWithoutChannelsInput>
   connectOrCreate?: Prisma.AlertCreateOrConnectWithoutChannelsInput
@@ -663,6 +787,11 @@ export type AlertCreateWithoutProjectInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelCreateNestedManyWithoutAlertInput
@@ -680,6 +809,11 @@ export type AlertUncheckedCreateWithoutProjectInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
@@ -727,6 +861,11 @@ export type AlertScalarWhereInput = {
   cooldownMins?: Prisma.IntFilter<"Alert"> | number
   enabled?: Prisma.BoolFilter<"Alert"> | boolean
   lastTriggeredAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFilter<"Alert"> | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFilter<"Alert"> | number
+  state?: Prisma.EnumAlertStateFilter<"Alert"> | $Enums.AlertState
+  stateChangedAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
+  lastEvaluatedAt?: Prisma.DateTimeNullableFilter<"Alert"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Alert"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Alert"> | Date | string
 }
@@ -741,6 +880,11 @@ export type AlertCreateWithoutChannelsInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
@@ -759,6 +903,11 @@ export type AlertUncheckedCreateWithoutChannelsInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   channelLinks?: Prisma.AlertChannelLinkUncheckedCreateNestedManyWithoutAlertInput
@@ -791,6 +940,11 @@ export type AlertUpdateWithoutChannelsInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
@@ -809,6 +963,11 @@ export type AlertUncheckedUpdateWithoutChannelsInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelLinks?: Prisma.AlertChannelLinkUncheckedUpdateManyWithoutAlertNestedInput
@@ -825,6 +984,11 @@ export type AlertCreateWithoutHistoryInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
@@ -843,6 +1007,11 @@ export type AlertUncheckedCreateWithoutHistoryInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
@@ -875,6 +1044,11 @@ export type AlertUpdateWithoutHistoryInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
@@ -893,6 +1067,11 @@ export type AlertUncheckedUpdateWithoutHistoryInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
@@ -909,6 +1088,11 @@ export type AlertCreateWithoutChannelLinksInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
@@ -927,6 +1111,11 @@ export type AlertUncheckedCreateWithoutChannelLinksInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
@@ -959,6 +1148,11 @@ export type AlertUpdateWithoutChannelLinksInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
@@ -977,6 +1171,11 @@ export type AlertUncheckedUpdateWithoutChannelLinksInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
@@ -993,6 +1192,11 @@ export type AlertCreateManyProjectInput = {
   cooldownMins?: number
   enabled?: boolean
   lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1007,6 +1211,11 @@ export type AlertUpdateWithoutProjectInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUpdateManyWithoutAlertNestedInput
@@ -1024,6 +1233,11 @@ export type AlertUncheckedUpdateWithoutProjectInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
@@ -1041,6 +1255,11 @@ export type AlertUncheckedUpdateManyWithoutProjectInput = {
   cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
   enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1105,6 +1324,11 @@ export type AlertSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   cooldownMins?: boolean
   enabled?: boolean
   lastTriggeredAt?: boolean
+  severity?: boolean
+  pendingMins?: boolean
+  state?: boolean
+  stateChangedAt?: boolean
+  lastEvaluatedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
@@ -1125,6 +1349,11 @@ export type AlertSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   cooldownMins?: boolean
   enabled?: boolean
   lastTriggeredAt?: boolean
+  severity?: boolean
+  pendingMins?: boolean
+  state?: boolean
+  stateChangedAt?: boolean
+  lastEvaluatedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
@@ -1141,6 +1370,11 @@ export type AlertSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   cooldownMins?: boolean
   enabled?: boolean
   lastTriggeredAt?: boolean
+  severity?: boolean
+  pendingMins?: boolean
+  state?: boolean
+  stateChangedAt?: boolean
+  lastEvaluatedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
@@ -1157,11 +1391,16 @@ export type AlertSelectScalar = {
   cooldownMins?: boolean
   enabled?: boolean
   lastTriggeredAt?: boolean
+  severity?: boolean
+  pendingMins?: boolean
+  state?: boolean
+  stateChangedAt?: boolean
+  lastEvaluatedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AlertOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "name" | "type" | "threshold" | "operator" | "windowMins" | "cooldownMins" | "enabled" | "lastTriggeredAt" | "createdAt" | "updatedAt", ExtArgs["result"]["alert"]>
+export type AlertOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "name" | "type" | "threshold" | "operator" | "windowMins" | "cooldownMins" | "enabled" | "lastTriggeredAt" | "severity" | "pendingMins" | "state" | "stateChangedAt" | "lastEvaluatedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["alert"]>
 export type AlertInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   channels?: boolean | Prisma.Alert$channelsArgs<ExtArgs>
@@ -1195,6 +1434,11 @@ export type $AlertPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     cooldownMins: number
     enabled: boolean
     lastTriggeredAt: Date | null
+    severity: $Enums.AlertSeverity
+    pendingMins: number
+    state: $Enums.AlertState
+    stateChangedAt: Date | null
+    lastEvaluatedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["alert"]>
@@ -1634,6 +1878,11 @@ export interface AlertFieldRefs {
   readonly cooldownMins: Prisma.FieldRef<"Alert", 'Int'>
   readonly enabled: Prisma.FieldRef<"Alert", 'Boolean'>
   readonly lastTriggeredAt: Prisma.FieldRef<"Alert", 'DateTime'>
+  readonly severity: Prisma.FieldRef<"Alert", 'AlertSeverity'>
+  readonly pendingMins: Prisma.FieldRef<"Alert", 'Int'>
+  readonly state: Prisma.FieldRef<"Alert", 'AlertState'>
+  readonly stateChangedAt: Prisma.FieldRef<"Alert", 'DateTime'>
+  readonly lastEvaluatedAt: Prisma.FieldRef<"Alert", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Alert", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Alert", 'DateTime'>
 }

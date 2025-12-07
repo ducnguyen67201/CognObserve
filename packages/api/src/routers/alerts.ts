@@ -11,8 +11,15 @@ import { createRouter, protectedProcedure, workspaceMiddleware } from "../trpc";
 import {
   AlertTypeSchema,
   AlertOperatorSchema,
+  AlertSeveritySchema,
   ChannelProviderSchema,
+  SEVERITY_DEFAULTS,
+  THRESHOLD_PRESETS,
+  SEVERITY_LABELS,
+  PRESET_LABELS,
+  STATE_LABELS,
 } from "../schemas/alerting";
+import { getMetric } from "../lib/alerting/metrics-service";
 import {
   LinkChannelSchema,
   UnlinkChannelSchema,
@@ -32,7 +39,9 @@ const CreateAlertSchema = z.object({
   threshold: z.number().min(0),
   operator: AlertOperatorSchema.default("GREATER_THAN"),
   windowMins: z.number().int().min(1).max(60).default(5),
-  cooldownMins: z.number().int().min(1).max(1440).default(60),
+  cooldownMins: z.number().int().min(1).max(1440).optional(),
+  severity: AlertSeveritySchema.default("MEDIUM"),
+  pendingMins: z.number().int().min(0).max(30).optional(),
 });
 
 const UpdateAlertSchema = z.object({
@@ -43,6 +52,8 @@ const UpdateAlertSchema = z.object({
   operator: AlertOperatorSchema.optional(),
   windowMins: z.number().int().min(1).max(60).optional(),
   cooldownMins: z.number().int().min(1).max(1440).optional(),
+  severity: AlertSeveritySchema.optional(),
+  pendingMins: z.number().int().min(0).max(30).optional(),
   enabled: z.boolean().optional(),
 });
 
@@ -80,6 +91,13 @@ export const alertsRouter = createRouter({
           channels: {
             select: { id: true, provider: true, verified: true },
           },
+          channelLinks: {
+            include: {
+              channel: {
+                select: { id: true, name: true, provider: true, verified: true },
+              },
+            },
+          },
           _count: { select: { history: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -98,6 +116,13 @@ export const alertsRouter = createRouter({
         include: {
           project: { select: { workspaceId: true } },
           channels: true,
+          channelLinks: {
+            include: {
+              channel: {
+                select: { id: true, name: true, provider: true, verified: true },
+              },
+            },
+          },
           history: {
             take: 10,
             orderBy: { triggeredAt: "desc" },
@@ -134,6 +159,9 @@ export const alertsRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
       }
 
+      // Apply severity-based defaults if not provided
+      const defaults = SEVERITY_DEFAULTS[input.severity];
+
       return prisma.alert.create({
         data: {
           projectId: input.projectId,
@@ -142,7 +170,10 @@ export const alertsRouter = createRouter({
           threshold: input.threshold,
           operator: input.operator,
           windowMins: input.windowMins,
-          cooldownMins: input.cooldownMins,
+          cooldownMins: input.cooldownMins ?? defaults.cooldownMins,
+          severity: input.severity,
+          pendingMins: input.pendingMins ?? defaults.pendingMins,
+          state: "INACTIVE",
         },
         include: { channels: true },
       });
@@ -170,8 +201,8 @@ export const alertsRouter = createRouter({
       }
 
       // Extract only the fields we want to update
-      const { name, threshold, operator, windowMins, cooldownMins, enabled } = input;
-      const updateData = { name, threshold, operator, windowMins, cooldownMins, enabled };
+      const { name, threshold, operator, windowMins, cooldownMins, severity, pendingMins, enabled } = input;
+      const updateData = { name, threshold, operator, windowMins, cooldownMins, severity, pendingMins, enabled };
 
       return prisma.alert.update({
         where: { id: input.id },
@@ -583,6 +614,166 @@ export const alertsRouter = createRouter({
 
       return { items: history, nextCursor };
     }),
+
+  /**
+   * Test alert - send test notification to all linked channels
+   */
+  testAlert: protectedProcedure
+    .input(z.object({ workspaceSlug: z.string(), alertId: z.string() }))
+    .use(workspaceMiddleware)
+    .mutation(async ({ ctx, input }) => {
+      // Get alert with linked channels
+      const alert = await prisma.alert.findUnique({
+        where: { id: input.alertId },
+        include: {
+          project: { select: { id: true, name: true, workspaceId: true } },
+          channelLinks: {
+            include: {
+              channel: true,
+            },
+          },
+        },
+      });
+
+      if (!alert) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Alert not found" });
+      }
+
+      if (alert.project.workspaceId !== ctx.workspace.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      if (alert.channelLinks.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No notification channels linked to this alert",
+        });
+      }
+
+      // Send test notification to each channel
+      const results = await Promise.all(
+        alert.channelLinks.map(async (link) => {
+          try {
+            const adapter = AlertingAdapter(link.channel.provider);
+            const result = await adapter.send(link.channel.config, {
+              alertId: alert.id,
+              alertName: `[TEST] ${alert.name}`,
+              projectId: alert.projectId,
+              projectName: alert.project.name,
+              type: alert.type,
+              threshold: alert.threshold,
+              actualValue: alert.operator === "GREATER_THAN" ? alert.threshold * 1.1 : alert.threshold * 0.9, // Simulate threshold breach
+              operator: alert.operator,
+              triggeredAt: new Date().toISOString(),
+            });
+            return { ...result, channelId: link.channelId };
+          } catch (error) {
+            return {
+              channelId: link.channelId,
+              provider: link.channel.provider,
+              success: false,
+              error: error instanceof Error ? error.message : "Unknown error",
+            };
+          }
+        })
+      );
+
+      const successful = results.filter((r) => r.success).length;
+      return {
+        success: successful > 0,
+        sent: successful,
+        failed: results.length - successful,
+        results,
+      };
+    }),
+
+  /**
+   * Dry run - check if alert would trigger without actually triggering
+   */
+  dryRun: protectedProcedure
+    .input(z.object({ workspaceSlug: z.string(), alertId: z.string() }))
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }) => {
+      const alert = await prisma.alert.findUnique({
+        where: { id: input.alertId },
+        include: {
+          project: { select: { workspaceId: true } },
+        },
+      });
+
+      if (!alert) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Alert not found" });
+      }
+
+      if (alert.project.workspaceId !== ctx.workspace.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      // Get current metric value
+      const metric = await getMetric(
+        alert.projectId,
+        alert.type,
+        alert.windowMins
+      );
+
+      // Check if condition would be met
+      const wouldTrigger =
+        alert.operator === "GREATER_THAN"
+          ? metric.value > alert.threshold
+          : metric.value < alert.threshold;
+
+      // Calculate pending progress if applicable
+      let pendingProgress = 0;
+      if (alert.state === "PENDING" && alert.stateChangedAt && alert.pendingMins > 0) {
+        const pendingMs = alert.pendingMins * 60_000;
+        const elapsed = Date.now() - alert.stateChangedAt.getTime();
+        pendingProgress = Math.min(100, (elapsed / pendingMs) * 100);
+      }
+
+      // Calculate cooldown remaining if applicable
+      let cooldownRemaining = 0;
+      if (alert.state === "FIRING" && alert.lastTriggeredAt) {
+        const cooldownMs = alert.cooldownMins * 60_000;
+        const elapsed = Date.now() - alert.lastTriggeredAt.getTime();
+        cooldownRemaining = Math.max(0, cooldownMs - elapsed);
+      }
+
+      // Get severity defaults for display
+      const severityDefaults = SEVERITY_DEFAULTS[alert.severity];
+
+      return {
+        currentValue: metric.value,
+        threshold: alert.threshold,
+        operator: alert.operator,
+        wouldTrigger,
+        sampleCount: metric.sampleCount,
+        state: alert.state,
+        pendingProgress,
+        cooldownRemaining,
+        config: {
+          severity: alert.severity,
+          pendingMins: alert.pendingMins,
+          cooldownMins: alert.cooldownMins,
+          windowMins: alert.windowMins,
+          severityDefaults,
+        },
+      };
+    }),
+
+  /**
+   * Get threshold presets and severity defaults
+   */
+  getPresets: protectedProcedure.query(() => {
+    return {
+      thresholdPresets: THRESHOLD_PRESETS,
+      severityDefaults: SEVERITY_DEFAULTS,
+      labels: {
+        severity: SEVERITY_LABELS,
+        presets: PRESET_LABELS,
+        states: STATE_LABELS,
+      },
+    };
+  }),
 });
 
 export type AlertsRouter = typeof alertsRouter;

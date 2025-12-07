@@ -29,11 +29,15 @@ export type AggregateAlertHistory = {
 export type AlertHistoryAvgAggregateOutputType = {
   value: number | null
   threshold: number | null
+  sampleCount: number | null
+  evaluationMs: number | null
 }
 
 export type AlertHistorySumAggregateOutputType = {
   value: number | null
   threshold: number | null
+  sampleCount: number | null
+  evaluationMs: number | null
 }
 
 export type AlertHistoryMinAggregateOutputType = {
@@ -44,6 +48,10 @@ export type AlertHistoryMinAggregateOutputType = {
   threshold: number | null
   resolved: boolean | null
   resolvedAt: Date | null
+  state: $Enums.AlertState | null
+  previousState: $Enums.AlertState | null
+  sampleCount: number | null
+  evaluationMs: number | null
 }
 
 export type AlertHistoryMaxAggregateOutputType = {
@@ -54,6 +62,10 @@ export type AlertHistoryMaxAggregateOutputType = {
   threshold: number | null
   resolved: boolean | null
   resolvedAt: Date | null
+  state: $Enums.AlertState | null
+  previousState: $Enums.AlertState | null
+  sampleCount: number | null
+  evaluationMs: number | null
 }
 
 export type AlertHistoryCountAggregateOutputType = {
@@ -65,6 +77,10 @@ export type AlertHistoryCountAggregateOutputType = {
   resolved: number
   resolvedAt: number
   notifiedVia: number
+  state: number
+  previousState: number
+  sampleCount: number
+  evaluationMs: number
   _all: number
 }
 
@@ -72,11 +88,15 @@ export type AlertHistoryCountAggregateOutputType = {
 export type AlertHistoryAvgAggregateInputType = {
   value?: true
   threshold?: true
+  sampleCount?: true
+  evaluationMs?: true
 }
 
 export type AlertHistorySumAggregateInputType = {
   value?: true
   threshold?: true
+  sampleCount?: true
+  evaluationMs?: true
 }
 
 export type AlertHistoryMinAggregateInputType = {
@@ -87,6 +107,10 @@ export type AlertHistoryMinAggregateInputType = {
   threshold?: true
   resolved?: true
   resolvedAt?: true
+  state?: true
+  previousState?: true
+  sampleCount?: true
+  evaluationMs?: true
 }
 
 export type AlertHistoryMaxAggregateInputType = {
@@ -97,6 +121,10 @@ export type AlertHistoryMaxAggregateInputType = {
   threshold?: true
   resolved?: true
   resolvedAt?: true
+  state?: true
+  previousState?: true
+  sampleCount?: true
+  evaluationMs?: true
 }
 
 export type AlertHistoryCountAggregateInputType = {
@@ -108,6 +136,10 @@ export type AlertHistoryCountAggregateInputType = {
   resolved?: true
   resolvedAt?: true
   notifiedVia?: true
+  state?: true
+  previousState?: true
+  sampleCount?: true
+  evaluationMs?: true
   _all?: true
 }
 
@@ -206,6 +238,10 @@ export type AlertHistoryGroupByOutputType = {
   resolved: boolean
   resolvedAt: Date | null
   notifiedVia: string[]
+  state: $Enums.AlertState | null
+  previousState: $Enums.AlertState | null
+  sampleCount: number | null
+  evaluationMs: number | null
   _count: AlertHistoryCountAggregateOutputType | null
   _avg: AlertHistoryAvgAggregateOutputType | null
   _sum: AlertHistorySumAggregateOutputType | null
@@ -240,6 +276,10 @@ export type AlertHistoryWhereInput = {
   resolved?: Prisma.BoolFilter<"AlertHistory"> | boolean
   resolvedAt?: Prisma.DateTimeNullableFilter<"AlertHistory"> | Date | string | null
   notifiedVia?: Prisma.StringNullableListFilter<"AlertHistory">
+  state?: Prisma.EnumAlertStateNullableFilter<"AlertHistory"> | $Enums.AlertState | null
+  previousState?: Prisma.EnumAlertStateNullableFilter<"AlertHistory"> | $Enums.AlertState | null
+  sampleCount?: Prisma.IntNullableFilter<"AlertHistory"> | number | null
+  evaluationMs?: Prisma.IntNullableFilter<"AlertHistory"> | number | null
   alert?: Prisma.XOR<Prisma.AlertScalarRelationFilter, Prisma.AlertWhereInput>
 }
 
@@ -252,6 +292,10 @@ export type AlertHistoryOrderByWithRelationInput = {
   resolved?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   notifiedVia?: Prisma.SortOrder
+  state?: Prisma.SortOrderInput | Prisma.SortOrder
+  previousState?: Prisma.SortOrderInput | Prisma.SortOrder
+  sampleCount?: Prisma.SortOrderInput | Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrderInput | Prisma.SortOrder
   alert?: Prisma.AlertOrderByWithRelationInput
 }
 
@@ -267,6 +311,10 @@ export type AlertHistoryWhereUniqueInput = Prisma.AtLeast<{
   resolved?: Prisma.BoolFilter<"AlertHistory"> | boolean
   resolvedAt?: Prisma.DateTimeNullableFilter<"AlertHistory"> | Date | string | null
   notifiedVia?: Prisma.StringNullableListFilter<"AlertHistory">
+  state?: Prisma.EnumAlertStateNullableFilter<"AlertHistory"> | $Enums.AlertState | null
+  previousState?: Prisma.EnumAlertStateNullableFilter<"AlertHistory"> | $Enums.AlertState | null
+  sampleCount?: Prisma.IntNullableFilter<"AlertHistory"> | number | null
+  evaluationMs?: Prisma.IntNullableFilter<"AlertHistory"> | number | null
   alert?: Prisma.XOR<Prisma.AlertScalarRelationFilter, Prisma.AlertWhereInput>
 }, "id">
 
@@ -279,6 +327,10 @@ export type AlertHistoryOrderByWithAggregationInput = {
   resolved?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   notifiedVia?: Prisma.SortOrder
+  state?: Prisma.SortOrderInput | Prisma.SortOrder
+  previousState?: Prisma.SortOrderInput | Prisma.SortOrder
+  sampleCount?: Prisma.SortOrderInput | Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AlertHistoryCountOrderByAggregateInput
   _avg?: Prisma.AlertHistoryAvgOrderByAggregateInput
   _max?: Prisma.AlertHistoryMaxOrderByAggregateInput
@@ -298,6 +350,10 @@ export type AlertHistoryScalarWhereWithAggregatesInput = {
   resolved?: Prisma.BoolWithAggregatesFilter<"AlertHistory"> | boolean
   resolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AlertHistory"> | Date | string | null
   notifiedVia?: Prisma.StringNullableListFilter<"AlertHistory">
+  state?: Prisma.EnumAlertStateNullableWithAggregatesFilter<"AlertHistory"> | $Enums.AlertState | null
+  previousState?: Prisma.EnumAlertStateNullableWithAggregatesFilter<"AlertHistory"> | $Enums.AlertState | null
+  sampleCount?: Prisma.IntNullableWithAggregatesFilter<"AlertHistory"> | number | null
+  evaluationMs?: Prisma.IntNullableWithAggregatesFilter<"AlertHistory"> | number | null
 }
 
 export type AlertHistoryCreateInput = {
@@ -308,6 +364,10 @@ export type AlertHistoryCreateInput = {
   resolved?: boolean
   resolvedAt?: Date | string | null
   notifiedVia?: Prisma.AlertHistoryCreatenotifiedViaInput | string[]
+  state?: $Enums.AlertState | null
+  previousState?: $Enums.AlertState | null
+  sampleCount?: number | null
+  evaluationMs?: number | null
   alert: Prisma.AlertCreateNestedOneWithoutHistoryInput
 }
 
@@ -320,6 +380,10 @@ export type AlertHistoryUncheckedCreateInput = {
   resolved?: boolean
   resolvedAt?: Date | string | null
   notifiedVia?: Prisma.AlertHistoryCreatenotifiedViaInput | string[]
+  state?: $Enums.AlertState | null
+  previousState?: $Enums.AlertState | null
+  sampleCount?: number | null
+  evaluationMs?: number | null
 }
 
 export type AlertHistoryUpdateInput = {
@@ -330,6 +394,10 @@ export type AlertHistoryUpdateInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   alert?: Prisma.AlertUpdateOneRequiredWithoutHistoryNestedInput
 }
 
@@ -342,6 +410,10 @@ export type AlertHistoryUncheckedUpdateInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type AlertHistoryCreateManyInput = {
@@ -353,6 +425,10 @@ export type AlertHistoryCreateManyInput = {
   resolved?: boolean
   resolvedAt?: Date | string | null
   notifiedVia?: Prisma.AlertHistoryCreatenotifiedViaInput | string[]
+  state?: $Enums.AlertState | null
+  previousState?: $Enums.AlertState | null
+  sampleCount?: number | null
+  evaluationMs?: number | null
 }
 
 export type AlertHistoryUpdateManyMutationInput = {
@@ -363,6 +439,10 @@ export type AlertHistoryUpdateManyMutationInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type AlertHistoryUncheckedUpdateManyInput = {
@@ -374,6 +454,10 @@ export type AlertHistoryUncheckedUpdateManyInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type AlertHistoryListRelationFilter = {
@@ -403,11 +487,17 @@ export type AlertHistoryCountOrderByAggregateInput = {
   resolved?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
   notifiedVia?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  previousState?: Prisma.SortOrder
+  sampleCount?: Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrder
 }
 
 export type AlertHistoryAvgOrderByAggregateInput = {
   value?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
+  sampleCount?: Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrder
 }
 
 export type AlertHistoryMaxOrderByAggregateInput = {
@@ -418,6 +508,10 @@ export type AlertHistoryMaxOrderByAggregateInput = {
   threshold?: Prisma.SortOrder
   resolved?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  previousState?: Prisma.SortOrder
+  sampleCount?: Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrder
 }
 
 export type AlertHistoryMinOrderByAggregateInput = {
@@ -428,11 +522,17 @@ export type AlertHistoryMinOrderByAggregateInput = {
   threshold?: Prisma.SortOrder
   resolved?: Prisma.SortOrder
   resolvedAt?: Prisma.SortOrder
+  state?: Prisma.SortOrder
+  previousState?: Prisma.SortOrder
+  sampleCount?: Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrder
 }
 
 export type AlertHistorySumOrderByAggregateInput = {
   value?: Prisma.SortOrder
   threshold?: Prisma.SortOrder
+  sampleCount?: Prisma.SortOrder
+  evaluationMs?: Prisma.SortOrder
 }
 
 export type AlertHistoryCreateNestedManyWithoutAlertInput = {
@@ -486,6 +586,10 @@ export type AlertHistoryUpdatenotifiedViaInput = {
   push?: string | string[]
 }
 
+export type NullableEnumAlertStateFieldUpdateOperationsInput = {
+  set?: $Enums.AlertState | null
+}
+
 export type AlertHistoryCreateWithoutAlertInput = {
   id?: string
   triggeredAt?: Date | string
@@ -494,6 +598,10 @@ export type AlertHistoryCreateWithoutAlertInput = {
   resolved?: boolean
   resolvedAt?: Date | string | null
   notifiedVia?: Prisma.AlertHistoryCreatenotifiedViaInput | string[]
+  state?: $Enums.AlertState | null
+  previousState?: $Enums.AlertState | null
+  sampleCount?: number | null
+  evaluationMs?: number | null
 }
 
 export type AlertHistoryUncheckedCreateWithoutAlertInput = {
@@ -504,6 +612,10 @@ export type AlertHistoryUncheckedCreateWithoutAlertInput = {
   resolved?: boolean
   resolvedAt?: Date | string | null
   notifiedVia?: Prisma.AlertHistoryCreatenotifiedViaInput | string[]
+  state?: $Enums.AlertState | null
+  previousState?: $Enums.AlertState | null
+  sampleCount?: number | null
+  evaluationMs?: number | null
 }
 
 export type AlertHistoryCreateOrConnectWithoutAlertInput = {
@@ -544,6 +656,10 @@ export type AlertHistoryScalarWhereInput = {
   resolved?: Prisma.BoolFilter<"AlertHistory"> | boolean
   resolvedAt?: Prisma.DateTimeNullableFilter<"AlertHistory"> | Date | string | null
   notifiedVia?: Prisma.StringNullableListFilter<"AlertHistory">
+  state?: Prisma.EnumAlertStateNullableFilter<"AlertHistory"> | $Enums.AlertState | null
+  previousState?: Prisma.EnumAlertStateNullableFilter<"AlertHistory"> | $Enums.AlertState | null
+  sampleCount?: Prisma.IntNullableFilter<"AlertHistory"> | number | null
+  evaluationMs?: Prisma.IntNullableFilter<"AlertHistory"> | number | null
 }
 
 export type AlertHistoryCreateManyAlertInput = {
@@ -554,6 +670,10 @@ export type AlertHistoryCreateManyAlertInput = {
   resolved?: boolean
   resolvedAt?: Date | string | null
   notifiedVia?: Prisma.AlertHistoryCreatenotifiedViaInput | string[]
+  state?: $Enums.AlertState | null
+  previousState?: $Enums.AlertState | null
+  sampleCount?: number | null
+  evaluationMs?: number | null
 }
 
 export type AlertHistoryUpdateWithoutAlertInput = {
@@ -564,6 +684,10 @@ export type AlertHistoryUpdateWithoutAlertInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type AlertHistoryUncheckedUpdateWithoutAlertInput = {
@@ -574,6 +698,10 @@ export type AlertHistoryUncheckedUpdateWithoutAlertInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type AlertHistoryUncheckedUpdateManyWithoutAlertInput = {
@@ -584,6 +712,10 @@ export type AlertHistoryUncheckedUpdateManyWithoutAlertInput = {
   resolved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   notifiedVia?: Prisma.AlertHistoryUpdatenotifiedViaInput | string[]
+  state?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  previousState?: Prisma.NullableEnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState | null
+  sampleCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  evaluationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 
@@ -597,6 +729,10 @@ export type AlertHistorySelect<ExtArgs extends runtime.Types.Extensions.Internal
   resolved?: boolean
   resolvedAt?: boolean
   notifiedVia?: boolean
+  state?: boolean
+  previousState?: boolean
+  sampleCount?: boolean
+  evaluationMs?: boolean
   alert?: boolean | Prisma.AlertDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["alertHistory"]>
 
@@ -609,6 +745,10 @@ export type AlertHistorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   resolved?: boolean
   resolvedAt?: boolean
   notifiedVia?: boolean
+  state?: boolean
+  previousState?: boolean
+  sampleCount?: boolean
+  evaluationMs?: boolean
   alert?: boolean | Prisma.AlertDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["alertHistory"]>
 
@@ -621,6 +761,10 @@ export type AlertHistorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   resolved?: boolean
   resolvedAt?: boolean
   notifiedVia?: boolean
+  state?: boolean
+  previousState?: boolean
+  sampleCount?: boolean
+  evaluationMs?: boolean
   alert?: boolean | Prisma.AlertDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["alertHistory"]>
 
@@ -633,9 +777,13 @@ export type AlertHistorySelectScalar = {
   resolved?: boolean
   resolvedAt?: boolean
   notifiedVia?: boolean
+  state?: boolean
+  previousState?: boolean
+  sampleCount?: boolean
+  evaluationMs?: boolean
 }
 
-export type AlertHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "alertId" | "triggeredAt" | "value" | "threshold" | "resolved" | "resolvedAt" | "notifiedVia", ExtArgs["result"]["alertHistory"]>
+export type AlertHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "alertId" | "triggeredAt" | "value" | "threshold" | "resolved" | "resolvedAt" | "notifiedVia" | "state" | "previousState" | "sampleCount" | "evaluationMs", ExtArgs["result"]["alertHistory"]>
 export type AlertHistoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   alert?: boolean | Prisma.AlertDefaultArgs<ExtArgs>
 }
@@ -660,6 +808,10 @@ export type $AlertHistoryPayload<ExtArgs extends runtime.Types.Extensions.Intern
     resolved: boolean
     resolvedAt: Date | null
     notifiedVia: string[]
+    state: $Enums.AlertState | null
+    previousState: $Enums.AlertState | null
+    sampleCount: number | null
+    evaluationMs: number | null
   }, ExtArgs["result"]["alertHistory"]>
   composites: {}
 }
@@ -1092,6 +1244,10 @@ export interface AlertHistoryFieldRefs {
   readonly resolved: Prisma.FieldRef<"AlertHistory", 'Boolean'>
   readonly resolvedAt: Prisma.FieldRef<"AlertHistory", 'DateTime'>
   readonly notifiedVia: Prisma.FieldRef<"AlertHistory", 'String[]'>
+  readonly state: Prisma.FieldRef<"AlertHistory", 'AlertState'>
+  readonly previousState: Prisma.FieldRef<"AlertHistory", 'AlertState'>
+  readonly sampleCount: Prisma.FieldRef<"AlertHistory", 'Int'>
+  readonly evaluationMs: Prisma.FieldRef<"AlertHistory", 'Int'>
 }
     
 

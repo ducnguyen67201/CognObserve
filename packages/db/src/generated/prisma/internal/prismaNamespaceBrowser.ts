@@ -296,6 +296,11 @@ export const AlertScalarFieldEnum = {
   cooldownMins: 'cooldownMins',
   enabled: 'enabled',
   lastTriggeredAt: 'lastTriggeredAt',
+  severity: 'severity',
+  pendingMins: 'pendingMins',
+  state: 'state',
+  stateChangedAt: 'stateChangedAt',
+  lastEvaluatedAt: 'lastEvaluatedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -323,7 +328,11 @@ export const AlertHistoryScalarFieldEnum = {
   threshold: 'threshold',
   resolved: 'resolved',
   resolvedAt: 'resolvedAt',
-  notifiedVia: 'notifiedVia'
+  notifiedVia: 'notifiedVia',
+  state: 'state',
+  previousState: 'previousState',
+  sampleCount: 'sampleCount',
+  evaluationMs: 'evaluationMs'
 } as const
 
 export type AlertHistoryScalarFieldEnum = (typeof AlertHistoryScalarFieldEnum)[keyof typeof AlertHistoryScalarFieldEnum]

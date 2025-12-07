@@ -65,3 +65,23 @@ export const ChannelProvider = {
 } as const
 
 export type ChannelProvider = (typeof ChannelProvider)[keyof typeof ChannelProvider]
+
+
+export const AlertSeverity = {
+  CRITICAL: 'CRITICAL',
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW'
+} as const
+
+export type AlertSeverity = (typeof AlertSeverity)[keyof typeof AlertSeverity]
+
+
+export const AlertState = {
+  INACTIVE: 'INACTIVE',
+  PENDING: 'PENDING',
+  FIRING: 'FIRING',
+  RESOLVED: 'RESOLVED'
+} as const
+
+export type AlertState = (typeof AlertState)[keyof typeof AlertState]
