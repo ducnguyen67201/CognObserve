@@ -13,6 +13,8 @@ import { TracesTable } from "@/components/traces/traces-table";
 import { SessionsTable } from "@/components/sessions/sessions-table";
 import { TrackedUsersTable } from "@/components/tracked-users/tracked-users-table";
 import { AlertsPanel } from "@/components/alerts/alerts-panel";
+import { useProjectUserCount } from "@/hooks/project-user-count/use-project-user-count";
+import { Badge } from "@/components/ui/badge";
 
 type ProjectTab = "traces" | "sessions" | "users";
 
@@ -30,6 +32,11 @@ export default function ProjectDetailPage() {
       { workspaceSlug: workspaceSlug ?? "", projectId },
       { enabled: !!workspaceSlug && !!projectId }
     );
+
+  const { userCount, isLoading: isLoadingUsers } = useProjectUserCount({
+    workspaceSlug: workspaceSlug ?? "",
+    projectId,
+  });
 
   const handleTabChange = useCallback(
     (tab: string) => {
@@ -88,7 +95,17 @@ export default function ProjectDetailPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
+              {isLoadingUsers ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <Badge variant="secondary" className="gap-1">
+                  <Users className="h-3 w-3" />
+                  {userCount} users
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground">
               Created {new Date(project.createdAt).toLocaleDateString()}
             </p>
