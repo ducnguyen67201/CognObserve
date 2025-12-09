@@ -1,6 +1,6 @@
 # Sprint 2: Vector Search - Semantic Code Search
 
-**Sprint ID:** #120 Sprint 2
+**Sprint ID:** #127 Sprint 2
 **Story Points:** 21
 **Priority:** P0
 **Dependencies:** Sprint 1 (Foundation) completed
@@ -27,7 +27,7 @@
 
 ### Story 1: pgvector Setup + Migrations
 
-**Ticket ID:** #120-5
+**Ticket ID:** #132
 **Points:** 3
 **Priority:** P0
 
@@ -140,7 +140,7 @@ services:
 
 ### Story 2: Embedding Generation Activity
 
-**Ticket ID:** #120-6
+**Ticket ID:** #133
 **Points:** 5
 **Priority:** P0
 
@@ -298,7 +298,7 @@ OPENAI_API_KEY=sk-...
 
 ### Story 3: Vector Similarity Search
 
-**Ticket ID:** #120-7
+**Ticket ID:** #134
 **Points:** 8
 **Priority:** P0
 
@@ -503,7 +503,7 @@ LIMIT 10;
 
 ### Story 4: Embedding Caching by Content Hash
 
-**Ticket ID:** #120-8
+**Ticket ID:** #135
 **Points:** 5
 **Priority:** P1
 
@@ -671,10 +671,10 @@ console.log(`Embedding cache: ${cached} hits, ${generated} misses, ${(cached / (
 
 | Story | Points | Assignee | Status |
 |-------|--------|----------|--------|
-| #120-5 pgvector setup | 3 | TBD | To Do |
-| #120-6 Embedding generation | 5 | TBD | To Do |
-| #120-7 Vector similarity search | 8 | TBD | To Do |
-| #120-8 Embedding caching | 5 | TBD | To Do |
+| #132 pgvector setup | 3 | TBD | To Do |
+| #133 Embedding generation | 5 | TBD | To Do |
+| #134 Vector similarity search | 8 | TBD | To Do |
+| #135 Embedding caching | 5 | TBD | To Do |
 | **Total** | **21** | | |
 
 ---

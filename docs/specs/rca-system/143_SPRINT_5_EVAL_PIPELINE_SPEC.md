@@ -1,6 +1,6 @@
 # Sprint 5: Eval Pipeline - Proactive Regression Detection (Optional)
 
-**Sprint ID:** #120 Sprint 5
+**Sprint ID:** #127 Sprint 5
 **Story Points:** 8
 **Priority:** P2 (Optional Enhancement)
 **Dependencies:** Sprint 3 (RCA Engine) completed
@@ -27,7 +27,7 @@
 
 ### Story 1: Eval Workflow Triggered on PR Merge
 
-**Ticket ID:** #120-16
+**Ticket ID:** #143
 **Points:** 5
 **Priority:** P2
 
@@ -352,7 +352,7 @@ if (event === "pull_request" && payload.action === "closed" && payload.pull_requ
 
 ### Story 2: Regression Detection
 
-**Ticket ID:** #120-17
+**Ticket ID:** #144
 **Points:** 3
 **Priority:** P2
 
@@ -487,8 +487,8 @@ if (payload.regressionInfo) {
 
 | Story | Points | Assignee | Status |
 |-------|--------|----------|--------|
-| #120-16 Eval workflow on PR merge | 5 | TBD | To Do |
-| #120-17 Regression detection | 3 | TBD | To Do |
+| #143 Eval workflow on PR merge | 5 | TBD | To Do |
+| #144 Regression detection | 3 | TBD | To Do |
 | **Total** | **8** | | |
 
 ---

@@ -1,6 +1,6 @@
 # Sprint 3: RCA Engine - Root Cause Analysis Generation
 
-**Sprint ID:** #120 Sprint 3
+**Sprint ID:** #127 Sprint 3
 **Story Points:** 26
 **Priority:** P0
 **Dependencies:** Sprint 2 (Vector Search) completed
@@ -28,7 +28,7 @@
 
 ### Story 1: Trace Analysis Activity
 
-**Ticket ID:** #120-9
+**Ticket ID:** #136
 **Points:** 8
 **Priority:** P0
 
@@ -272,7 +272,7 @@ function detectAnomalies(
 
 ### Story 2: Change Correlation Algorithm
 
-**Ticket ID:** #120-10
+**Ticket ID:** #137
 **Points:** 8
 **Priority:** P0
 
@@ -505,7 +505,7 @@ function scoreChange(
 
 ### Story 3: LLM-Based RCA Generation
 
-**Ticket ID:** #120-11
+**Ticket ID:** #138
 **Points:** 8
 **Priority:** P0
 
@@ -762,7 +762,7 @@ function generateTemplateRCA(input: RCAGenerationInput): RCAReport {
 
 ### Story 4: RCA Storage and Schema
 
-**Ticket ID:** #120-12
+**Ticket ID:** #139
 **Points:** 2
 **Priority:** P0
 
@@ -950,10 +950,10 @@ export async function rcaAnalysisWorkflow(input: RCAInput): Promise<RCAResult> {
 
 | Story | Points | Assignee | Status |
 |-------|--------|----------|--------|
-| #120-9 Trace analysis | 8 | TBD | To Do |
-| #120-10 Change correlation | 8 | TBD | To Do |
-| #120-11 LLM RCA generation | 8 | TBD | To Do |
-| #120-12 RCA storage | 2 | TBD | To Do |
+| #136 Trace analysis | 8 | TBD | To Do |
+| #137 Change correlation | 8 | TBD | To Do |
+| #138 LLM RCA generation | 8 | TBD | To Do |
+| #139 RCA storage | 2 | TBD | To Do |
 | **Total** | **26** | | |
 
 ---

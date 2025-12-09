@@ -1,6 +1,6 @@
 # Sprint 4: Integration & Notifications - RCA in User Experience
 
-**Sprint ID:** #120 Sprint 4
+**Sprint ID:** #127 Sprint 4
 **Story Points:** 13
 **Priority:** P0 (Stories 1-2), P2 (Story 3)
 **Dependencies:** Sprint 3 (RCA Engine) completed
@@ -27,7 +27,7 @@
 
 ### Story 1: RCA in Alert Notifications
 
-**Ticket ID:** #120-13
+**Ticket ID:** #140
 **Points:** 5
 **Priority:** P0
 
@@ -281,7 +281,7 @@ if (transition.newState === "FIRING" && transition.shouldNotify) {
 
 ### Story 2: RCA Detail Page in Dashboard
 
-**Ticket ID:** #120-14
+**Ticket ID:** #141
 **Points:** 5
 **Priority:** P1
 
@@ -594,7 +594,7 @@ function RCAFeedbackCard({ rcaId, currentFeedback }: Props) {
 
 ### Story 3: Manual RCA Trigger Button
 
-**Ticket ID:** #120-15
+**Ticket ID:** #142
 **Points:** 3
 **Priority:** P2
 
@@ -736,9 +736,9 @@ function AlertHistoryRow({ history }: { history: AlertHistoryWithRCA }) {
 
 | Story | Points | Assignee | Status |
 |-------|--------|----------|--------|
-| #120-13 RCA in notifications | 5 | TBD | To Do |
-| #120-14 RCA detail page | 5 | TBD | To Do |
-| #120-15 Manual RCA trigger | 3 | TBD | To Do |
+| #140 RCA in notifications | 5 | TBD | To Do |
+| #141 RCA detail page | 5 | TBD | To Do |
+| #142 Manual RCA trigger | 3 | TBD | To Do |
 | **Total** | **13** | | |
 
 ---

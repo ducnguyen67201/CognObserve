@@ -1,6 +1,6 @@
 # Automated RCA System with GitHub Integration - Epic Specification
 
-**Epic ID:** #120
+**Epic ID:** #127
 **Epic Name:** Automated Root Cause Analysis (RCA) with GitHub Project Indexing
 **Total Story Points:** 89
 **Estimated Sprints:** 5 sprints (2-week cadence)
@@ -361,23 +361,23 @@ model Project {
 
 | Ticket ID | Sprint | Title | Points | Priority |
 |-----------|--------|-------|--------|----------|
-| #120-1 | 1 | Database schema for GitHub indexing | 3 | P0 |
-| #120-2 | 1 | GitHub webhook receiver endpoint | 5 | P0 |
-| #120-3 | 1 | Temporal workflow: basic indexing | 8 | P0 |
-| #120-4 | 1 | Code chunking utility | 5 | P0 |
-| #120-5 | 2 | pgvector setup + migrations | 3 | P0 |
-| #120-6 | 2 | Embedding generation activity | 5 | P0 |
-| #120-7 | 2 | Vector similarity search | 8 | P0 |
-| #120-8 | 2 | Embedding caching by content hash | 5 | P1 |
-| #120-9 | 3 | Trace analysis activity | 8 | P0 |
-| #120-10 | 3 | Change correlation algorithm | 8 | P0 |
-| #120-11 | 3 | LLM-based RCA generation | 8 | P0 |
-| #120-12 | 3 | RCA storage and schema | 2 | P0 |
-| #120-13 | 4 | RCA in alert notifications | 5 | P0 |
-| #120-14 | 4 | RCA detail page in dashboard | 5 | P1 |
-| #120-15 | 4 | Manual RCA trigger button | 3 | P2 |
-| #120-16 | 5 | Eval workflow triggered on PR merge | 5 | P2 |
-| #120-17 | 5 | Regression detection | 3 | P2 |
+| #128 | 1 | Database schema for GitHub indexing | 3 | P0 |
+| #129 | 1 | GitHub webhook receiver endpoint | 5 | P0 |
+| #130 | 1 | Temporal workflow: basic indexing | 8 | P0 |
+| #131 | 1 | Code chunking utility | 5 | P0 |
+| #132 | 2 | pgvector setup + migrations | 3 | P0 |
+| #133 | 2 | Embedding generation activity | 5 | P0 |
+| #134 | 2 | Vector similarity search | 8 | P0 |
+| #135 | 2 | Embedding caching by content hash | 5 | P1 |
+| #136 | 3 | Trace analysis activity | 8 | P0 |
+| #137 | 3 | Change correlation algorithm | 8 | P0 |
+| #138 | 3 | LLM-based RCA generation | 8 | P0 |
+| #139 | 3 | RCA storage and schema | 2 | P0 |
+| #140 | 4 | RCA in alert notifications | 5 | P0 |
+| #141 | 4 | RCA detail page in dashboard | 5 | P1 |
+| #142 | 4 | Manual RCA trigger button | 3 | P2 |
+| #143 | 5 | Eval workflow triggered on PR merge | 5 | P2 |
+| #144 | 5 | Regression detection | 3 | P2 |
 
 ---
 

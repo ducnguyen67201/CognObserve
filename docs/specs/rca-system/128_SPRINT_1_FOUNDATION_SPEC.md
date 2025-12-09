@@ -1,6 +1,6 @@
 # Sprint 1: Foundation - GitHub Indexing Infrastructure
 
-**Sprint ID:** #120 Sprint 1
+**Sprint ID:** #127 Sprint 1
 **Story Points:** 21
 **Priority:** P0
 **Dependencies:** #115 (Temporal Migration completed)
@@ -27,7 +27,7 @@
 
 ### Story 1: Database Schema for GitHub Indexing
 
-**Ticket ID:** #120-1
+**Ticket ID:** #128
 **Points:** 3
 **Priority:** P0
 
@@ -92,7 +92,7 @@ pnpm --filter @cognobserve/db db:generate
 
 ### Story 2: GitHub Webhook Receiver Endpoint
 
-**Ticket ID:** #120-2
+**Ticket ID:** #129
 **Points:** 5
 **Priority:** P0
 
@@ -161,7 +161,7 @@ GITHUB_WEBHOOK_SECRET=your-webhook-secret-here
 
 ### Story 3: Temporal Workflow - Basic Indexing
 
-**Ticket ID:** #120-3
+**Ticket ID:** #130
 **Points:** 8
 **Priority:** P0
 
@@ -271,7 +271,7 @@ storeGitHubIndex: internalProcedure
 
 ### Story 4: Code Chunking Utility
 
-**Ticket ID:** #120-4
+**Ticket ID:** #131
 **Points:** 5
 **Priority:** P0
 
@@ -383,10 +383,10 @@ describe("chunkCode", () => {
 
 | Story | Points | Assignee | Status |
 |-------|--------|----------|--------|
-| #120-1 Database schema | 3 | TBD | To Do |
-| #120-2 Webhook endpoint | 5 | TBD | To Do |
-| #120-3 Index workflow | 8 | TBD | To Do |
-| #120-4 Code chunking | 5 | TBD | To Do |
+| #128 Database schema | 3 | TBD | To Do |
+| #129 Webhook endpoint | 5 | TBD | To Do |
+| #130 Index workflow | 8 | TBD | To Do |
+| #131 Code chunking | 5 | TBD | To Do |
 | **Total** | **21** | | |
 
 ---
