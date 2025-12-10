@@ -1,0 +1,123 @@
+# Dockerfile.app
+#
+# CognObserve Application Container (Web + Worker + Ingest)
+# For use with Docker Compose (separate infrastructure containers)
+#
+# Usage:
+#   docker build -f Dockerfile.app -t cognobserve-app:latest .
+#   docker compose up -d
+
+# ============================================================
+# Stage 1: Build Node.js Applications
+# ============================================================
+FROM node:24-alpine AS node-builder
+
+RUN apk add --no-cache python3 make g++
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+WORKDIR /app
+
+# Copy package files for dependency installation
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/worker/package.json ./apps/worker/
+COPY packages/db/package.json ./packages/db/
+COPY packages/db/prisma ./packages/db/prisma/
+COPY packages/api/package.json ./packages/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/proto/package.json ./packages/proto/
+COPY packages/config-eslint/package.json ./packages/config-eslint/
+COPY packages/config-typescript/package.json ./packages/config-typescript/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN pnpm --filter @cognobserve/db db:generate
+
+# Build Web (Next.js with standalone output)
+# Provide dummy env vars for build time - actual values are set at runtime
+ENV NEXTAUTH_SECRET="build-time-placeholder-secret-min-32-chars"
+ENV JWT_SHARED_SECRET="build-time-placeholder-secret-min-32-chars"
+ENV INTERNAL_API_SECRET="build-time-placeholder-secret-min-32-chars"
+ENV NEXTAUTH_URL="http://localhost:3000"
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
+RUN pnpm --filter @cognobserve/web build
+
+# Build Worker
+RUN pnpm --filter @cognobserve/worker build
+
+# ============================================================
+# Stage 2: Build Go Ingest Service
+# ============================================================
+FROM golang:1.23-alpine AS go-builder
+
+WORKDIR /app
+
+# Copy Go module files
+COPY apps/ingest/go.mod apps/ingest/go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy Go source
+COPY apps/ingest/ ./
+
+# Build static binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /ingest ./cmd/ingest
+
+# ============================================================
+# Stage 3: Production Runtime
+# ============================================================
+FROM node:24-alpine AS runtime
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    supervisor \
+    wget \
+    openssl \
+    netcat-openbsd \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user
+RUN addgroup -S cognobserve && adduser -S cognobserve -G cognobserve
+
+WORKDIR /app
+
+# Copy Node.js artifacts
+COPY --from=node-builder /app/apps/web/.next/standalone ./
+COPY --from=node-builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=node-builder /app/apps/web/public ./apps/web/public
+COPY --from=node-builder /app/apps/worker/dist ./apps/worker/dist
+COPY --from=node-builder /app/node_modules ./node_modules
+COPY --from=node-builder /app/packages ./packages
+
+# Copy Go binary
+COPY --from=go-builder /ingest ./ingest
+
+# Copy configuration files
+COPY docker/production/supervisord.conf /etc/supervisord.conf
+COPY docker/production/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Create directories
+RUN mkdir -p /app/secrets \
+    && chown -R cognobserve:cognobserve /app
+
+# Switch to non-root user
+USER cognobserve
+
+# Expose ports
+# 3000 - Web Dashboard & API
+# 8080 - Ingest API (for SDKs)
+EXPOSE 3000 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget -qO- http://localhost:3000/api/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,0 +1,149 @@
+# .github/workflows/docker-build-check.yml
+#
+# CI workflow to validate Docker builds on stage branch
+# Builds the images but does NOT push to registry
+
+name: Docker Build Check
+
+on:
+  push:
+    branches:
+      - stage
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "Dockerfile.*"
+      - "docker/**"
+      - ".github/workflows/docker-build-check.yml"
+  pull_request:
+    branches:
+      - main
+      - stage
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "Dockerfile.*"
+      - "docker/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # Build Quick Start Image (All-in-One)
+  # ============================================================
+  build-quickstart:
+    name: Build Quick Start Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Quick Start image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.quickstart
+          push: false
+          load: true
+          tags: cognobserve:quickstart-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test container starts
+        run: |
+          # Start container
+          docker run -d --name cognobserve-test \
+            -p 3000:3000 \
+            -p 8080:8080 \
+            cognobserve:quickstart-test
+
+          # Wait for services to start (max 120 seconds)
+          echo "Waiting for services to start..."
+          for i in {1..60}; do
+            if docker exec cognobserve-test supervisorctl status 2>/dev/null | grep -q "RUNNING"; then
+              echo "Services are starting..."
+              break
+            fi
+            sleep 2
+          done
+
+          # Wait for ingest health check
+          echo "Waiting for ingest service..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/health | grep -q '"status":"ok"'; then
+              echo "Ingest service is healthy!"
+              break
+            fi
+            sleep 2
+          done
+
+          # Verify health
+          curl -s http://localhost:8080/health
+
+          # Check container health status
+          docker inspect cognobserve-test --format='{{.State.Health.Status}}'
+
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          docker logs cognobserve-test 2>&1 | tail -100
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop cognobserve-test 2>/dev/null || true
+          docker rm cognobserve-test 2>/dev/null || true
+
+  # ============================================================
+  # Build App Image (Production)
+  # ============================================================
+  build-app:
+    name: Build App Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build App image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.app
+          push: false
+          tags: cognobserve-app:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================
+  # Summary
+  # ============================================================
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-quickstart, build-app]
+    if: always()
+
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.build-quickstart.result }}" == "success" ] && [ "${{ needs.build-app.result }}" == "success" ]; then
+            echo "All Docker builds passed!"
+            exit 0
+          else
+            echo "Some Docker builds failed"
+            echo "  - Quick Start: ${{ needs.build-quickstart.result }}"
+            echo "  - App: ${{ needs.build-app.result }}"
+            exit 1
+          fi
