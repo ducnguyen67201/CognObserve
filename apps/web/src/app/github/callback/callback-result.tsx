@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
-import type { GitHubCallbackResult } from "./page";
+import type { GitHubCallbackResult } from "@/lib/github-callback-service";
 
 interface CallbackResultProps {
   result: GitHubCallbackResult;
