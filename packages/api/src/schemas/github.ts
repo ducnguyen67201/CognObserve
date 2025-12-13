@@ -7,6 +7,7 @@ import { z } from "zod";
 export const IndexStatusSchema = z.enum([
   "PENDING",
   "INDEXING",
+  "UPDATING",
   "READY",
   "FAILED",
 ]);
@@ -29,6 +30,7 @@ export type GitHubWebhookEvent = z.infer<typeof GitHubWebhookEventSchema>;
 export const INDEX_STATUS_LABELS: Record<IndexStatus, string> = {
   PENDING: "Pending",
   INDEXING: "Indexing...",
+  UPDATING: "Updating...",
   READY: "Ready",
   FAILED: "Failed",
 };

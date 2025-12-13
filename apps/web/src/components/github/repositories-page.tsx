@@ -1,0 +1,95 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc/client";
+import { useDebounce } from "@/hooks/use-debounce";
+import { RepositoryList } from "./repository-list";
+import { RepositoryFilters } from "./repository-filters";
+import { GitHubEmptyState } from "./github-empty-state";
+import type { FilterType } from "./types";
+
+const PAGE_SIZE = 20;
+
+interface RepositoriesPageProps {
+  workspaceSlug: string;
+}
+
+export function RepositoriesPage({ workspaceSlug }: RepositoriesPageProps) {
+  const [filter, setFilter] = useState<FilterType>("enabled");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 300);
+
+  const { data: installation, isLoading: installationLoading } =
+    trpc.github.getInstallation.useQuery({ workspaceSlug });
+
+  const { data, isLoading, refetch } = trpc.github.listRepositories.useQuery(
+    {
+      workspaceSlug,
+      filter,
+      search: debouncedSearch || undefined,
+      page,
+      pageSize: PAGE_SIZE,
+    },
+    { enabled: !!installation }
+  );
+
+  const handleFilterChange = useCallback((newFilter: FilterType) => {
+    setFilter(newFilter);
+    setPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((newSearch: string) => {
+    setSearch(newSearch);
+    setPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  // Loading state
+  if (installationLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // No GitHub connected
+  if (!installation) {
+    return <GitHubEmptyState workspaceSlug={workspaceSlug} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Repositories</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage which repositories are indexed for Root Cause Analysis.
+          </p>
+        </div>
+      </div>
+
+      <RepositoryFilters
+        filter={filter}
+        search={search}
+        counts={data?.counts ?? { enabled: 0, disabled: 0, all: 0 }}
+        onFilterChange={handleFilterChange}
+        onSearchChange={handleSearchChange}
+      />
+
+      <RepositoryList
+        repositories={data?.repositories ?? []}
+        isLoading={isLoading}
+        workspaceSlug={workspaceSlug}
+        pagination={data?.pagination ?? { page: 1, pageSize: PAGE_SIZE, totalCount: 0, totalPages: 0 }}
+        onPageChange={handlePageChange}
+        onRefresh={refetch}
+      />
+    </div>
+  );
+}

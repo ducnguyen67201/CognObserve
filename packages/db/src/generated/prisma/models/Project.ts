@@ -378,6 +378,11 @@ export type ProjectScalarRelationFilter = {
   isNot?: Prisma.ProjectWhereInput
 }
 
+export type ProjectNullableScalarRelationFilter = {
+  is?: Prisma.ProjectWhereInput | null
+  isNot?: Prisma.ProjectWhereInput | null
+}
+
 export type ProjectCreateNestedManyWithoutWorkspaceInput = {
   create?: Prisma.XOR<Prisma.ProjectCreateWithoutWorkspaceInput, Prisma.ProjectUncheckedCreateWithoutWorkspaceInput> | Prisma.ProjectCreateWithoutWorkspaceInput[] | Prisma.ProjectUncheckedCreateWithoutWorkspaceInput[]
   connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutWorkspaceInput | Prisma.ProjectCreateOrConnectWithoutWorkspaceInput[]
@@ -524,10 +529,12 @@ export type ProjectCreateNestedOneWithoutGithubRepoInput = {
   connect?: Prisma.ProjectWhereUniqueInput
 }
 
-export type ProjectUpdateOneRequiredWithoutGithubRepoNestedInput = {
+export type ProjectUpdateOneWithoutGithubRepoNestedInput = {
   create?: Prisma.XOR<Prisma.ProjectCreateWithoutGithubRepoInput, Prisma.ProjectUncheckedCreateWithoutGithubRepoInput>
   connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutGithubRepoInput
   upsert?: Prisma.ProjectUpsertWithoutGithubRepoInput
+  disconnect?: Prisma.ProjectWhereInput | boolean
+  delete?: Prisma.ProjectWhereInput | boolean
   connect?: Prisma.ProjectWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutGithubRepoInput, Prisma.ProjectUpdateWithoutGithubRepoInput>, Prisma.ProjectUncheckedUpdateWithoutGithubRepoInput>
 }

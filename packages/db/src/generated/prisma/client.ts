@@ -145,6 +145,11 @@ export type TrackedUser = Prisma.TrackedUserModel
  */
 export type TraceSession = Prisma.TraceSessionModel
 /**
+ * Model GitHubInstallation
+ * 
+ */
+export type GitHubInstallation = Prisma.GitHubInstallationModel
+/**
  * Model GitHubRepository
  * 
  */

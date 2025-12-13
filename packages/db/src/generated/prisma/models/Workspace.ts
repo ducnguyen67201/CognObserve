@@ -194,6 +194,7 @@ export type WorkspaceWhereInput = {
   projects?: Prisma.ProjectListRelationFilter
   allowedDomains?: Prisma.AllowedDomainListRelationFilter
   notificationChannels?: Prisma.NotificationChannelListRelationFilter
+  githubInstallation?: Prisma.XOR<Prisma.GitHubInstallationNullableScalarRelationFilter, Prisma.GitHubInstallationWhereInput> | null
 }
 
 export type WorkspaceOrderByWithRelationInput = {
@@ -207,6 +208,7 @@ export type WorkspaceOrderByWithRelationInput = {
   projects?: Prisma.ProjectOrderByRelationAggregateInput
   allowedDomains?: Prisma.AllowedDomainOrderByRelationAggregateInput
   notificationChannels?: Prisma.NotificationChannelOrderByRelationAggregateInput
+  githubInstallation?: Prisma.GitHubInstallationOrderByWithRelationInput
 }
 
 export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
@@ -223,6 +225,7 @@ export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   projects?: Prisma.ProjectListRelationFilter
   allowedDomains?: Prisma.AllowedDomainListRelationFilter
   notificationChannels?: Prisma.NotificationChannelListRelationFilter
+  githubInstallation?: Prisma.XOR<Prisma.GitHubInstallationNullableScalarRelationFilter, Prisma.GitHubInstallationWhereInput> | null
 }, "id" | "slug">
 
 export type WorkspaceOrderByWithAggregationInput = {
@@ -260,6 +263,7 @@ export type WorkspaceCreateInput = {
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateInput = {
@@ -273,6 +277,7 @@ export type WorkspaceUncheckedCreateInput = {
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUpdateInput = {
@@ -286,6 +291,7 @@ export type WorkspaceUpdateInput = {
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateInput = {
@@ -299,6 +305,7 @@ export type WorkspaceUncheckedUpdateInput = {
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateManyInput = {
@@ -420,6 +427,20 @@ export type WorkspaceUpdateOneRequiredWithoutNotificationChannelsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutNotificationChannelsInput, Prisma.WorkspaceUpdateWithoutNotificationChannelsInput>, Prisma.WorkspaceUncheckedUpdateWithoutNotificationChannelsInput>
 }
 
+export type WorkspaceCreateNestedOneWithoutGithubInstallationInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutGithubInstallationInput, Prisma.WorkspaceUncheckedCreateWithoutGithubInstallationInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutGithubInstallationInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+}
+
+export type WorkspaceUpdateOneRequiredWithoutGithubInstallationNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkspaceCreateWithoutGithubInstallationInput, Prisma.WorkspaceUncheckedCreateWithoutGithubInstallationInput>
+  connectOrCreate?: Prisma.WorkspaceCreateOrConnectWithoutGithubInstallationInput
+  upsert?: Prisma.WorkspaceUpsertWithoutGithubInstallationInput
+  connect?: Prisma.WorkspaceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkspaceUpdateToOneWithWhereWithoutGithubInstallationInput, Prisma.WorkspaceUpdateWithoutGithubInstallationInput>, Prisma.WorkspaceUncheckedUpdateWithoutGithubInstallationInput>
+}
+
 export type WorkspaceCreateWithoutMembersInput = {
   id?: string
   name: string
@@ -430,6 +451,7 @@ export type WorkspaceCreateWithoutMembersInput = {
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutMembersInput = {
@@ -442,6 +464,7 @@ export type WorkspaceUncheckedCreateWithoutMembersInput = {
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutMembersInput = {
@@ -470,6 +493,7 @@ export type WorkspaceUpdateWithoutMembersInput = {
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutMembersInput = {
@@ -482,6 +506,7 @@ export type WorkspaceUncheckedUpdateWithoutMembersInput = {
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutAllowedDomainsInput = {
@@ -494,6 +519,7 @@ export type WorkspaceCreateWithoutAllowedDomainsInput = {
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutAllowedDomainsInput = {
@@ -506,6 +532,7 @@ export type WorkspaceUncheckedCreateWithoutAllowedDomainsInput = {
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutAllowedDomainsInput = {
@@ -534,6 +561,7 @@ export type WorkspaceUpdateWithoutAllowedDomainsInput = {
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutAllowedDomainsInput = {
@@ -546,6 +574,7 @@ export type WorkspaceUncheckedUpdateWithoutAllowedDomainsInput = {
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutProjectsInput = {
@@ -558,6 +587,7 @@ export type WorkspaceCreateWithoutProjectsInput = {
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutProjectsInput = {
@@ -570,6 +600,7 @@ export type WorkspaceUncheckedCreateWithoutProjectsInput = {
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
   notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutProjectsInput = {
@@ -598,6 +629,7 @@ export type WorkspaceUpdateWithoutProjectsInput = {
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
@@ -610,6 +642,7 @@ export type WorkspaceUncheckedUpdateWithoutProjectsInput = {
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
   notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceCreateWithoutNotificationChannelsInput = {
@@ -622,6 +655,7 @@ export type WorkspaceCreateWithoutNotificationChannelsInput = {
   members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceUncheckedCreateWithoutNotificationChannelsInput = {
@@ -634,6 +668,7 @@ export type WorkspaceUncheckedCreateWithoutNotificationChannelsInput = {
   members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
   projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
   allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedCreateNestedOneWithoutWorkspaceInput
 }
 
 export type WorkspaceCreateOrConnectWithoutNotificationChannelsInput = {
@@ -662,6 +697,7 @@ export type WorkspaceUpdateWithoutNotificationChannelsInput = {
   members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUpdateOneWithoutWorkspaceNestedInput
 }
 
 export type WorkspaceUncheckedUpdateWithoutNotificationChannelsInput = {
@@ -674,6 +710,75 @@ export type WorkspaceUncheckedUpdateWithoutNotificationChannelsInput = {
   members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
   projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
   allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
+  githubInstallation?: Prisma.GitHubInstallationUncheckedUpdateOneWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceCreateWithoutGithubInstallationInput = {
+  id?: string
+  name: string
+  slug: string
+  isPersonal?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceUncheckedCreateWithoutGithubInstallationInput = {
+  id?: string
+  name: string
+  slug: string
+  isPersonal?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutWorkspaceInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedCreateNestedManyWithoutWorkspaceInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedCreateNestedManyWithoutWorkspaceInput
+}
+
+export type WorkspaceCreateOrConnectWithoutGithubInstallationInput = {
+  where: Prisma.WorkspaceWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutGithubInstallationInput, Prisma.WorkspaceUncheckedCreateWithoutGithubInstallationInput>
+}
+
+export type WorkspaceUpsertWithoutGithubInstallationInput = {
+  update: Prisma.XOR<Prisma.WorkspaceUpdateWithoutGithubInstallationInput, Prisma.WorkspaceUncheckedUpdateWithoutGithubInstallationInput>
+  create: Prisma.XOR<Prisma.WorkspaceCreateWithoutGithubInstallationInput, Prisma.WorkspaceUncheckedCreateWithoutGithubInstallationInput>
+  where?: Prisma.WorkspaceWhereInput
+}
+
+export type WorkspaceUpdateToOneWithWhereWithoutGithubInstallationInput = {
+  where?: Prisma.WorkspaceWhereInput
+  data: Prisma.XOR<Prisma.WorkspaceUpdateWithoutGithubInstallationInput, Prisma.WorkspaceUncheckedUpdateWithoutGithubInstallationInput>
+}
+
+export type WorkspaceUpdateWithoutGithubInstallationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUpdateManyWithoutWorkspaceNestedInput
+}
+
+export type WorkspaceUncheckedUpdateWithoutGithubInstallationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isPersonal?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutWorkspaceNestedInput
+  allowedDomains?: Prisma.AllowedDomainUncheckedUpdateManyWithoutWorkspaceNestedInput
+  notificationChannels?: Prisma.NotificationChannelUncheckedUpdateManyWithoutWorkspaceNestedInput
 }
 
 
@@ -745,6 +850,7 @@ export type WorkspaceSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
   allowedDomains?: boolean | Prisma.Workspace$allowedDomainsArgs<ExtArgs>
   notificationChannels?: boolean | Prisma.Workspace$notificationChannelsArgs<ExtArgs>
+  githubInstallation?: boolean | Prisma.Workspace$githubInstallationArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workspace"]>
 
@@ -781,6 +887,7 @@ export type WorkspaceInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   projects?: boolean | Prisma.Workspace$projectsArgs<ExtArgs>
   allowedDomains?: boolean | Prisma.Workspace$allowedDomainsArgs<ExtArgs>
   notificationChannels?: boolean | Prisma.Workspace$notificationChannelsArgs<ExtArgs>
+  githubInstallation?: boolean | Prisma.Workspace$githubInstallationArgs<ExtArgs>
   _count?: boolean | Prisma.WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkspaceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -793,6 +900,7 @@ export type $WorkspacePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     projects: Prisma.$ProjectPayload<ExtArgs>[]
     allowedDomains: Prisma.$AllowedDomainPayload<ExtArgs>[]
     notificationChannels: Prisma.$NotificationChannelPayload<ExtArgs>[]
+    githubInstallation: Prisma.$GitHubInstallationPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1199,6 +1307,7 @@ export interface Prisma__WorkspaceClient<T, Null = never, ExtArgs extends runtim
   projects<T extends Prisma.Workspace$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   allowedDomains<T extends Prisma.Workspace$allowedDomainsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$allowedDomainsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AllowedDomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationChannels<T extends Prisma.Workspace$notificationChannelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$notificationChannelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  githubInstallation<T extends Prisma.Workspace$githubInstallationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Workspace$githubInstallationArgs<ExtArgs>>): Prisma.Prisma__GitHubInstallationClient<runtime.Types.Result.GetResult<Prisma.$GitHubInstallationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1715,6 +1824,25 @@ export type Workspace$notificationChannelsArgs<ExtArgs extends runtime.Types.Ext
   take?: number
   skip?: number
   distinct?: Prisma.NotificationChannelScalarFieldEnum | Prisma.NotificationChannelScalarFieldEnum[]
+}
+
+/**
+ * Workspace.githubInstallation
+ */
+export type Workspace$githubInstallationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GitHubInstallation
+   */
+  select?: Prisma.GitHubInstallationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GitHubInstallation
+   */
+  omit?: Prisma.GitHubInstallationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GitHubInstallationInclude<ExtArgs> | null
+  where?: Prisma.GitHubInstallationWhereInput
 }
 
 /**

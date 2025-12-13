@@ -28,6 +28,7 @@ import { alertsRouter } from "./alerts";
 import { channelsRouter } from "./channels";
 import { trackedUsersRouter } from "./trackedUsers";
 import { internalRouter } from "./internal";
+import { githubRouter } from "./github";
 
 /**
  * Main application router.
@@ -193,6 +194,21 @@ export const appRouter = createRouter({
   internal: internalRouter,
 
   /**
+   * GitHub Integration (RCA System)
+   * @see ./github.ts
+   *
+   * Workspace-level GitHub repository management.
+   *
+   * - github.getInstallation    - Get GitHub App installation
+   * - github.listRepositories   - List repos with filter/search
+   * - github.enableRepository   - Enable indexing
+   * - github.disableRepository  - Disable indexing
+   * - github.reindexRepository  - Trigger re-index
+   * - github.getRepository      - Get repo details
+   */
+  github: githubRouter,
+
+  /**
    * Future modules:
    *
    * billing: billingRouter,    // Billing & subscriptions
@@ -221,4 +237,5 @@ export {
   channelsRouter,
   trackedUsersRouter,
   internalRouter,
+  githubRouter,
 };
