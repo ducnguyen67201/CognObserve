@@ -369,6 +369,138 @@ export const githubRouter = createRouter({
         },
       };
     }),
+
+  /**
+   * Get comprehensive repository statistics
+   */
+  getRepositoryStats: protectedProcedure
+    .input(RepositoryActionSchema)
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }) => {
+      const { repositoryId } = input;
+
+      // Verify repository belongs to workspace
+      const repo = await prisma.gitHubRepository.findFirst({
+        where: {
+          id: repositoryId,
+          installation: {
+            workspaceId: ctx.workspace.id,
+          },
+        },
+        select: {
+          id: true,
+          fullName: true,
+          owner: true,
+          repo: true,
+          defaultBranch: true,
+          isPrivate: true,
+          enabled: true,
+          indexStatus: true,
+          lastIndexedAt: true,
+        },
+      });
+
+      if (!repo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+
+      // Get aggregate stats from chunks
+      const [
+        totalChunks,
+        languageStats,
+        chunkTypeStats,
+        fileStats,
+        topFiles,
+      ] = await Promise.all([
+        // Total chunk count
+        prisma.codeChunk.count({
+          where: { repoId: repositoryId },
+        }),
+
+        // Group by language
+        prisma.codeChunk.groupBy({
+          by: ["language"],
+          where: { repoId: repositoryId },
+          _count: true,
+          _sum: { endLine: true, startLine: true },
+        }),
+
+        // Group by chunk type
+        prisma.codeChunk.groupBy({
+          by: ["chunkType"],
+          where: { repoId: repositoryId },
+          _count: true,
+        }),
+
+        // Unique files count
+        prisma.codeChunk.findMany({
+          where: { repoId: repositoryId },
+          distinct: ["filePath"],
+          select: { filePath: true },
+        }),
+
+        // Top 15 files by chunk count
+        prisma.$queryRaw<{ filePath: string; language: string | null; chunkCount: bigint; totalLines: bigint }[]>`
+          SELECT
+            "filePath",
+            "language",
+            COUNT(*)::bigint as "chunkCount",
+            SUM("endLine" - "startLine" + 1)::bigint as "totalLines"
+          FROM "code_chunks"
+          WHERE "repoId" = ${repositoryId}
+          GROUP BY "filePath", "language"
+          ORDER BY "chunkCount" DESC
+          LIMIT 15
+        `,
+      ]);
+
+      // Sort language stats by count descending
+      const sortedLanguageStats = [...languageStats].sort(
+        (a, b) => (b._count ?? 0) - (a._count ?? 0)
+      );
+
+      // Sort chunk type stats by count descending
+      const sortedChunkTypeStats = [...chunkTypeStats].sort(
+        (a, b) => (b._count ?? 0) - (a._count ?? 0)
+      );
+
+      // Calculate total lines indexed
+      const totalLines = sortedLanguageStats.reduce((sum, stat) => {
+        const endLineSum = stat._sum?.endLine ?? 0;
+        const startLineSum = stat._sum?.startLine ?? 0;
+        const count = stat._count ?? 0;
+        const lines = endLineSum - startLineSum + count;
+        return sum + lines;
+      }, 0);
+
+      return {
+        repository: repo,
+        overview: {
+          totalFiles: fileStats.length,
+          totalChunks,
+          totalLines,
+          lastIndexedAt: repo.lastIndexedAt,
+        },
+        languageBreakdown: sortedLanguageStats.map((stat) => {
+          const count = stat._count ?? 0;
+          return {
+            language: stat.language ?? "Unknown",
+            count,
+            percentage: totalChunks > 0 ? Math.round((count / totalChunks) * 100) : 0,
+          };
+        }),
+        chunkTypeBreakdown: sortedChunkTypeStats.map((stat) => ({
+          type: stat.chunkType,
+          count: stat._count ?? 0,
+        })),
+        topFiles: topFiles.map((file) => ({
+          filePath: file.filePath,
+          language: file.language ?? "Unknown",
+          chunkCount: Number(file.chunkCount),
+          totalLines: Number(file.totalLines),
+        })),
+      };
+    }),
 });
 
 export type GitHubRouter = typeof githubRouter;

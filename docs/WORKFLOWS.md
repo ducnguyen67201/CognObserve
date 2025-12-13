@@ -82,6 +82,7 @@ const WORKFLOW_REGISTRY: Record<WorkflowType, WorkflowConfig> = {
 | `scoreIngestionWorkflow` | `score.workflow.ts` | Process score | Short-lived | Ingest API |
 | `alertEvaluationWorkflow` | `alert.workflow.ts` | Evaluate alerts periodically | Long-running | Worker boot |
 | `githubIndexWorkflow` | `github-index.workflow.ts` | Index GitHub push/PR events | Short-lived | GitHub webhook |
+| `repositoryIndexWorkflow` | `repository-index.workflow.ts` | Full repository indexing from UI | Short-lived | UI enable/re-index |
 
 ### Workflow Categories
 
@@ -231,6 +232,9 @@ export async function getDetails(id: string): Promise<Details | null> {
 | `internal.transitionAlertState` | `{ alertId, conditionMet }` | Transition alert state |
 | `internal.dispatchNotification` | `{ alertId, state, ... }` | Send notifications |
 | `internal.storeGitHubIndex` | `{ repoId, chunks, ... }` | Store indexed code |
+| `internal.updateRepositoryIndexStatus` | `{ repositoryId, status, lastIndexedAt? }` | Update repo index status |
+| `internal.deleteRepositoryChunks` | `{ repositoryId }` | Delete chunks for reindex |
+| `internal.storeRepositoryChunks` | `{ repositoryId, chunks }` | Store code chunks |
 
 ## Startup Summary Output
 
@@ -293,6 +297,41 @@ PR Event → parse payload → storeIndexedData (metadata only)
 - Activities: `apps/worker/src/temporal/activities/github.activities.ts`
 - Schemas: `packages/api/src/schemas/github.ts`
 - Chunking: `packages/shared/src/chunking/`
+
+## Repository Indexing Details
+
+Indexes entire repository when user enables or re-indexes from UI:
+
+```
+Enable/Re-index → updateStatus(INDEXING) → cleanupChunks (if reindex) →
+  fetchRepositoryTree → fetchRepositoryContents (batched) →
+  chunkCodeFiles → storeRepositoryChunks → updateStatus(READY)
+```
+
+**Trigger**: tRPC `github.enableRepository` or `github.reindexRepository`
+
+**Input types:**
+```typescript
+interface RepositoryIndexInput {
+  repositoryId: string;
+  installationId: number;
+  owner: string;
+  repo: string;
+  branch: string;
+  mode: "initial" | "reindex";
+}
+```
+
+**Key files:**
+- Workflow: `apps/worker/src/workflows/repository-index.workflow.ts`
+- Activities: `apps/worker/src/temporal/activities/repository-index.activities.ts`
+- Temporal Client: `packages/api/src/lib/temporal.ts`
+- Router: `packages/api/src/routers/github.ts`
+
+**Performance:**
+- Batches GitHub API requests (20 files per batch)
+- 100ms delay between batches to avoid rate limits
+- 100KB max file size limit
 
 ## Debugging
 

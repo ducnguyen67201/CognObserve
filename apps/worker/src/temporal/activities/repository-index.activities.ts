@@ -10,17 +10,12 @@
 import { z } from "zod";
 import { Octokit } from "@octokit/rest";
 import { createAppAuth } from "@octokit/auth-app";
-import {
-  chunkCode as sharedChunkCode,
-  shouldIndexFile as sharedShouldIndexFile,
-} from "@cognobserve/shared";
 import { getInternalCaller } from "@/lib/trpc-caller";
 import { env } from "@/lib/env";
 import type {
   FetchTreeInput,
   FetchContentsInput,
   FileContent,
-  CodeChunkData,
   StoreRepositoryChunksInput,
 } from "../types";
 
@@ -259,6 +254,12 @@ async function fetchSingleFile(
     // Skip files that are too large
     if (content.size > MAX_FILE_SIZE) {
       console.log(`[RepositoryIndex] Skipping large file: ${path} (${content.size} bytes)`);
+      return null;
+    }
+
+    // Verify encoding is base64
+    if (content.encoding !== "base64") {
+      console.warn(`[RepositoryIndex] Unexpected encoding for ${path}: ${content.encoding}`);
       return null;
     }
 
