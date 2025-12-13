@@ -85,3 +85,13 @@ export const AlertState = {
 } as const
 
 export type AlertState = (typeof AlertState)[keyof typeof AlertState]
+
+
+export const IndexStatus = {
+  PENDING: 'PENDING',
+  INDEXING: 'INDEXING',
+  READY: 'READY',
+  FAILED: 'FAILED'
+} as const
+
+export type IndexStatus = (typeof IndexStatus)[keyof typeof IndexStatus]

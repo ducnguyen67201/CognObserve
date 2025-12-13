@@ -190,6 +190,7 @@ export type ProjectWhereInput = {
   members?: Prisma.ProjectMemberListRelationFilter
   costSummary?: Prisma.CostDailySummaryListRelationFilter
   alerts?: Prisma.AlertListRelationFilter
+  githubRepo?: Prisma.XOR<Prisma.GitHubRepositoryNullableScalarRelationFilter, Prisma.GitHubRepositoryWhereInput> | null
 }
 
 export type ProjectOrderByWithRelationInput = {
@@ -206,6 +207,7 @@ export type ProjectOrderByWithRelationInput = {
   members?: Prisma.ProjectMemberOrderByRelationAggregateInput
   costSummary?: Prisma.CostDailySummaryOrderByRelationAggregateInput
   alerts?: Prisma.AlertOrderByRelationAggregateInput
+  githubRepo?: Prisma.GitHubRepositoryOrderByWithRelationInput
 }
 
 export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -225,6 +227,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   members?: Prisma.ProjectMemberListRelationFilter
   costSummary?: Prisma.CostDailySummaryListRelationFilter
   alerts?: Prisma.AlertListRelationFilter
+  githubRepo?: Prisma.XOR<Prisma.GitHubRepositoryNullableScalarRelationFilter, Prisma.GitHubRepositoryWhereInput> | null
 }, "id">
 
 export type ProjectOrderByWithAggregationInput = {
@@ -262,6 +265,7 @@ export type ProjectCreateInput = {
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateInput = {
@@ -277,6 +281,7 @@ export type ProjectUncheckedCreateInput = {
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUpdateInput = {
@@ -292,6 +297,7 @@ export type ProjectUpdateInput = {
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateInput = {
@@ -307,6 +313,7 @@ export type ProjectUncheckedUpdateInput = {
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateManyInput = {
@@ -511,6 +518,20 @@ export type ProjectUpdateOneRequiredWithoutTraceSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutTraceSessionsInput, Prisma.ProjectUpdateWithoutTraceSessionsInput>, Prisma.ProjectUncheckedUpdateWithoutTraceSessionsInput>
 }
 
+export type ProjectCreateNestedOneWithoutGithubRepoInput = {
+  create?: Prisma.XOR<Prisma.ProjectCreateWithoutGithubRepoInput, Prisma.ProjectUncheckedCreateWithoutGithubRepoInput>
+  connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutGithubRepoInput
+  connect?: Prisma.ProjectWhereUniqueInput
+}
+
+export type ProjectUpdateOneRequiredWithoutGithubRepoNestedInput = {
+  create?: Prisma.XOR<Prisma.ProjectCreateWithoutGithubRepoInput, Prisma.ProjectUncheckedCreateWithoutGithubRepoInput>
+  connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutGithubRepoInput
+  upsert?: Prisma.ProjectUpsertWithoutGithubRepoInput
+  connect?: Prisma.ProjectWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutGithubRepoInput, Prisma.ProjectUpdateWithoutGithubRepoInput>, Prisma.ProjectUncheckedUpdateWithoutGithubRepoInput>
+}
+
 export type ProjectCreateWithoutWorkspaceInput = {
   id?: string
   name: string
@@ -523,6 +544,7 @@ export type ProjectCreateWithoutWorkspaceInput = {
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutWorkspaceInput = {
@@ -537,6 +559,7 @@ export type ProjectUncheckedCreateWithoutWorkspaceInput = {
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutWorkspaceInput = {
@@ -588,6 +611,7 @@ export type ProjectCreateWithoutMembersInput = {
   trackedUsers?: Prisma.TrackedUserCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutMembersInput = {
@@ -602,6 +626,7 @@ export type ProjectUncheckedCreateWithoutMembersInput = {
   trackedUsers?: Prisma.TrackedUserUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutMembersInput = {
@@ -632,6 +657,7 @@ export type ProjectUpdateWithoutMembersInput = {
   trackedUsers?: Prisma.TrackedUserUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutMembersInput = {
@@ -646,6 +672,7 @@ export type ProjectUncheckedUpdateWithoutMembersInput = {
   trackedUsers?: Prisma.TrackedUserUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutApiKeysInput = {
@@ -660,6 +687,7 @@ export type ProjectCreateWithoutApiKeysInput = {
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutApiKeysInput = {
@@ -674,6 +702,7 @@ export type ProjectUncheckedCreateWithoutApiKeysInput = {
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutApiKeysInput = {
@@ -704,6 +733,7 @@ export type ProjectUpdateWithoutApiKeysInput = {
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutApiKeysInput = {
@@ -718,6 +748,7 @@ export type ProjectUncheckedUpdateWithoutApiKeysInput = {
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutTracesInput = {
@@ -732,6 +763,7 @@ export type ProjectCreateWithoutTracesInput = {
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutTracesInput = {
@@ -746,6 +778,7 @@ export type ProjectUncheckedCreateWithoutTracesInput = {
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutTracesInput = {
@@ -776,6 +809,7 @@ export type ProjectUpdateWithoutTracesInput = {
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutTracesInput = {
@@ -790,6 +824,7 @@ export type ProjectUncheckedUpdateWithoutTracesInput = {
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutCostSummaryInput = {
@@ -804,6 +839,7 @@ export type ProjectCreateWithoutCostSummaryInput = {
   trackedUsers?: Prisma.TrackedUserCreateNestedManyWithoutProjectInput
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutCostSummaryInput = {
@@ -818,6 +854,7 @@ export type ProjectUncheckedCreateWithoutCostSummaryInput = {
   trackedUsers?: Prisma.TrackedUserUncheckedCreateNestedManyWithoutProjectInput
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutCostSummaryInput = {
@@ -848,6 +885,7 @@ export type ProjectUpdateWithoutCostSummaryInput = {
   trackedUsers?: Prisma.TrackedUserUpdateManyWithoutProjectNestedInput
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutCostSummaryInput = {
@@ -862,6 +900,7 @@ export type ProjectUncheckedUpdateWithoutCostSummaryInput = {
   trackedUsers?: Prisma.TrackedUserUncheckedUpdateManyWithoutProjectNestedInput
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutAlertsInput = {
@@ -876,6 +915,7 @@ export type ProjectCreateWithoutAlertsInput = {
   trackedUsers?: Prisma.TrackedUserCreateNestedManyWithoutProjectInput
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutAlertsInput = {
@@ -890,6 +930,7 @@ export type ProjectUncheckedCreateWithoutAlertsInput = {
   trackedUsers?: Prisma.TrackedUserUncheckedCreateNestedManyWithoutProjectInput
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutAlertsInput = {
@@ -920,6 +961,7 @@ export type ProjectUpdateWithoutAlertsInput = {
   trackedUsers?: Prisma.TrackedUserUpdateManyWithoutProjectNestedInput
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutAlertsInput = {
@@ -934,6 +976,7 @@ export type ProjectUncheckedUpdateWithoutAlertsInput = {
   trackedUsers?: Prisma.TrackedUserUncheckedUpdateManyWithoutProjectNestedInput
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutTrackedUsersInput = {
@@ -948,6 +991,7 @@ export type ProjectCreateWithoutTrackedUsersInput = {
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutTrackedUsersInput = {
@@ -962,6 +1006,7 @@ export type ProjectUncheckedCreateWithoutTrackedUsersInput = {
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutTrackedUsersInput = {
@@ -992,6 +1037,7 @@ export type ProjectUpdateWithoutTrackedUsersInput = {
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutTrackedUsersInput = {
@@ -1006,6 +1052,7 @@ export type ProjectUncheckedUpdateWithoutTrackedUsersInput = {
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutTraceSessionsInput = {
@@ -1020,6 +1067,7 @@ export type ProjectCreateWithoutTraceSessionsInput = {
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutTraceSessionsInput = {
@@ -1034,6 +1082,7 @@ export type ProjectUncheckedCreateWithoutTraceSessionsInput = {
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
   alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedCreateNestedOneWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutTraceSessionsInput = {
@@ -1064,6 +1113,7 @@ export type ProjectUpdateWithoutTraceSessionsInput = {
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutTraceSessionsInput = {
@@ -1074,6 +1124,83 @@ export type ProjectUncheckedUpdateWithoutTraceSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutProjectNestedInput
   traces?: Prisma.TraceUncheckedUpdateManyWithoutProjectNestedInput
+  trackedUsers?: Prisma.TrackedUserUncheckedUpdateManyWithoutProjectNestedInput
+  members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+  costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
+  alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
+}
+
+export type ProjectCreateWithoutGithubRepoInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  workspace: Prisma.WorkspaceCreateNestedOneWithoutProjectsInput
+  apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutProjectInput
+  traces?: Prisma.TraceCreateNestedManyWithoutProjectInput
+  traceSessions?: Prisma.TraceSessionCreateNestedManyWithoutProjectInput
+  trackedUsers?: Prisma.TrackedUserCreateNestedManyWithoutProjectInput
+  members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
+  costSummary?: Prisma.CostDailySummaryCreateNestedManyWithoutProjectInput
+  alerts?: Prisma.AlertCreateNestedManyWithoutProjectInput
+}
+
+export type ProjectUncheckedCreateWithoutGithubRepoInput = {
+  id?: string
+  name: string
+  workspaceId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutProjectInput
+  traces?: Prisma.TraceUncheckedCreateNestedManyWithoutProjectInput
+  traceSessions?: Prisma.TraceSessionUncheckedCreateNestedManyWithoutProjectInput
+  trackedUsers?: Prisma.TrackedUserUncheckedCreateNestedManyWithoutProjectInput
+  members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+  costSummary?: Prisma.CostDailySummaryUncheckedCreateNestedManyWithoutProjectInput
+  alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutProjectInput
+}
+
+export type ProjectCreateOrConnectWithoutGithubRepoInput = {
+  where: Prisma.ProjectWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProjectCreateWithoutGithubRepoInput, Prisma.ProjectUncheckedCreateWithoutGithubRepoInput>
+}
+
+export type ProjectUpsertWithoutGithubRepoInput = {
+  update: Prisma.XOR<Prisma.ProjectUpdateWithoutGithubRepoInput, Prisma.ProjectUncheckedUpdateWithoutGithubRepoInput>
+  create: Prisma.XOR<Prisma.ProjectCreateWithoutGithubRepoInput, Prisma.ProjectUncheckedCreateWithoutGithubRepoInput>
+  where?: Prisma.ProjectWhereInput
+}
+
+export type ProjectUpdateToOneWithWhereWithoutGithubRepoInput = {
+  where?: Prisma.ProjectWhereInput
+  data: Prisma.XOR<Prisma.ProjectUpdateWithoutGithubRepoInput, Prisma.ProjectUncheckedUpdateWithoutGithubRepoInput>
+}
+
+export type ProjectUpdateWithoutGithubRepoInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workspace?: Prisma.WorkspaceUpdateOneRequiredWithoutProjectsNestedInput
+  apiKeys?: Prisma.ApiKeyUpdateManyWithoutProjectNestedInput
+  traces?: Prisma.TraceUpdateManyWithoutProjectNestedInput
+  traceSessions?: Prisma.TraceSessionUpdateManyWithoutProjectNestedInput
+  trackedUsers?: Prisma.TrackedUserUpdateManyWithoutProjectNestedInput
+  members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
+  costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
+  alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+}
+
+export type ProjectUncheckedUpdateWithoutGithubRepoInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  workspaceId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutProjectNestedInput
+  traces?: Prisma.TraceUncheckedUpdateManyWithoutProjectNestedInput
+  traceSessions?: Prisma.TraceSessionUncheckedUpdateManyWithoutProjectNestedInput
   trackedUsers?: Prisma.TrackedUserUncheckedUpdateManyWithoutProjectNestedInput
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
@@ -1099,6 +1226,7 @@ export type ProjectUpdateWithoutWorkspaceInput = {
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutWorkspaceInput = {
@@ -1113,6 +1241,7 @@ export type ProjectUncheckedUpdateWithoutWorkspaceInput = {
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   costSummary?: Prisma.CostDailySummaryUncheckedUpdateManyWithoutProjectNestedInput
   alerts?: Prisma.AlertUncheckedUpdateManyWithoutProjectNestedInput
+  githubRepo?: Prisma.GitHubRepositoryUncheckedUpdateOneWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateManyWithoutWorkspaceInput = {
@@ -1221,6 +1350,7 @@ export type ProjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   members?: boolean | Prisma.Project$membersArgs<ExtArgs>
   costSummary?: boolean | Prisma.Project$costSummaryArgs<ExtArgs>
   alerts?: boolean | Prisma.Project$alertsArgs<ExtArgs>
+  githubRepo?: boolean | Prisma.Project$githubRepoArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["project"]>
 
@@ -1260,6 +1390,7 @@ export type ProjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   members?: boolean | Prisma.Project$membersArgs<ExtArgs>
   costSummary?: boolean | Prisma.Project$costSummaryArgs<ExtArgs>
   alerts?: boolean | Prisma.Project$alertsArgs<ExtArgs>
+  githubRepo?: boolean | Prisma.Project$githubRepoArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProjectIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1280,6 +1411,7 @@ export type $ProjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     members: Prisma.$ProjectMemberPayload<ExtArgs>[]
     costSummary: Prisma.$CostDailySummaryPayload<ExtArgs>[]
     alerts: Prisma.$AlertPayload<ExtArgs>[]
+    githubRepo: Prisma.$GitHubRepositoryPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1689,6 +1821,7 @@ export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends runtime.
   members<T extends Prisma.Project$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   costSummary<T extends Prisma.Project$costSummaryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$costSummaryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CostDailySummaryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   alerts<T extends Prisma.Project$alertsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$alertsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  githubRepo<T extends Prisma.Project$githubRepoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$githubRepoArgs<ExtArgs>>): Prisma.Prisma__GitHubRepositoryClient<runtime.Types.Result.GetResult<Prisma.$GitHubRepositoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2284,6 +2417,25 @@ export type Project$alertsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.AlertScalarFieldEnum | Prisma.AlertScalarFieldEnum[]
+}
+
+/**
+ * Project.githubRepo
+ */
+export type Project$githubRepoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GitHubRepository
+   */
+  select?: Prisma.GitHubRepositorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GitHubRepository
+   */
+  omit?: Prisma.GitHubRepositoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GitHubRepositoryInclude<ExtArgs> | null
+  where?: Prisma.GitHubRepositoryWhereInput
 }
 
 /**

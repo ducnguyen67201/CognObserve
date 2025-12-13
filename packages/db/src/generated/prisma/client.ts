@@ -144,3 +144,28 @@ export type TrackedUser = Prisma.TrackedUserModel
  * 
  */
 export type TraceSession = Prisma.TraceSessionModel
+/**
+ * Model GitHubRepository
+ * 
+ */
+export type GitHubRepository = Prisma.GitHubRepositoryModel
+/**
+ * Model GitCommit
+ * 
+ */
+export type GitCommit = Prisma.GitCommitModel
+/**
+ * Model GitPullRequest
+ * 
+ */
+export type GitPullRequest = Prisma.GitPullRequestModel
+/**
+ * Model CodeChunk
+ * 
+ */
+export type CodeChunk = Prisma.CodeChunkModel
+/**
+ * Model AlertRCA
+ * 
+ */
+export type AlertRCA = Prisma.AlertRCAModel
