@@ -53,8 +53,11 @@ export const DEFAULT_TOP_K = 10;
 export const DEFAULT_MIN_SIMILARITY = 0.5;
 
 // ============================================================
-// Validation
+// Validation & Sanitization
 // ============================================================
+
+/** CUID pattern for validating chunk IDs */
+const CUID_PATTERN = /^c[a-z0-9]{24}$/;
 
 /**
  * Validate embedding dimensions
@@ -65,6 +68,24 @@ function validateEmbedding(embedding: number[]): void {
       `Invalid embedding dimensions: expected ${EMBEDDING_DIMENSIONS}, got ${embedding.length}`
     );
   }
+}
+
+/**
+ * Validate that a string is a valid CUID (used for chunk IDs)
+ * Prevents SQL injection by ensuring IDs match expected format
+ */
+function validateCuid(id: string, fieldName: string = "id"): void {
+  if (!CUID_PATTERN.test(id)) {
+    throw new Error(`Invalid ${fieldName}: must be a valid CUID`);
+  }
+}
+
+/**
+ * Escape single quotes in SQL LIKE patterns to prevent SQL injection
+ */
+function escapeLikePattern(pattern: string): string {
+  // Escape single quotes by doubling them (SQL standard)
+  return pattern.replace(/'/g, "''");
 }
 
 /**
@@ -143,13 +164,15 @@ export async function setChunkEmbeddings(
 ): Promise<void> {
   if (items.length === 0) return;
 
-  // Validate all embeddings first
+  // Validate all chunk IDs and embeddings first
   for (const item of items) {
+    validateCuid(item.chunkId, "chunkId");
     validateEmbedding(item.embedding);
   }
 
   // Build batch update using CASE WHEN
   // This is more efficient than multiple UPDATE statements
+  // Note: chunkIds are validated as CUIDs above, safe for interpolation
   const ids = items.map((item) => item.chunkId);
   const cases = items
     .map((item) => {
@@ -238,14 +261,17 @@ export async function searchSimilarChunksWithPatterns(
     return searchSimilarChunks(repoId, queryEmbedding, topK, minSimilarity);
   }
 
-  // Convert glob patterns to SQL LIKE patterns
-  const likePatterns = filePatterns.map((p) =>
-    p.replace(/\*\*/g, "%").replace(/\*/g, "%").replace(/\?/g, "_")
-  );
+  // Convert glob patterns to SQL LIKE patterns and escape for SQL safety
+  const likePatterns = filePatterns.map((p) => {
+    // First escape single quotes, then convert glob to LIKE syntax
+    const escaped = escapeLikePattern(p);
+    return escaped.replace(/\*\*/g, "%").replace(/\*/g, "%").replace(/\?/g, "_");
+  });
 
   const vectorLiteral = formatVector(queryEmbedding);
 
   // Build OR conditions for file patterns
+  // Note: patterns are escaped above, safe for interpolation
   const patternConditions = likePatterns
     .map((pattern) => `file_path LIKE '${pattern}'`)
     .join(" OR ");

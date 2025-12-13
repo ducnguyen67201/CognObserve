@@ -218,6 +218,19 @@ describe("Vector Operations", () => {
         "Invalid embedding dimensions"
       );
     });
+
+    it("should reject invalid chunk IDs (SQL injection prevention)", async () => {
+      const maliciousItems: EmbeddingBatchItem[] = [
+        {
+          chunkId: "'; DROP TABLE code_chunks; --",
+          embedding: createTestEmbedding(99),
+        },
+      ];
+
+      await expect(setChunkEmbeddings(maliciousItems)).rejects.toThrow(
+        "Invalid chunkId: must be a valid CUID"
+      );
+    });
   });
 
   describe("searchSimilarChunks", () => {
