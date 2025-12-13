@@ -160,6 +160,7 @@ model Project {
   members       ProjectMember[]
   costSummary   CostDailySummary[]
   alerts        Alert[]
+  githubRepo    GitHubRepository?
 
   @@index([workspaceId])
 }
@@ -338,6 +339,13 @@ enum AlertState {
   RESOLVED // Was firing, now recovered
 }
 
+enum IndexStatus {
+  PENDING
+  INDEXING
+  READY
+  FAILED
+}
+
 model Alert {
   id              String             @id @default(cuid())
   projectId       String
@@ -365,6 +373,7 @@ model Alert {
   channels        AlertChannel[]     // Legacy - to be deprecated
   channelLinks    AlertChannelLink[] // New - links to workspace channels
   history         AlertHistory[]
+  rcaAnalyses     AlertRCA[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
@@ -492,4 +501,107 @@ model TraceSession {
   @@index([projectId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("trace_sessions")
+}
+
+// ============================================================
+// GitHub Indexing Models (RCA System)
+// ============================================================
+
+model GitHubRepository {
+  id             String      @id @default(cuid())
+  projectId      String      @unique
+  owner          String
+  repo           String
+  defaultBranch  String      @default("main")
+  installationId BigInt?
+  indexStatus    IndexStatus @default(PENDING)
+  lastIndexedAt  DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  commits GitCommit[]
+  prs     GitPullRequest[]
+  chunks  CodeChunk[]
+
+  @@index([owner, repo])
+  @@map("github_repositories")
+}
+
+model GitCommit {
+  id          String   @id @default(cuid())
+  repoId      String
+  sha         String
+  message     String
+  author      String
+  authorEmail String?
+  timestamp   DateTime
+  createdAt   DateTime @default(now())
+
+  repo GitHubRepository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  prs  GitPullRequest[]
+
+  @@unique([repoId, sha])
+  @@index([repoId, timestamp(sort: Desc)])
+  @@map("git_commits")
+}
+
+model GitPullRequest {
+  id         String    @id @default(cuid())
+  repoId     String
+  number     Int
+  title      String
+  body       String?   @db.Text
+  state      String
+  author     String
+  baseBranch String
+  headBranch String
+  mergedAt   DateTime?
+  closedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  repo    GitHubRepository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  commits GitCommit[]
+
+  @@unique([repoId, number])
+  @@index([repoId, mergedAt(sort: Desc)])
+  @@map("git_pull_requests")
+}
+
+model CodeChunk {
+  id          String   @id @default(cuid())
+  repoId      String
+  filePath    String
+  startLine   Int
+  endLine     Int
+  content     String   @db.Text
+  contentHash String
+  language    String?
+  chunkType   String   @default("block")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  repo GitHubRepository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@index([repoId, filePath])
+  @@index([contentHash])
+  @@map("code_chunks")
+}
+
+model AlertRCA {
+  id               String   @id @default(cuid())
+  alertId          String
+  triggeredAt      DateTime
+  analysisJson     Json
+  suspectedPRs     String[]
+  suspectedCommits String[]
+  confidence       Float?
+  createdAt        DateTime @default(now())
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([alertId])
+  @@index([triggeredAt(sort: Desc)])
+  @@map("alert_rcas")
 }
