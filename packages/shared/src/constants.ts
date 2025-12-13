@@ -49,6 +49,10 @@ export const WORKFLOW_TIMEOUTS = {
     WORKFLOW_EXECUTION: "24h",
     ACTIVITY: "10s",
     EVALUATION_INTERVAL_MS: 10_000, // 10 seconds
+    // ContinueAsNew thresholds to prevent event history overflow
+    CONTINUE_AS_NEW_HISTORY_THRESHOLD: 8_000, // Continue at 8K events (limit is 51.2K)
+    CONTINUE_AS_NEW_TIME_THRESHOLD_MS: 4 * 60 * 60 * 1000, // Or every 4 hours
+    MAX_EVALUATIONS_PER_RUN: 1_000, // Or every 1000 evaluations
   },
 } as const;
 

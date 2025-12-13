@@ -96,6 +96,23 @@ export interface AlertWorkflowInput {
 }
 
 /**
+ * State preserved across continueAsNew restarts.
+ * This state survives workflow restarts and maintains continuity.
+ */
+export interface AlertWorkflowState {
+  /** Total evaluations across all runs */
+  totalEvaluations: number;
+  /** Evaluations in current run (reset on continueAsNew) */
+  evaluationsThisRun: number;
+  /** Timestamp of last evaluation */
+  lastEvaluatedAt: number;
+  /** Timestamp when this run started */
+  runStartedAt: number;
+  /** Number of times workflow has continued as new */
+  continueAsNewCount: number;
+}
+
+/**
  * Alert evaluation result from evaluateAlert activity
  */
 export interface AlertEvaluationResult {
