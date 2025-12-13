@@ -11,7 +11,8 @@
     "./schemas": "./src/schemas.ts",
     "./lib/cost": "./src/lib/cost/index.ts",
     "./lib/alerting": "./src/lib/alerting/index.ts",
-    "./lib/alerting/init": "./src/lib/alerting/init.ts"
+    "./lib/alerting/init": "./src/lib/alerting/init.ts",
+    "./lib/github": "./src/lib/github/index.ts"
   },
   "scripts": {
     "lint": "eslint src/",

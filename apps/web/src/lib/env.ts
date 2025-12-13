@@ -40,6 +40,12 @@ export const env = createEnv({
       .string()
       .length(62)
       .default("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+
+    // GitHub Webhook
+    GITHUB_WEBHOOK_SECRET: z.string().min(32).optional(),
+
+    // Temporal
+    TEMPORAL_ADDRESS: z.string().optional(),
   },
 
   /**
@@ -68,6 +74,8 @@ export const env = createEnv({
     API_KEY_PREFIX: process.env.API_KEY_PREFIX,
     API_KEY_RANDOM_BYTES_LENGTH: process.env.API_KEY_RANDOM_BYTES_LENGTH,
     API_KEY_BASE62_CHARSET: process.env.API_KEY_BASE62_CHARSET,
+    GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+    TEMPORAL_ADDRESS: process.env.TEMPORAL_ADDRESS,
   },
 
   /**
