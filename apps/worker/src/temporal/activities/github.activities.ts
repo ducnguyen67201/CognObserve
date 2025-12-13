@@ -7,9 +7,13 @@
  * IMPORTANT: Follows READ-ONLY pattern - all mutations via tRPC internal procedures.
  */
 
+import { z } from "zod";
 import { prisma } from "@cognobserve/db";
 import { GitHubPushPayloadSchema } from "@cognobserve/api/schemas";
-import { createHash } from "crypto";
+import {
+  chunkCode as sharedChunkCode,
+  shouldIndexFile as sharedShouldIndexFile,
+} from "@cognobserve/shared";
 import { getInternalCaller } from "@/lib/trpc-caller";
 import { env } from "@/lib/env";
 import type {
@@ -24,31 +28,22 @@ import type {
 // Constants
 // ============================================
 
-const INDEXABLE_EXTENSIONS = [
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx", // JavaScript/TypeScript
-  ".py", // Python
-  ".go", // Go
-  ".rs", // Rust
-  ".java", // Java
-];
-
-const EXCLUDED_PATTERNS = [
-  /node_modules/,
-  /\.git\//,
-  /dist\//,
-  /build\//,
-  /\.next\//,
-  /\.min\./,
-  /package-lock\.json/,
-  /pnpm-lock\.yaml/,
-  /yarn\.lock/,
-];
-
 const MAX_FILE_SIZE = 100 * 1024; // 100KB max per file
 const MAX_FILES_PER_BATCH = 50;
+
+// ============================================
+// Zod Schemas for External API Responses
+// ============================================
+
+/**
+ * Schema for GitHub Contents API response.
+ * Used to validate unknown data from external API.
+ */
+const GitHubContentResponseSchema = z.object({
+  size: z.number(),
+  content: z.string(),
+  encoding: z.string(),
+});
 
 // ============================================
 // Activity: Extract Changed Files
@@ -184,11 +179,16 @@ async function fetchSingleFile(
     throw new Error(`GitHub API error: ${response.status}`);
   }
 
-  const data = (await response.json()) as {
-    size: number;
-    content: string;
-    encoding: string;
-  };
+  // Validate response with Zod (per CLAUDE.md: "ALWAYS use Zod to validate unknown data")
+  const json: unknown = await response.json();
+  const parsed = GitHubContentResponseSchema.safeParse(json);
+
+  if (!parsed.success) {
+    console.warn(`[GitHub] Invalid response for ${path}:`, parsed.error.flatten());
+    return null;
+  }
+
+  const data = parsed.data;
 
   // Skip files that are too large
   if (data.size > MAX_FILE_SIZE) {
@@ -212,7 +212,7 @@ async function fetchSingleFile(
 
 /**
  * Split code files into chunks for indexing.
- * Pure computation - no side effects.
+ * Uses the shared chunking module for intelligent semantic chunking.
  */
 export async function chunkCodeFiles(
   files: FileContent[]
@@ -220,82 +220,26 @@ export async function chunkCodeFiles(
   const allChunks: CodeChunkData[] = [];
 
   for (const file of files) {
-    const language = detectLanguage(file.path);
-    const chunks = chunkCode(file.path, file.content, language);
-    allChunks.push(...chunks);
+    const chunks = sharedChunkCode({
+      content: file.content,
+      filePath: file.path,
+    });
+
+    // Map to CodeChunkData format
+    for (const chunk of chunks) {
+      allChunks.push({
+        filePath: chunk.filePath,
+        startLine: chunk.startLine,
+        endLine: chunk.endLine,
+        content: chunk.content,
+        contentHash: chunk.contentHash,
+        language: chunk.language,
+        chunkType: chunk.chunkType,
+      });
+    }
   }
 
   return allChunks;
-}
-
-/**
- * Simple line-based chunking.
- * TODO: Implement AST-based chunking in #131
- */
-function chunkCode(
-  filePath: string,
-  content: string,
-  language: string | null
-): CodeChunkData[] {
-  const lines = content.split("\n");
-  const chunks: CodeChunkData[] = [];
-
-  const CHUNK_SIZE = 100; // lines per chunk
-  const MIN_CHUNK_SIZE = 10;
-
-  for (let i = 0; i < lines.length; i += CHUNK_SIZE) {
-    const chunkLines = lines.slice(i, i + CHUNK_SIZE);
-
-    // Skip tiny chunks at the end - append to previous chunk
-    if (chunkLines.length < MIN_CHUNK_SIZE && chunks.length > 0) {
-      const prev = chunks[chunks.length - 1];
-      if (prev) {
-        prev.endLine = i + chunkLines.length;
-        prev.content += "\n" + chunkLines.join("\n");
-        prev.contentHash = generateContentHash(prev.content);
-      }
-      continue;
-    }
-
-    const chunkContent = chunkLines.join("\n");
-
-    chunks.push({
-      filePath,
-      startLine: i + 1,
-      endLine: i + chunkLines.length,
-      content: chunkContent,
-      contentHash: generateContentHash(chunkContent),
-      language,
-      chunkType: "block",
-    });
-  }
-
-  return chunks;
-}
-
-/**
- * Generate SHA-256 hash of content for deduplication.
- */
-function generateContentHash(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
-}
-
-/**
- * Detect programming language from file extension.
- */
-function detectLanguage(filePath: string): string | null {
-  const ext = filePath.substring(filePath.lastIndexOf("."));
-  const langMap: Record<string, string> = {
-    ".ts": "typescript",
-    ".tsx": "typescript",
-    ".js": "javascript",
-    ".jsx": "javascript",
-    ".py": "python",
-    ".go": "go",
-    ".rs": "rust",
-    ".java": "java",
-  };
-  return langMap[ext] || null;
 }
 
 // ============================================
@@ -319,16 +263,10 @@ export async function storeIndexedData(
 
 /**
  * Check if a file should be indexed based on extension and path.
- * Exported for use in workflow (pure function - safe in workflow context).
+ * Delegates to shared shouldIndexFile for consistency.
  */
 export function shouldIndexFile(path: string): boolean {
-  // Check excluded patterns
-  if (EXCLUDED_PATTERNS.some((p) => p.test(path))) {
-    return false;
-  }
-
-  // Check extension
-  return INDEXABLE_EXTENSIONS.some((ext) => path.endsWith(ext));
+  return sharedShouldIndexFile(path);
 }
 
 // ============================================
