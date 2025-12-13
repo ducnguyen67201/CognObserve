@@ -46,3 +46,6 @@ if (!globalForPrisma.prisma) {
 export const prisma: PrismaClient = globalForPrisma.prisma;
 
 export * from "./generated/prisma/client";
+
+// Vector operations (pgvector)
+export * from "./vector";

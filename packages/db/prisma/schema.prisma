@@ -605,6 +605,11 @@ model CodeChunk {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // pgvector embedding column for semantic search
+  // 1536 dimensions for OpenAI text-embedding-3-small model
+  // Use raw SQL for operations (see packages/db/src/vector.ts)
+  embedding Unsupported("vector(1536)")?
+
   repo GitHubRepository @relation(fields: [repoId], references: [id], onDelete: Cascade)
 
   @@index([repoId, filePath])
