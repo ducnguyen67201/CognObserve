@@ -52,6 +52,7 @@ export const githubRouter = createRouter({
         where: { workspaceId: ctx.workspace.id },
         select: {
           id: true,
+          workspaceId: true,
           installationId: true,
           accountLogin: true,
           accountType: true,
