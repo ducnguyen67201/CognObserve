@@ -8,10 +8,7 @@
  */
 
 import { prisma } from "@cognobserve/db";
-import {
-  GitHubPushPayloadSchema,
-  GitHubPRPayloadSchema,
-} from "@cognobserve/api/schemas";
+import { GitHubPushPayloadSchema } from "@cognobserve/api/schemas";
 import { createHash } from "crypto";
 import { getInternalCaller } from "@/lib/trpc-caller";
 import { env } from "@/lib/env";
