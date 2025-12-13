@@ -102,7 +102,6 @@ export async function updateRepositoryIndexStatus(
     status,
     lastIndexedAt: status === "READY" ? new Date() : undefined,
   });
-  console.log(`[RepositoryIndex] Status updated to ${status} for ${repositoryId}`);
 }
 
 // ============================================
@@ -117,8 +116,7 @@ export async function cleanupRepositoryChunks(
   repositoryId: string
 ): Promise<void> {
   const caller = getInternalCaller();
-  const result = await caller.internal.deleteRepositoryChunks({ repositoryId });
-  console.log(`[RepositoryIndex] Deleted ${result.deletedCount} chunks for ${repositoryId}`);
+  await caller.internal.deleteRepositoryChunks({ repositoryId });
 }
 
 // ============================================
@@ -133,9 +131,6 @@ export async function fetchRepositoryTree(
   input: FetchTreeInput
 ): Promise<string[]> {
   const { installationId, owner, repo, branch } = input;
-
-  console.log(`[RepositoryIndex] Fetching tree for ${owner}/${repo}@${branch}`);
-
   const octokit = createAppOctokit(installationId);
 
   // Use recursive tree API to get all files
@@ -166,7 +161,6 @@ export async function fetchRepositoryTree(
     .filter((item) => !item.size || item.size <= MAX_FILE_SIZE) // Skip large files early
     .map((item) => item.path);
 
-  console.log(`[RepositoryIndex] Found ${filePaths.length} files in tree`);
   return filePaths;
 }
 
@@ -182,9 +176,6 @@ export async function fetchRepositoryContents(
   input: FetchContentsInput
 ): Promise<FileContent[]> {
   const { installationId, owner, repo, branch, files } = input;
-
-  console.log(`[RepositoryIndex] Fetching contents for ${files.length} files`);
-
   const octokit = createAppOctokit(installationId);
   const contents: FileContent[] = [];
 
@@ -213,7 +204,6 @@ export async function fetchRepositoryContents(
     }
   }
 
-  console.log(`[RepositoryIndex] Successfully fetched ${contents.length}/${files.length} files`);
   return contents;
 }
 
@@ -253,7 +243,6 @@ async function fetchSingleFile(
 
     // Skip files that are too large
     if (content.size > MAX_FILE_SIZE) {
-      console.log(`[RepositoryIndex] Skipping large file: ${path} (${content.size} bytes)`);
       return null;
     }
 
@@ -290,9 +279,7 @@ export async function storeRepositoryChunks(
   input: StoreRepositoryChunksInput
 ): Promise<{ chunksCreated: number }> {
   const caller = getInternalCaller();
-  const result = await caller.internal.storeRepositoryChunks(input);
-  console.log(`[RepositoryIndex] Stored ${result.chunksCreated} chunks for ${input.repositoryId}`);
-  return result;
+  return caller.internal.storeRepositoryChunks(input);
 }
 
 // ============================================
