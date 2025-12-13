@@ -126,12 +126,18 @@ export async function POST(req: NextRequest) {
 
   // 9. Look up repository in database
   const githubRepo = await prisma.gitHubRepository.findFirst({
-    where: { owner, repo },
+    where: { owner, repo, enabled: true },
     select: { id: true, projectId: true },
   });
 
   if (!githubRepo) {
-    console.log("Repository not registered", { delivery, owner, repo });
+    console.log("Repository not registered or not enabled", { delivery, owner, repo });
+    return webhookSuccess.skipped(SKIP_REASONS.REPO_NOT_REGISTERED);
+  }
+
+  // Skip repos that haven't been linked to a project yet
+  if (!githubRepo.projectId) {
+    console.log("Repository not linked to project", { delivery, owner, repo });
     return webhookSuccess.skipped(SKIP_REASONS.REPO_NOT_REGISTERED);
   }
 

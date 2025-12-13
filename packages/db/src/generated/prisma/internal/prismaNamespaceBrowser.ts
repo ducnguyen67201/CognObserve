@@ -72,6 +72,7 @@ export const ModelName = {
   AlertChannelLink: 'AlertChannelLink',
   TrackedUser: 'TrackedUser',
   TraceSession: 'TraceSession',
+  GitHubInstallation: 'GitHubInstallation',
   GitHubRepository: 'GitHubRepository',
   GitCommit: 'GitCommit',
   GitPullRequest: 'GitPullRequest',
@@ -401,13 +402,30 @@ export const TraceSessionScalarFieldEnum = {
 export type TraceSessionScalarFieldEnum = (typeof TraceSessionScalarFieldEnum)[keyof typeof TraceSessionScalarFieldEnum]
 
 
+export const GitHubInstallationScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  installationId: 'installationId',
+  accountLogin: 'accountLogin',
+  accountType: 'accountType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitHubInstallationScalarFieldEnum = (typeof GitHubInstallationScalarFieldEnum)[keyof typeof GitHubInstallationScalarFieldEnum]
+
+
 export const GitHubRepositoryScalarFieldEnum = {
   id: 'id',
+  installationId: 'installationId',
   projectId: 'projectId',
+  githubId: 'githubId',
   owner: 'owner',
   repo: 'repo',
+  fullName: 'fullName',
   defaultBranch: 'defaultBranch',
-  installationId: 'installationId',
+  isPrivate: 'isPrivate',
+  enabled: 'enabled',
   indexStatus: 'indexStatus',
   lastIndexedAt: 'lastIndexedAt',
   createdAt: 'createdAt',

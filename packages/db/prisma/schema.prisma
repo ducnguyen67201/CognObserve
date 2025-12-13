@@ -92,6 +92,7 @@ model Workspace {
   projects             Project[]
   allowedDomains       AllowedDomain[]
   notificationChannels NotificationChannel[]
+  githubInstallation   GitHubInstallation?
 
   @@index([slug])
   @@map("workspaces")
@@ -342,6 +343,7 @@ enum AlertState {
 enum IndexStatus {
   PENDING
   INDEXING
+  UPDATING
   READY
   FAILED
 }
@@ -507,23 +509,44 @@ model TraceSession {
 // GitHub Indexing Models (RCA System)
 // ============================================================
 
+model GitHubInstallation {
+  id             String   @id @default(cuid())
+  workspaceId    String   @unique
+  installationId BigInt   @unique
+  accountLogin   String   // GitHub username or org name
+  accountType    String   // "User" or "Organization"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace    Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repositories GitHubRepository[]
+
+  @@map("github_installations")
+}
+
 model GitHubRepository {
   id             String      @id @default(cuid())
-  projectId      String      @unique
+  installationId String
+  projectId      String?     @unique // Optional - only set when enabled for a project
+  githubId       BigInt      @unique // GitHub's repository ID
   owner          String
   repo           String
+  fullName       String      // "owner/repo"
   defaultBranch  String      @default("main")
-  installationId BigInt?
+  isPrivate      Boolean     @default(false)
+  enabled        Boolean     @default(false)
   indexStatus    IndexStatus @default(PENDING)
   lastIndexedAt  DateTime?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  project Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  commits GitCommit[]
-  prs     GitPullRequest[]
-  chunks  CodeChunk[]
+  installation GitHubInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  project      Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  commits      GitCommit[]
+  prs          GitPullRequest[]
+  chunks       CodeChunk[]
 
+  @@index([installationId])
   @@index([owner, repo])
   @@map("github_repositories")
 }

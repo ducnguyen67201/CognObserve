@@ -405,6 +405,7 @@ export const ModelName = {
   AlertChannelLink: 'AlertChannelLink',
   TrackedUser: 'TrackedUser',
   TraceSession: 'TraceSession',
+  GitHubInstallation: 'GitHubInstallation',
   GitHubRepository: 'GitHubRepository',
   GitCommit: 'GitCommit',
   GitPullRequest: 'GitPullRequest',
@@ -425,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "trackedUser" | "traceSession" | "gitHubRepository" | "gitCommit" | "gitPullRequest" | "codeChunk" | "alertRCA"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "trackedUser" | "traceSession" | "gitHubInstallation" | "gitHubRepository" | "gitCommit" | "gitPullRequest" | "codeChunk" | "alertRCA"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1983,6 +1984,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    GitHubInstallation: {
+      payload: Prisma.$GitHubInstallationPayload<ExtArgs>
+      fields: Prisma.GitHubInstallationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GitHubInstallationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GitHubInstallationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        findFirst: {
+          args: Prisma.GitHubInstallationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GitHubInstallationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        findMany: {
+          args: Prisma.GitHubInstallationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>[]
+        }
+        create: {
+          args: Prisma.GitHubInstallationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        createMany: {
+          args: Prisma.GitHubInstallationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GitHubInstallationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>[]
+        }
+        delete: {
+          args: Prisma.GitHubInstallationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        update: {
+          args: Prisma.GitHubInstallationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        deleteMany: {
+          args: Prisma.GitHubInstallationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GitHubInstallationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GitHubInstallationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>[]
+        }
+        upsert: {
+          args: Prisma.GitHubInstallationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        aggregate: {
+          args: Prisma.GitHubInstallationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGitHubInstallation>
+        }
+        groupBy: {
+          args: Prisma.GitHubInstallationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitHubInstallationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GitHubInstallationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitHubInstallationCountAggregateOutputType> | number
+        }
+      }
+    }
     GitHubRepository: {
       payload: Prisma.$GitHubRepositoryPayload<ExtArgs>
       fields: Prisma.GitHubRepositoryFieldRefs
@@ -2698,13 +2773,30 @@ export const TraceSessionScalarFieldEnum = {
 export type TraceSessionScalarFieldEnum = (typeof TraceSessionScalarFieldEnum)[keyof typeof TraceSessionScalarFieldEnum]
 
 
+export const GitHubInstallationScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  installationId: 'installationId',
+  accountLogin: 'accountLogin',
+  accountType: 'accountType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitHubInstallationScalarFieldEnum = (typeof GitHubInstallationScalarFieldEnum)[keyof typeof GitHubInstallationScalarFieldEnum]
+
+
 export const GitHubRepositoryScalarFieldEnum = {
   id: 'id',
+  installationId: 'installationId',
   projectId: 'projectId',
+  githubId: 'githubId',
   owner: 'owner',
   repo: 'repo',
+  fullName: 'fullName',
   defaultBranch: 'defaultBranch',
-  installationId: 'installationId',
+  isPrivate: 'isPrivate',
+  enabled: 'enabled',
   indexStatus: 'indexStatus',
   lastIndexedAt: 'lastIndexedAt',
   createdAt: 'createdAt',
@@ -3162,6 +3254,7 @@ export type GlobalOmitConfig = {
   alertChannelLink?: Prisma.AlertChannelLinkOmit
   trackedUser?: Prisma.TrackedUserOmit
   traceSession?: Prisma.TraceSessionOmit
+  gitHubInstallation?: Prisma.GitHubInstallationOmit
   gitHubRepository?: Prisma.GitHubRepositoryOmit
   gitCommit?: Prisma.GitCommitOmit
   gitPullRequest?: Prisma.GitPullRequestOmit
