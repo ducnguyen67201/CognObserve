@@ -214,3 +214,59 @@ export interface StoreGitHubIndexInput {
   changedFiles: string[];
   chunks: CodeChunkData[];
 }
+
+// ============================================
+// Repository Index Workflow Types
+// ============================================
+
+/**
+ * Repository index workflow input (for full repo indexing).
+ * Triggered when user enables a repository or requests re-index.
+ */
+export interface RepositoryIndexInput {
+  repositoryId: string;
+  installationId: number;
+  owner: string;
+  repo: string;
+  branch: string;
+  mode: "initial" | "reindex";
+}
+
+/**
+ * Repository index workflow result
+ */
+export interface RepositoryIndexResult {
+  success: boolean;
+  filesProcessed: number;
+  chunksCreated: number;
+  error?: string;
+}
+
+/**
+ * Input for fetch repository tree activity
+ */
+export interface FetchTreeInput {
+  installationId: number;
+  owner: string;
+  repo: string;
+  branch: string;
+}
+
+/**
+ * Input for fetch repository file contents activity
+ */
+export interface FetchContentsInput {
+  installationId: number;
+  owner: string;
+  repo: string;
+  branch: string;
+  files: string[];
+}
+
+/**
+ * Input for store repository chunks activity
+ */
+export interface StoreRepositoryChunksInput {
+  repositoryId: string;
+  chunks: CodeChunkData[];
+}

@@ -14,6 +14,7 @@ import {
   workspaceMiddleware,
 } from "../trpc";
 import { WORKSPACE_ADMIN_ROLES, type WorkspaceRole } from "../middleware/workspace";
+import { getTemporalClient, getTaskQueue } from "../lib/temporal";
 
 // ============================================
 // Input Schemas
@@ -186,15 +187,37 @@ export const githubRouter = createRouter({
       }
 
       // Enable and set to pending
-      await prisma.gitHubRepository.update({
+      const updatedRepo = await prisma.gitHubRepository.update({
         where: { id: repositoryId },
         data: {
           enabled: true,
           indexStatus: "PENDING",
         },
+        include: {
+          installation: true,
+        },
       });
 
-      // TODO: Trigger initial indexing workflow via Temporal
+      // Trigger initial indexing workflow via Temporal
+      try {
+        const client = await getTemporalClient();
+        await client.workflow.start("repositoryIndexWorkflow", {
+          taskQueue: getTaskQueue(),
+          workflowId: `repo-index-${repositoryId}-${Date.now()}`,
+          args: [{
+            repositoryId: updatedRepo.id,
+            installationId: Number(updatedRepo.installation.installationId),
+            owner: updatedRepo.owner,
+            repo: updatedRepo.repo,
+            branch: updatedRepo.defaultBranch,
+            mode: "initial",
+          }],
+        });
+        console.log(`[GitHub] Started indexing workflow for ${updatedRepo.fullName}`);
+      } catch (error) {
+        // Log but don't fail the mutation - user can retry via re-index
+        console.error("[GitHub] Failed to start indexing workflow:", error);
+      }
 
       return { success: true };
     }),
@@ -273,13 +296,35 @@ export const githubRouter = createRouter({
         });
       }
 
-      // Set status to INDEXING
-      await prisma.gitHubRepository.update({
+      // Set status to PENDING (workflow will change to INDEXING)
+      const updatedRepo = await prisma.gitHubRepository.update({
         where: { id: repositoryId },
-        data: { indexStatus: "INDEXING" },
+        data: { indexStatus: "PENDING" },
+        include: {
+          installation: true,
+        },
       });
 
-      // TODO: Trigger full re-index workflow via Temporal
+      // Trigger re-index workflow via Temporal
+      try {
+        const client = await getTemporalClient();
+        await client.workflow.start("repositoryIndexWorkflow", {
+          taskQueue: getTaskQueue(),
+          workflowId: `repo-reindex-${repositoryId}-${Date.now()}`,
+          args: [{
+            repositoryId: updatedRepo.id,
+            installationId: Number(updatedRepo.installation.installationId),
+            owner: updatedRepo.owner,
+            repo: updatedRepo.repo,
+            branch: updatedRepo.defaultBranch,
+            mode: "reindex",
+          }],
+        });
+        console.log(`[GitHub] Started reindex workflow for ${updatedRepo.fullName}`);
+      } catch (error) {
+        // Log but don't fail the mutation - user can retry
+        console.error("[GitHub] Failed to start reindex workflow:", error);
+      }
 
       return { success: true };
     }),

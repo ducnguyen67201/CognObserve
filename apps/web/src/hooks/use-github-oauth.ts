@@ -166,6 +166,102 @@ interface UseGitHubDisconnectReturn {
  * @param workspaceId - The workspace ID to disconnect from
  * @returns Disconnect function and loading state
  */
+interface UseManageReposReturn {
+  /** Open the GitHub settings popup to manage repos */
+  openManageRepos: () => void;
+  /** Whether the popup is currently open */
+  isOpen: boolean;
+}
+
+/**
+ * Hook for managing GitHub App repository access via popup.
+ *
+ * Opens a popup to GitHub settings where users can add/remove repository access.
+ * When the popup closes, automatically refreshes the repository list.
+ *
+ * @param installation - The GitHub installation details
+ * @returns Function to open popup and loading state
+ */
+export function useManageRepos(installation: {
+  installationId: bigint;
+  accountLogin: string;
+  accountType: string;
+}): UseManageReposReturn {
+  const utils = trpc.useUtils();
+  const [isOpen, setIsOpen] = useState(false);
+  const popupRef = useRef<Window | null>(null);
+  const checkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Get the GitHub settings URL
+  const getManageReposUrl = useCallback(() => {
+    const installId = installation.installationId.toString();
+    if (installation.accountType === "Organization") {
+      return `https://github.com/organizations/${installation.accountLogin}/settings/installations/${installId}`;
+    }
+    return `https://github.com/settings/installations/${installId}`;
+  }, [installation]);
+
+  // Cleanup and refresh repos
+  const cleanup = useCallback(() => {
+    if (checkIntervalRef.current) {
+      clearInterval(checkIntervalRef.current);
+      checkIntervalRef.current = null;
+    }
+    popupRef.current = null;
+    setIsOpen(false);
+
+    // Refresh repository list when popup closes
+    utils.github.listRepositories.invalidate();
+  }, [utils]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Open window
+  const openManageRepos = useCallback(() => {
+    if (isOpen) return;
+
+    setIsOpen(true);
+
+    // Calculate window position (centered)
+    const width = 1000;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    // Open as a regular window (not popup) to avoid session/cookie issues
+    // Using resizable,scrollbars,status makes it a full window that shares cookies properly
+    const popup = window.open(
+      getManageReposUrl(),
+      "github-manage-repos",
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+    );
+
+    popupRef.current = popup;
+
+    // Check if window was blocked
+    if (!popup) {
+      setIsOpen(false);
+      return;
+    }
+
+    // Poll to check if window was closed
+    checkIntervalRef.current = setInterval(() => {
+      if (popup.closed) {
+        cleanup();
+      }
+    }, 500);
+  }, [isOpen, getManageReposUrl, cleanup]);
+
+  return { openManageRepos, isOpen };
+}
+
 export function useGitHubDisconnect(workspaceId: string): UseGitHubDisconnectReturn {
   const utils = trpc.useUtils();
   const [isDisconnecting, setIsDisconnecting] = useState(false);

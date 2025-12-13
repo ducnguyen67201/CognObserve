@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Unlink } from "lucide-react";
+import { Loader2, Settings, Unlink } from "lucide-react";
 import { GitHubIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +14,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useGitHubDisconnect } from "@/hooks/use-github-oauth";
+import { useGitHubDisconnect, useManageRepos } from "@/hooks/use-github-oauth";
 
 interface GitHubInstallation {
   id: string;
+  installationId: bigint;
   accountLogin: string;
   accountType: string;
   createdAt: Date;
@@ -33,6 +34,7 @@ export function GitHubConnectionStatus({
   workspaceId,
 }: GitHubConnectionStatusProps) {
   const { disconnect, isDisconnecting } = useGitHubDisconnect(workspaceId);
+  const { openManageRepos, isOpen: isManageReposOpen } = useManageRepos(installation);
 
   const handleDisconnect = async () => {
     await disconnect();
@@ -56,17 +58,32 @@ export function GitHubConnectionStatus({
         </div>
       </div>
 
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" disabled={isDisconnecting}>
-            {isDisconnecting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Unlink className="mr-2 h-4 w-4" />
-            )}
-            Disconnect
-          </Button>
-        </AlertDialogTrigger>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={openManageRepos}
+          disabled={isManageReposOpen}
+        >
+          {isManageReposOpen ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Settings className="mr-2 h-4 w-4" />
+          )}
+          {isManageReposOpen ? "Managing..." : "Manage Repos"}
+        </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" disabled={isDisconnecting}>
+              {isDisconnecting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Unlink className="mr-2 h-4 w-4" />
+              )}
+              Disconnect
+            </Button>
+          </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect GitHub?</AlertDialogTitle>
@@ -86,7 +103,8 @@ export function GitHubConnectionStatus({
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+        </AlertDialog>
+      </div>
     </div>
   );
 }
