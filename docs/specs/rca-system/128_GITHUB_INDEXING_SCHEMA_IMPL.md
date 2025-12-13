@@ -91,7 +91,7 @@ model GitHubRepository {
 model GitCommit {
   id          String   @id @default(cuid())
   repoId      String
-  sha         String              // Git commit SHA (40 chars)
+  sha         String   @db.Char(40)  // Git commit SHA (exactly 40 chars)
   message     String              // Commit message
   author      String              // Author name
   authorEmail String?             // Author email
@@ -163,7 +163,7 @@ model CodeChunk {
   startLine   Int                 // Starting line number
   endLine     Int                 // Ending line number
   content     String   @db.Text   // Chunk content (can be large)
-  contentHash String              // SHA-256 hash for deduplication
+  contentHash String   @db.Char(64)  // SHA-256 hash for deduplication (64 hex chars)
   language    String?             // Detected language
   chunkType   String   @default("block")  // function, class, module, block
   createdAt   DateTime @default(now())
@@ -315,7 +315,7 @@ export const ConnectRepositorySchema = z.object({
   owner: z.string().min(1),
   repo: z.string().min(1),
   defaultBranch: z.string().default("main"),
-  installationId: z.number().optional(),
+  installationId: z.bigint().optional(),
 });
 export type ConnectRepositoryInput = z.infer<typeof ConnectRepositorySchema>;
 
@@ -323,15 +323,20 @@ export type ConnectRepositoryInput = z.infer<typeof ConnectRepositorySchema>;
 // Code Chunk Schemas (for Temporal workflows)
 // ============================================
 
-export const CodeChunkSchema = z.object({
-  filePath: z.string(),
-  startLine: z.number().int().positive(),
-  endLine: z.number().int().positive(),
-  content: z.string(),
-  contentHash: z.string(),
-  language: z.string().nullable(),
-  chunkType: ChunkTypeSchema,
-});
+export const CodeChunkSchema = z
+  .object({
+    filePath: z.string(),
+    startLine: z.number().int().positive(),
+    endLine: z.number().int().positive(),
+    content: z.string(),
+    contentHash: z.string().length(64),
+    language: z.string().nullable(),
+    chunkType: ChunkTypeSchema,
+  })
+  .refine((data) => data.endLine >= data.startLine, {
+    message: "endLine must be greater than or equal to startLine",
+    path: ["endLine"],
+  });
 export type CodeChunkInput = z.infer<typeof CodeChunkSchema>;
 ```
 
