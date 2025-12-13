@@ -4,6 +4,18 @@
 **Priority:** P0
 **Sprint:** Sprint 1 - Foundation
 **Dependencies:** #128 (Database Schema), #129 (Webhook Endpoint), #131 (Code Chunking - can be stubbed)
+**Status:** ✅ IMPLEMENTED
+
+> **Note:** This spec contains simplified code examples for documentation purposes.
+> The actual implementation in source files follows stricter patterns from CLAUDE.md:
+> - Uses `env` from `@/lib/env` (not `process.env`)
+> - Uses Zod validation for all external API responses
+> - Uses `ctx.db` in tRPC procedures (not direct `prisma` import)
+> - Inlines pure functions in workflows (not imported from activities)
+>
+> See actual implementation in:
+> - `apps/worker/src/workflows/github-index.workflow.ts`
+> - `apps/worker/src/temporal/activities/github.activities.ts`
 
 ---
 

@@ -52,7 +52,7 @@ const TS_PATTERNS = {
  * Determine chunk type from matched pattern
  */
 function getChunkType(line: string): ChunkType {
-  if (TS_PATTERNS.classDecl.test(line) || TS_PATTERNS.exportDefault.test(line) && line.includes("class")) {
+  if (TS_PATTERNS.classDecl.test(line) || (TS_PATTERNS.exportDefault.test(line) && line.includes("class"))) {
     return "class";
   }
   if (

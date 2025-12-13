@@ -59,6 +59,9 @@ function splitIntoChunks(
     const nextWouldExceed = exceedsLimits([...currentLines, lines[i + 1] ?? ""], opts);
     const atLimit = exceedsLimits(currentLines, opts);
 
+    // Split conditions:
+    // 1. atLimit: Hard limit reached - must split to respect size constraints
+    // 2. Natural boundary: At blank line AND next line would exceed AND we have minimum lines
     if (atLimit || (isBlankLine && nextWouldExceed && currentLines.length >= opts.minLines)) {
       // Create chunk from current lines
       chunks.push({
@@ -67,8 +70,9 @@ function splitIntoChunks(
         content: currentLines.join("\n"),
         chunkType: "block",
       });
+      // Advance to next line position
+      currentStart = currentStart + currentLines.length;
       currentLines = [];
-      currentStart = startLine + i + 1;
     }
   }
 

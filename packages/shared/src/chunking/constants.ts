@@ -28,11 +28,29 @@ export const EXTENSION_TO_LANGUAGE: Record<string, string> = {
 };
 
 /**
- * Languages with AST-based chunking support
+ * Languages with TypeScript/JavaScript heuristic chunking
+ * Note: Uses pattern matching, not true AST parsing.
+ * Future: Add @typescript-eslint/parser for AST-based chunking.
  */
-export const AST_LANGUAGES = ["typescript", "javascript"] as const;
+export const TS_LANGUAGES = ["typescript", "javascript"] as const;
 
 /**
- * Languages with heuristic chunking support
+ * Languages with heuristic chunking support (Python/Go)
  */
 export const HEURISTIC_LANGUAGES = ["python", "go"] as const;
+
+/**
+ * Excluded path patterns for indexing
+ */
+export const EXCLUDED_PATH_PATTERNS = [
+  /node_modules/,
+  /\.git\//,
+  /dist\//,
+  /build\//,
+  /\.next\//,
+  /\.min\./,
+  /package-lock\.json$/,
+  /pnpm-lock\.yaml$/,
+  /yarn\.lock$/,
+  /\.d\.ts$/,
+] as const;

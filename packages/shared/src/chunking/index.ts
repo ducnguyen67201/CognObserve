@@ -10,8 +10,9 @@ import type { ChunkInput, ChunkOptions, CodeChunk } from "./types";
 import {
   CHUNK_DEFAULTS,
   EXTENSION_TO_LANGUAGE,
-  AST_LANGUAGES,
+  TS_LANGUAGES,
   HEURISTIC_LANGUAGES,
+  EXCLUDED_PATH_PATTERNS,
 } from "./constants";
 import { chunkTypeScript } from "./typescript";
 import { chunkHeuristic } from "./heuristic";
@@ -38,22 +39,8 @@ export function generateContentHash(content: string): string {
  * Check if a file should be indexed based on extension and path patterns
  */
 export function shouldIndexFile(path: string): boolean {
-  // Excluded patterns
-  const excludedPatterns = [
-    /node_modules/,
-    /\.git\//,
-    /dist\//,
-    /build\//,
-    /\.next\//,
-    /\.min\./,
-    /package-lock\.json$/,
-    /pnpm-lock\.yaml$/,
-    /yarn\.lock$/,
-    /\.d\.ts$/,
-  ];
-
-  // Check excluded patterns
-  for (const pattern of excludedPatterns) {
+  // Check excluded patterns (from constants)
+  for (const pattern of EXCLUDED_PATH_PATTERNS) {
     if (pattern.test(path)) {
       return false;
     }
@@ -91,7 +78,7 @@ export function chunkCode(
   // Select chunking strategy based on language
   let chunks: CodeChunk[];
 
-  if (language && (AST_LANGUAGES as readonly string[]).includes(language)) {
+  if (language && (TS_LANGUAGES as readonly string[]).includes(language)) {
     // TypeScript/JavaScript - use heuristic pattern matching
     chunks = chunkTypeScript(content, filePath, language, options);
   } else if (language && (HEURISTIC_LANGUAGES as readonly string[]).includes(language)) {
