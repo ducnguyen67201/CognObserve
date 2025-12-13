@@ -1,33 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@cognobserve/db";
 import { verifyGitHubSignature } from "@cognobserve/api/lib/github";
 import {
   GitHubPushPayloadSchema,
   GitHubPRPayloadSchema,
+  type GitHubWebhookEvent,
 } from "@cognobserve/api/schemas";
 import { env } from "@/lib/env";
 import { startGitHubIndexWorkflow } from "@/lib/temporal-client";
+import {
+  webhookSuccess,
+  webhookError,
+  webhookServerError,
+  parseRepositoryFullName,
+  SKIP_REASONS,
+} from "@/lib/webhook-responses";
 
 // GitHub webhook headers
 const SIGNATURE_HEADER = "x-hub-signature-256";
 const EVENT_HEADER = "x-github-event";
 const DELIVERY_HEADER = "x-github-delivery";
 
-// Cache control headers
-const CACHE_HEADERS = { "Cache-Control": "no-store, no-cache, must-revalidate" };
-
 // Supported events
 const SUPPORTED_EVENTS = ["push", "pull_request"] as const;
-type SupportedEvent = (typeof SUPPORTED_EVENTS)[number];
 
 export async function POST(req: NextRequest) {
   // 1. Check if webhook secret is configured
   if (!env.GITHUB_WEBHOOK_SECRET) {
     console.error("GITHUB_WEBHOOK_SECRET not configured");
-    return NextResponse.json(
-      { error: "Webhook not configured" },
-      { status: 500, headers: CACHE_HEADERS }
-    );
+    return webhookServerError.notConfigured();
   }
 
   // 2. Get required headers
@@ -36,10 +37,7 @@ export async function POST(req: NextRequest) {
   const delivery = req.headers.get(DELIVERY_HEADER);
 
   if (!event || !delivery) {
-    return NextResponse.json(
-      { error: "Missing required headers" },
-      { status: 400, headers: CACHE_HEADERS }
-    );
+    return webhookError.missingHeaders();
   }
 
   // 3. Get raw payload for signature verification
@@ -53,10 +51,7 @@ export async function POST(req: NextRequest) {
       ip: req.headers.get("x-forwarded-for") || "unknown",
       timestamp: new Date().toISOString(),
     });
-    return NextResponse.json(
-      { error: "Invalid signature" },
-      { status: 401, headers: CACHE_HEADERS }
-    );
+    return webhookError.invalidSignature();
   }
 
   // 5. Parse payload
@@ -64,28 +59,19 @@ export async function POST(req: NextRequest) {
   try {
     payload = JSON.parse(rawPayload);
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400, headers: CACHE_HEADERS }
-    );
+    return webhookError.invalidJson();
   }
 
   // 6. Handle ping event (GitHub sends this when webhook is first created)
   if (event === "ping") {
     console.log("GitHub webhook ping received", { delivery });
-    return NextResponse.json(
-      { message: "pong" },
-      { status: 200, headers: CACHE_HEADERS }
-    );
+    return webhookSuccess.pong();
   }
 
   // 7. Check if event is supported
-  if (!SUPPORTED_EVENTS.includes(event as SupportedEvent)) {
+  if (!SUPPORTED_EVENTS.includes(event as GitHubWebhookEvent)) {
     console.log("Unsupported GitHub event", { event, delivery });
-    return NextResponse.json(
-      { message: "Event not supported" },
-      { status: 200, headers: CACHE_HEADERS }
-    );
+    return webhookSuccess.skipped(SKIP_REASONS.EVENT_NOT_SUPPORTED);
   }
 
   // 8. Extract repository info based on event type
@@ -95,15 +81,12 @@ export async function POST(req: NextRequest) {
   try {
     if (event === "push") {
       const parsed = GitHubPushPayloadSchema.parse(payload);
-      const parts = parsed.repository.full_name.split("/");
-      if (parts.length !== 2 || !parts[0] || !parts[1]) {
-        return NextResponse.json(
-          { error: "Invalid repository name format" },
-          { status: 400, headers: CACHE_HEADERS }
-        );
+      const repoInfo = parseRepositoryFullName(parsed.repository.full_name);
+      if (!repoInfo) {
+        return webhookError.invalidRepoFormat();
       }
-      owner = parts[0];
-      repo = parts[1];
+      owner = repoInfo.owner;
+      repo = repoInfo.repo;
 
       // Only process pushes to default branch
       const branch = parsed.ref.replace("refs/heads/", "");
@@ -113,22 +96,16 @@ export async function POST(req: NextRequest) {
           branch,
           defaultBranch: parsed.repository.default_branch,
         });
-        return NextResponse.json(
-          { message: "Non-default branch push ignored" },
-          { status: 200, headers: CACHE_HEADERS }
-        );
+        return webhookSuccess.skipped(SKIP_REASONS.NON_DEFAULT_BRANCH);
       }
     } else if (event === "pull_request") {
       const parsed = GitHubPRPayloadSchema.parse(payload);
-      const parts = parsed.repository.full_name.split("/");
-      if (parts.length !== 2 || !parts[0] || !parts[1]) {
-        return NextResponse.json(
-          { error: "Invalid repository name format" },
-          { status: 400, headers: CACHE_HEADERS }
-        );
+      const repoInfo = parseRepositoryFullName(parsed.repository.full_name);
+      if (!repoInfo) {
+        return webhookError.invalidRepoFormat();
       }
-      owner = parts[0];
-      repo = parts[1];
+      owner = repoInfo.owner;
+      repo = repoInfo.repo;
 
       // Only process opened, closed, and synchronize events
       const relevantActions = ["opened", "closed", "synchronize"];
@@ -137,23 +114,14 @@ export async function POST(req: NextRequest) {
           delivery,
           action: parsed.action,
         });
-        return NextResponse.json(
-          { message: "PR action not relevant" },
-          { status: 200, headers: CACHE_HEADERS }
-        );
+        return webhookSuccess.skipped(SKIP_REASONS.PR_ACTION_NOT_RELEVANT);
       }
     } else {
-      return NextResponse.json(
-        { message: "Event not supported" },
-        { status: 200, headers: CACHE_HEADERS }
-      );
+      return webhookSuccess.skipped(SKIP_REASONS.EVENT_NOT_SUPPORTED);
     }
   } catch (error) {
     console.error("Failed to parse webhook payload", { delivery, event, error });
-    return NextResponse.json(
-      { error: "Invalid payload structure" },
-      { status: 400, headers: CACHE_HEADERS }
-    );
+    return webhookError.invalidPayload();
   }
 
   // 9. Look up repository in database
@@ -164,10 +132,7 @@ export async function POST(req: NextRequest) {
 
   if (!githubRepo) {
     console.log("Repository not registered", { delivery, owner, repo });
-    return NextResponse.json(
-      { message: "Repository not registered" },
-      { status: 200, headers: CACHE_HEADERS }
-    );
+    return webhookSuccess.skipped(SKIP_REASONS.REPO_NOT_REGISTERED);
   }
 
   // 10. Start Temporal workflow asynchronously
@@ -175,7 +140,7 @@ export async function POST(req: NextRequest) {
     const workflowId = await startGitHubIndexWorkflow({
       repoId: githubRepo.id,
       projectId: githubRepo.projectId,
-      event: event as SupportedEvent,
+      event: event as GitHubWebhookEvent,
       payload,
       deliveryId: delivery,
     });
@@ -188,18 +153,9 @@ export async function POST(req: NextRequest) {
       workflowId,
     });
 
-    return NextResponse.json(
-      {
-        message: "Webhook received",
-        workflowId,
-      },
-      { status: 200, headers: CACHE_HEADERS }
-    );
+    return webhookSuccess.received(workflowId);
   } catch (error) {
     console.error("Failed to start workflow", { delivery, event, error });
-    return NextResponse.json(
-      { error: "Failed to process webhook" },
-      { status: 500, headers: CACHE_HEADERS }
-    );
+    return webhookServerError.processingFailed();
   }
 }

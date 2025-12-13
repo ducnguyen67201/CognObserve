@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@cognobserve/db";
 import { validateInternalSecret } from "@cognobserve/shared";
 import { env } from "@/lib/env";
+import { internalApiError, internalApiSuccess } from "@/lib/api-responses";
 
 // Constants
 const INTERNAL_SECRET_HEADER = "X-Internal-Secret";
-const CACHE_CONTROL_NO_STORE = "no-store, no-cache, must-revalidate";
 
 // Input validation schema
 const validateKeySchema = z.object({
@@ -27,8 +27,6 @@ const validateKeySchema = z.object({
  * 4. No sensitive data in logs
  */
 export async function POST(req: NextRequest) {
-  const headers = { "Cache-Control": CACHE_CONTROL_NO_STORE };
-
   // 1. Validate internal secret (constant-time)
   const providedSecret = req.headers.get(INTERNAL_SECRET_HEADER);
   if (!validateInternalSecret(providedSecret, env.INTERNAL_API_SECRET)) {
@@ -36,10 +34,7 @@ export async function POST(req: NextRequest) {
       ip: req.headers.get("x-forwarded-for") || "unknown",
       timestamp: new Date().toISOString(),
     });
-    return NextResponse.json(
-      { valid: false, error: "Unauthorized" },
-      { status: 401, headers }
-    );
+    return internalApiSuccess.invalid("Unauthorized");
   }
 
   // 2. Parse and validate input
@@ -47,18 +42,12 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json(
-      { valid: false, error: "Invalid JSON" },
-      { status: 400, headers }
-    );
+    return internalApiSuccess.invalid("Invalid JSON");
   }
 
   const parseResult = validateKeySchema.safeParse(body);
   if (!parseResult.success) {
-    return NextResponse.json(
-      { valid: false, error: "Invalid hash format" },
-      { status: 400, headers }
-    );
+    return internalApiSuccess.invalid("Invalid hash format");
   }
 
   const { hashedKey } = parseResult.data;
@@ -79,10 +68,7 @@ export async function POST(req: NextRequest) {
       console.info("API key validation failed: key not found", {
         timestamp: new Date().toISOString(),
       });
-      return NextResponse.json(
-        { valid: false, error: "Invalid or expired API key" },
-        { status: 401, headers }
-      );
+      return internalApiSuccess.invalid("Invalid or expired API key");
     }
 
     // 5. Check expiration
@@ -91,10 +77,7 @@ export async function POST(req: NextRequest) {
         keyId: apiKey.id,
         expiredAt: apiKey.expiresAt.toISOString(),
       });
-      return NextResponse.json(
-        { valid: false, error: "Invalid or expired API key" },
-        { status: 401, headers }
-      );
+      return internalApiSuccess.invalid("Invalid or expired API key");
     }
 
     // 6. Success - return project ID
@@ -103,15 +86,9 @@ export async function POST(req: NextRequest) {
       projectId: apiKey.projectId,
     });
 
-    return NextResponse.json(
-      { valid: true, projectId: apiKey.projectId },
-      { status: 200, headers }
-    );
+    return internalApiSuccess.valid({ projectId: apiKey.projectId });
   } catch (error) {
     console.error("Database error during key validation:", error);
-    return NextResponse.json(
-      { valid: false, error: "Internal server error" },
-      { status: 500, headers }
-    );
+    return internalApiError.internal();
   }
 }

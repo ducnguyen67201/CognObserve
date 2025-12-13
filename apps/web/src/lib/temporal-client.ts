@@ -1,5 +1,9 @@
 import { Client, Connection } from "@temporalio/client";
+import type { GitHubIndexWorkflowInput } from "@cognobserve/api/schemas";
 import { env } from "./env";
+
+// Re-export the type for convenience
+export type { GitHubIndexWorkflowInput } from "@cognobserve/api/schemas";
 
 let _client: Client | null = null;
 let _connection: Connection | null = null;
@@ -23,17 +27,6 @@ export async function getTemporalClient(): Promise<Client> {
   });
 
   return _client;
-}
-
-/**
- * Input for GitHub index workflow.
- */
-export interface GitHubIndexWorkflowInput {
-  repoId: string;
-  projectId: string;
-  event: "push" | "pull_request";
-  payload: unknown;
-  deliveryId: string;
 }
 
 /**

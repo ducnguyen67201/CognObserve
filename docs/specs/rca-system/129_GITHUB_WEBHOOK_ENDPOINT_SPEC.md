@@ -118,8 +118,12 @@ function verifyGitHubSignature(
 
 Add to server schema:
 ```typescript
+// Optional - allows app to start without GitHub integration
+// Webhook endpoint returns 500 if not configured when called
 GITHUB_WEBHOOK_SECRET: z.string().min(32).optional(),
 ```
+
+> **Note:** The env var is intentionally optional to allow the app to start without GitHub integration configured. The webhook endpoint handles the missing configuration gracefully by returning a 500 error with a clear message.
 
 **File: `.env.example`**
 

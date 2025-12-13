@@ -128,3 +128,89 @@ export interface ScoreValidationResult {
  * Score data type enum (matches Prisma)
  */
 export type ScoreDataType = "NUMERIC" | "CATEGORICAL" | "BOOLEAN";
+
+// ============================================
+// GitHub Index Workflow Types
+// ============================================
+
+/**
+ * GitHub index workflow input (from webhook)
+ */
+export interface GitHubIndexInput {
+  repoId: string;
+  projectId: string;
+  event: "push" | "pull_request";
+  payload: unknown;
+  deliveryId: string;
+}
+
+/**
+ * GitHub index workflow result
+ */
+export interface GitHubIndexResult {
+  success: boolean;
+  repoId: string;
+  event: "push" | "pull_request";
+  filesProcessed: number;
+  chunksCreated: number;
+  commitSha?: string;
+  prNumber?: number;
+  error?: string;
+}
+
+/**
+ * Changed file info extracted from GitHub events
+ */
+export interface ChangedFile {
+  path: string;
+  status: "added" | "modified" | "removed";
+}
+
+/**
+ * File content fetched from GitHub
+ */
+export interface FileContent {
+  path: string;
+  content: string;
+  encoding: "utf-8" | "base64";
+}
+
+/**
+ * Code chunk data for storage
+ */
+export interface CodeChunkData {
+  filePath: string;
+  startLine: number;
+  endLine: number;
+  content: string;
+  contentHash: string;
+  language: string | null;
+  chunkType: "function" | "class" | "module" | "block";
+}
+
+/**
+ * Input for storeGitHubIndex internal procedure
+ */
+export interface StoreGitHubIndexInput {
+  repoId: string;
+  event: "push" | "pull_request";
+  // Commit fields (for push events)
+  commitSha?: string;
+  commitMessage?: string;
+  commitAuthor?: string;
+  commitAuthorEmail?: string;
+  commitTimestamp?: string;
+  // PR fields (for pull_request events)
+  prNumber?: number;
+  prTitle?: string;
+  prBody?: string;
+  prState?: string;
+  prAuthor?: string;
+  prBaseBranch?: string;
+  prHeadBranch?: string;
+  prMergedAt?: string;
+  prClosedAt?: string;
+  // Changed files and chunks
+  changedFiles: string[];
+  chunks: CodeChunkData[];
+}

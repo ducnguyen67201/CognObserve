@@ -20,3 +20,6 @@ export {
   triggerEvaluationSignal,
   stopEvaluationSignal,
 } from "./alert.workflow";
+
+// GitHub index workflow
+export { githubIndexWorkflow } from "./github-index.workflow";

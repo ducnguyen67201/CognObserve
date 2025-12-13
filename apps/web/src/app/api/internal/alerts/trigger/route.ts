@@ -5,7 +5,7 @@
  * Sends notifications via all linked channels.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@cognobserve/db";
 import { validateInternalSecret } from "@cognobserve/shared";
@@ -13,12 +13,12 @@ import { env } from "@/lib/env";
 import { AlertingAdapter } from "@cognobserve/api/lib/alerting";
 import { initializeAlertingAdapters } from "@cognobserve/api/lib/alerting/init";
 import { type ChannelProvider } from "@cognobserve/api/schemas";
+import { internalApiError, internalApiSuccess } from "@/lib/api-responses";
 
 // Initialize alerting adapters on module load
 initializeAlertingAdapters();
 
 const INTERNAL_SECRET_HEADER = "X-Internal-Secret";
-const CACHE_CONTROL_NO_STORE = "no-store, no-cache, must-revalidate";
 
 // Define schema inline to avoid bundling issues
 const AlertPayloadSchema = z.object({
@@ -50,8 +50,6 @@ type ChannelResult = {
 };
 
 export async function POST(req: NextRequest) {
-  const headers = { "Cache-Control": CACHE_CONTROL_NO_STORE };
-
   // 1. Validate internal secret
   const providedSecret = req.headers.get(INTERNAL_SECRET_HEADER);
   if (!validateInternalSecret(providedSecret, env.INTERNAL_API_SECRET)) {
@@ -59,10 +57,7 @@ export async function POST(req: NextRequest) {
       ip: req.headers.get("x-forwarded-for") || "unknown",
       timestamp: new Date().toISOString(),
     });
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401, headers }
-    );
+    return internalApiError.unauthorized();
   }
 
   // 2. Parse and validate input
@@ -70,18 +65,12 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json(
-      { success: false, error: "Invalid JSON" },
-      { status: 400, headers }
-    );
+    return internalApiError.invalidJson();
   }
 
   const parseResult = TriggerAlertSchema.safeParse(body);
   if (!parseResult.success) {
-    return NextResponse.json(
-      { success: false, error: "Invalid request", details: parseResult.error.flatten() },
-      { status: 400, headers }
-    );
+    return internalApiError.validation("Invalid request", parseResult.error.flatten());
   }
 
   const { alertId, payload } = parseResult.data;
@@ -101,10 +90,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!alert) {
-      return NextResponse.json(
-        { success: false, error: "Alert not found" },
-        { status: 404, headers }
-      );
+      return internalApiError.notFound("Alert");
     }
 
     // 4. Send notifications to all channels
@@ -163,21 +149,10 @@ export async function POST(req: NextRequest) {
       `Alert "${payload.alertName}" triggered - ${successCount}/${results.length} notifications sent`
     );
 
-    return NextResponse.json(
-      {
-        success: true,
-        alertId,
-        results,
-        notifiedVia,
-      },
-      { status: 200, headers }
-    );
+    return internalApiSuccess.ok({ alertId, results, notifiedVia });
   } catch (error) {
     console.error("Error triggering alert notification:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500, headers }
-    );
+    return internalApiError.internal();
   }
 }
 
