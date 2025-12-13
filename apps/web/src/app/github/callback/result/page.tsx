@@ -1,16 +1,45 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+
+const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+  cancelled: {
+    title: "Connection Cancelled",
+    description: "You cancelled the GitHub authorization.",
+  },
+  invalid_state: {
+    title: "Session Expired",
+    description: "Your session has expired. Please try again.",
+  },
+  github_api_error: {
+    title: "Connection Failed",
+    description: "Failed to connect to GitHub. Please try again.",
+  },
+  missing_installation: {
+    title: "Installation Failed",
+    description: "GitHub did not return installation details.",
+  },
+};
 
 /**
- * GitHub OAuth Result Page
- *
- * This page receives the result from the API callback route and
- * communicates it to the parent window via postMessage.
+ * Loading fallback for the Suspense boundary
  */
-export default function GitHubCallbackResultPage() {
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <Loader2 className="h-16 w-16 animate-spin text-muted-foreground" />
+      <p className="mt-4 text-sm text-muted-foreground">Processing...</p>
+    </div>
+  );
+}
+
+/**
+ * Inner component that uses useSearchParams
+ * Must be wrapped in Suspense boundary
+ */
+function GitHubCallbackResultContent() {
   const searchParams = useSearchParams();
 
   const success = searchParams.get("success") === "true";
@@ -18,18 +47,15 @@ export default function GitHubCallbackResultPage() {
   const repoCount = searchParams.get("repoCount");
 
   useEffect(() => {
-    // Build result object
     const result = success
       ? { type: "github-oauth-result", success: true, repoCount: Number(repoCount) }
       : { type: "github-oauth-result", success: false, error: error || "unknown" };
 
     console.log("[GitHub Result] Sending postMessage:", result);
 
-    // Send result to parent window
     if (window.opener) {
       window.opener.postMessage(result, window.location.origin);
 
-      // Close popup after a brief delay
       const timeout = setTimeout(() => {
         window.close();
       }, 1500);
@@ -38,7 +64,6 @@ export default function GitHubCallbackResultPage() {
     }
   }, [success, error, repoCount]);
 
-  // Render success state
   if (success) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -54,28 +79,8 @@ export default function GitHubCallbackResultPage() {
     );
   }
 
-  // Error states
-  const errorMessages: Record<string, { title: string; description: string }> = {
-    cancelled: {
-      title: "Connection Cancelled",
-      description: "You cancelled the GitHub authorization.",
-    },
-    invalid_state: {
-      title: "Session Expired",
-      description: "Your session has expired. Please try again.",
-    },
-    github_api_error: {
-      title: "Connection Failed",
-      description: "Failed to connect to GitHub. Please try again.",
-    },
-    missing_installation: {
-      title: "Installation Failed",
-      description: "GitHub did not return installation details.",
-    },
-  };
-
   const errorInfo = error
-    ? errorMessages[error] || { title: "Unknown Error", description: "An unknown error occurred." }
+    ? ERROR_MESSAGES[error] || { title: "Unknown Error", description: "An unknown error occurred." }
     : { title: "Unknown Error", description: "An unknown error occurred." };
 
   return (
@@ -87,5 +92,19 @@ export default function GitHubCallbackResultPage() {
         This window will close automatically...
       </p>
     </div>
+  );
+}
+
+/**
+ * GitHub OAuth Result Page
+ *
+ * This page receives the result from the API callback route and
+ * communicates it to the parent window via postMessage.
+ */
+export default function GitHubCallbackResultPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <GitHubCallbackResultContent />
+    </Suspense>
   );
 }
