@@ -411,6 +411,46 @@ export const formError = {
 // Alert Error Toasts
 // ============================================================
 
+// ============================================================
+// GitHub Error Toasts
+// ============================================================
+
+export const githubError = {
+  cancelled: () =>
+    toast.error("GitHub Connection Cancelled", {
+      description: "You cancelled the GitHub authorization.",
+    }),
+
+  invalid_state: () =>
+    toast.error("Session Expired", {
+      description: "Your session has expired. Please try connecting again.",
+    }),
+
+  github_api_error: () =>
+    toast.error("GitHub Connection Failed", {
+      description: "Failed to connect to GitHub. Please try again.",
+    }),
+
+  missing_installation: () =>
+    toast.error("Installation Failed", {
+      description: "GitHub did not return installation details. Please try again.",
+    }),
+
+  not_configured: () =>
+    toast.error("GitHub Not Configured", {
+      description: "GitHub integration is not configured on this server.",
+    }),
+
+  disconnect_failed: () =>
+    toast.error("Disconnect Failed", {
+      description: "Failed to disconnect GitHub. Please try again.",
+    }),
+} as const;
+
+// ============================================================
+// Alert Error Toasts
+// ============================================================
+
 export const alertError = {
   notFound: () =>
     toast.error("Alert Not Found", {

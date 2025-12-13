@@ -158,6 +158,36 @@ export const clipboardToast = {
 // Alert Toasts
 // ============================================================
 
+// ============================================================
+// GitHub Toasts
+// ============================================================
+
+export const githubToast = {
+  connected: (repoCount: number) =>
+    toast.success("GitHub Connected", {
+      description: `${repoCount} ${repoCount === 1 ? "repository" : "repositories"} synced successfully.`,
+    }),
+
+  disconnected: () =>
+    toast.success("GitHub Disconnected", {
+      description: "GitHub integration has been removed from this workspace.",
+    }),
+
+  repositoryEnabled: (name: string) =>
+    toast.success("Repository Enabled", {
+      description: `"${name}" is now being indexed.`,
+    }),
+
+  repositoryDisabled: (name: string) =>
+    toast.success("Repository Disabled", {
+      description: `"${name}" indexing has been stopped.`,
+    }),
+} as const;
+
+// ============================================================
+// Alert Toasts
+// ============================================================
+
 export const alertToast = {
   created: (name: string) =>
     toast.success("Alert created", { description: `"${name}" is now monitoring your project.` }),

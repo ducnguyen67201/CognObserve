@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { useDebounce } from "@/hooks/use-debounce";
 import { RepositoryList } from "./repository-list";
 import { RepositoryFilters } from "./repository-filters";
 import { GitHubEmptyState } from "./github-empty-state";
+import { GitHubConnectionStatus } from "./github-connection-status";
 import type { FilterType } from "./types";
 
 const PAGE_SIZE = 20;
+const POLLING_INTERVAL_MS = 5000; // Poll every 5 seconds when indexing
 
 interface RepositoriesPageProps {
   workspaceSlug: string;
@@ -24,6 +26,9 @@ export function RepositoriesPage({ workspaceSlug }: RepositoriesPageProps) {
   const { data: installation, isLoading: installationLoading } =
     trpc.github.getInstallation.useQuery({ workspaceSlug });
 
+  // Track if we should poll (when repos are indexing)
+  const [shouldPoll, setShouldPoll] = useState(false);
+
   const { data, isLoading, refetch } = trpc.github.listRepositories.useQuery(
     {
       workspaceSlug,
@@ -32,8 +37,19 @@ export function RepositoriesPage({ workspaceSlug }: RepositoriesPageProps) {
       page,
       pageSize: PAGE_SIZE,
     },
-    { enabled: !!installation }
+    {
+      enabled: !!installation,
+      refetchInterval: shouldPoll ? POLLING_INTERVAL_MS : false,
+    }
   );
+
+  // Check if any repositories are currently indexing and update polling state
+  useEffect(() => {
+    const hasIndexing = data?.repositories.some(
+      (repo) => repo.enabled && (repo.indexStatus === "INDEXING" || repo.indexStatus === "PENDING")
+    ) ?? false;
+    setShouldPoll(hasIndexing);
+  }, [data?.repositories]);
 
   const handleFilterChange = useCallback((newFilter: FilterType) => {
     setFilter(newFilter);
@@ -73,6 +89,11 @@ export function RepositoriesPage({ workspaceSlug }: RepositoriesPageProps) {
           </p>
         </div>
       </div>
+
+      <GitHubConnectionStatus
+        installation={installation}
+        workspaceId={installation.workspaceId}
+      />
 
       <RepositoryFilters
         filter={filter}
