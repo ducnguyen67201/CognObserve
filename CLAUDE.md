@@ -1581,6 +1581,37 @@ const handleCopy = async (text: string) => {
 4. **Use consistent naming**: `{domain}Toast` for success, `{domain}Error` for errors
 5. **Export from the file** so it can be imported elsewhere
 
+## API Responses (CRITICAL)
+
+**NEVER use `NextResponse.json()` directly.** Always use centralized response utilities.
+
+**Full documentation:** [`docs/api-responses.md`](docs/api-responses.md)
+
+### Quick Reference
+
+```typescript
+import { apiError, apiSuccess, apiServerError } from "@/lib/api-responses";
+
+// Success
+return apiSuccess.ok({ data: result });
+return apiSuccess.created(newUser);
+
+// Errors
+return apiError.unauthorized();
+return apiError.notFound("User");
+return apiServerError.internal();
+```
+
+### Files
+- `apps/web/src/lib/api-responses.ts` - REST API responses
+- `apps/web/src/lib/webhook-responses.ts` - Webhook responses
+
+### Adding New API Responses
+When adding new response methods:
+1. Add to the appropriate object in `api-responses.ts` or `webhook-responses.ts`
+2. **Update [`docs/api-responses.md`](docs/api-responses.md)** to document the new method
+3. Follow existing patterns (use `json()` helper, include error codes)
+
 ## Quick Reference for Claude
 
 ### Key Locations
@@ -1595,6 +1626,7 @@ const handleCopy = async (text: string) => {
 | **Types** | Import from `@cognobserve/db`, `@cognobserve/api/schemas`, `@cognobserve/proto` | Duplicate types, import from `@prisma/client` |
 | **Unknown Data** | Use Zod `safeParse()` for API responses, JSON parsing | Type assertions (`as`), manual type checking |
 | **Toasts** | Use `@/lib/errors` and `@/lib/success` | Import `toast` from "sonner" directly |
+| **API Responses** | Use `@/lib/api-responses` and `@/lib/webhook-responses` | Use `NextResponse.json()` directly |
 | **UI** | Use shadcn/ui from `@/components/ui/` | Write custom CSS for standard elements |
 | **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |
 | **Frontend** | < 150 lines, logic in hooks, domain folders | Fat components, inline business logic |

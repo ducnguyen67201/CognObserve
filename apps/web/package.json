@@ -16,6 +16,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
     "@cognobserve/api": "workspace:*",
+    "@temporalio/client": "^1.13.2",
     "@cognobserve/db": "workspace:*",
     "@cognobserve/sdk": "workspace:^",
     "@cognobserve/shared": "workspace:*",

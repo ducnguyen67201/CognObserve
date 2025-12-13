@@ -40,6 +40,14 @@ export const env = createEnv({
       .string()
       .length(62)
       .default("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+
+    // GitHub Webhook (optional - allows app to start without GitHub integration)
+    // Webhook endpoint returns 500 if not configured when called
+    GITHUB_WEBHOOK_SECRET: z.string().min(32).optional(),
+
+    // Temporal (host:port format, NOT a URL - no scheme like http://)
+    // Example: "localhost:7233" or "temporal.example.com:7233"
+    TEMPORAL_ADDRESS: z.string().optional(),
   },
 
   /**
@@ -68,6 +76,8 @@ export const env = createEnv({
     API_KEY_PREFIX: process.env.API_KEY_PREFIX,
     API_KEY_RANDOM_BYTES_LENGTH: process.env.API_KEY_RANDOM_BYTES_LENGTH,
     API_KEY_BASE62_CHARSET: process.env.API_KEY_BASE62_CHARSET,
+    GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+    TEMPORAL_ADDRESS: process.env.TEMPORAL_ADDRESS,
   },
 
   /**

@@ -32,6 +32,9 @@ export const env = createEnv({
     TEMPORAL_ADDRESS: z.string().default("localhost:7233"),
     TEMPORAL_NAMESPACE: z.string().default("default"),
     TEMPORAL_TASK_QUEUE: z.string().default("cognobserve-tasks"),
+
+    // GitHub API (optional, for higher rate limits)
+    GITHUB_TOKEN: z.string().optional(),
   },
 
   /**
@@ -52,6 +55,9 @@ export const env = createEnv({
     TEMPORAL_ADDRESS: process.env.TEMPORAL_ADDRESS,
     TEMPORAL_NAMESPACE: process.env.TEMPORAL_NAMESPACE,
     TEMPORAL_TASK_QUEUE: process.env.TEMPORAL_TASK_QUEUE,
+
+    // GitHub API
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
   },
 
   /**

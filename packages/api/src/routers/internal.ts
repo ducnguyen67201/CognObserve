@@ -14,7 +14,9 @@ import { prisma, Prisma, SpanLevel } from "@cognobserve/db";
 import { createRouter, publicProcedure, middleware } from "../trpc";
 import { calculateSpanCost } from "../lib/cost";
 import { SEVERITY_DEFAULTS, type AlertPayload, type ChannelProvider } from "../schemas/alerting";
+import { StoreGitHubIndexSchema } from "../schemas/github";
 import { AdapterRegistry } from "../lib/alerting/registry";
+import { GitHubService } from "../services";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -627,6 +629,14 @@ export const internalRouter = createRouter({
       console.log(`[Internal:dispatchNotification] Sent to ${sentCount}/${alert.channelLinks.length} channels`);
       return { channelCount: alert.channelLinks.length, sentCount, failedCount };
     }),
+
+  /**
+   * Store GitHub indexed data
+   * Called by: github.activities.ts → storeIndexedData
+   */
+  storeGitHubIndex: internalProcedure
+    .input(StoreGitHubIndexSchema)
+    .mutation(({ input }) => GitHubService.storeIndexedData(input)),
 });
 
 export type InternalRouter = typeof internalRouter;

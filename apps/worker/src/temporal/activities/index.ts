@@ -27,3 +27,12 @@ export {
   transitionAlertState,
   dispatchNotification,
 } from "./alert.activities";
+
+// GitHub indexing activities
+export {
+  extractChangedFiles,
+  fetchFileContents,
+  chunkCodeFiles,
+  storeIndexedData,
+  shouldIndexFile,
+} from "./github.activities";

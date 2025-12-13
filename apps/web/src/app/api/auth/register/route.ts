@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@cognobserve/db";
 import { extractDomainFromEmail } from "@cognobserve/api";
 import { z } from "zod";
+import { apiError, apiSuccess, apiServerError } from "@/lib/api-responses";
 
 const registerSchema = z.object({
   name: z.string().min(2).max(100),
@@ -21,10 +22,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 409 }
-      );
+      return apiError.userExists();
     }
 
     // Hash password
@@ -70,19 +68,13 @@ export async function POST(request: NextRequest) {
       return newUser;
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return apiSuccess.created(user);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: error.issues },
-        { status: 400 }
-      );
+      return apiError.validation("Validation failed", error.issues);
     }
 
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiServerError.internal();
   }
 }
