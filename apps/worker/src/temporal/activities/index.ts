@@ -28,7 +28,7 @@ export {
   dispatchNotification,
 } from "./alert.activities";
 
-// GitHub indexing activities
+// GitHub indexing activities (webhook-triggered)
 export {
   extractChangedFiles,
   fetchFileContents,
@@ -36,3 +36,12 @@ export {
   storeIndexedData,
   shouldIndexFile,
 } from "./github.activities";
+
+// Repository indexing activities (UI-triggered full indexing)
+export {
+  updateRepositoryIndexStatus,
+  cleanupRepositoryChunks,
+  fetchRepositoryTree,
+  fetchRepositoryContents,
+  storeRepositoryChunks,
+} from "./repository-index.activities";

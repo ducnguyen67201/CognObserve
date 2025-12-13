@@ -35,6 +35,11 @@ export const env = createEnv({
 
     // GitHub API (optional, for higher rate limits)
     GITHUB_TOKEN: z.string().optional(),
+
+    // GitHub App Configuration (for repository indexing)
+    // Required for fetching repository contents via installation token
+    GITHUB_APP_ID: z.string().optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
   },
 
   /**
@@ -58,6 +63,10 @@ export const env = createEnv({
 
     // GitHub API
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+
+    // GitHub App Configuration
+    GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+    GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
   },
 
   /**

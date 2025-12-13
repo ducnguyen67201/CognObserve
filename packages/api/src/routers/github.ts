@@ -14,6 +14,7 @@ import {
   workspaceMiddleware,
 } from "../trpc";
 import { WORKSPACE_ADMIN_ROLES, type WorkspaceRole } from "../middleware/workspace";
+import { getTemporalClient, getTaskQueue } from "../lib/temporal";
 
 // ============================================
 // Input Schemas
@@ -186,15 +187,37 @@ export const githubRouter = createRouter({
       }
 
       // Enable and set to pending
-      await prisma.gitHubRepository.update({
+      const updatedRepo = await prisma.gitHubRepository.update({
         where: { id: repositoryId },
         data: {
           enabled: true,
           indexStatus: "PENDING",
         },
+        include: {
+          installation: true,
+        },
       });
 
-      // TODO: Trigger initial indexing workflow via Temporal
+      // Trigger initial indexing workflow via Temporal
+      try {
+        const client = await getTemporalClient();
+        await client.workflow.start("repositoryIndexWorkflow", {
+          taskQueue: getTaskQueue(),
+          workflowId: `repo-index-${repositoryId}-${Date.now()}`,
+          args: [{
+            repositoryId: updatedRepo.id,
+            installationId: Number(updatedRepo.installation.installationId),
+            owner: updatedRepo.owner,
+            repo: updatedRepo.repo,
+            branch: updatedRepo.defaultBranch,
+            mode: "initial",
+          }],
+        });
+        console.log(`[GitHub] Started indexing workflow for ${updatedRepo.fullName}`);
+      } catch (error) {
+        // Log but don't fail the mutation - user can retry via re-index
+        console.error("[GitHub] Failed to start indexing workflow:", error);
+      }
 
       return { success: true };
     }),
@@ -273,13 +296,35 @@ export const githubRouter = createRouter({
         });
       }
 
-      // Set status to INDEXING
-      await prisma.gitHubRepository.update({
+      // Set status to PENDING (workflow will change to INDEXING)
+      const updatedRepo = await prisma.gitHubRepository.update({
         where: { id: repositoryId },
-        data: { indexStatus: "INDEXING" },
+        data: { indexStatus: "PENDING" },
+        include: {
+          installation: true,
+        },
       });
 
-      // TODO: Trigger full re-index workflow via Temporal
+      // Trigger re-index workflow via Temporal
+      try {
+        const client = await getTemporalClient();
+        await client.workflow.start("repositoryIndexWorkflow", {
+          taskQueue: getTaskQueue(),
+          workflowId: `repo-reindex-${repositoryId}-${Date.now()}`,
+          args: [{
+            repositoryId: updatedRepo.id,
+            installationId: Number(updatedRepo.installation.installationId),
+            owner: updatedRepo.owner,
+            repo: updatedRepo.repo,
+            branch: updatedRepo.defaultBranch,
+            mode: "reindex",
+          }],
+        });
+        console.log(`[GitHub] Started reindex workflow for ${updatedRepo.fullName}`);
+      } catch (error) {
+        // Log but don't fail the mutation - user can retry
+        console.error("[GitHub] Failed to start reindex workflow:", error);
+      }
 
       return { success: true };
     }),
@@ -322,6 +367,138 @@ export const githubRouter = createRouter({
           commits: repo._count.commits,
           prs: repo._count.prs,
         },
+      };
+    }),
+
+  /**
+   * Get comprehensive repository statistics
+   */
+  getRepositoryStats: protectedProcedure
+    .input(RepositoryActionSchema)
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }) => {
+      const { repositoryId } = input;
+
+      // Verify repository belongs to workspace
+      const repo = await prisma.gitHubRepository.findFirst({
+        where: {
+          id: repositoryId,
+          installation: {
+            workspaceId: ctx.workspace.id,
+          },
+        },
+        select: {
+          id: true,
+          fullName: true,
+          owner: true,
+          repo: true,
+          defaultBranch: true,
+          isPrivate: true,
+          enabled: true,
+          indexStatus: true,
+          lastIndexedAt: true,
+        },
+      });
+
+      if (!repo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+
+      // Get aggregate stats from chunks
+      const [
+        totalChunks,
+        languageStats,
+        chunkTypeStats,
+        fileStats,
+        topFiles,
+      ] = await Promise.all([
+        // Total chunk count
+        prisma.codeChunk.count({
+          where: { repoId: repositoryId },
+        }),
+
+        // Group by language
+        prisma.codeChunk.groupBy({
+          by: ["language"],
+          where: { repoId: repositoryId },
+          _count: true,
+          _sum: { endLine: true, startLine: true },
+        }),
+
+        // Group by chunk type
+        prisma.codeChunk.groupBy({
+          by: ["chunkType"],
+          where: { repoId: repositoryId },
+          _count: true,
+        }),
+
+        // Unique files count
+        prisma.codeChunk.findMany({
+          where: { repoId: repositoryId },
+          distinct: ["filePath"],
+          select: { filePath: true },
+        }),
+
+        // Top 15 files by chunk count
+        prisma.$queryRaw<{ filePath: string; language: string | null; chunkCount: bigint; totalLines: bigint }[]>`
+          SELECT
+            "filePath",
+            "language",
+            COUNT(*)::bigint as "chunkCount",
+            SUM("endLine" - "startLine" + 1)::bigint as "totalLines"
+          FROM "code_chunks"
+          WHERE "repoId" = ${repositoryId}
+          GROUP BY "filePath", "language"
+          ORDER BY "chunkCount" DESC
+          LIMIT 15
+        `,
+      ]);
+
+      // Sort language stats by count descending
+      const sortedLanguageStats = [...languageStats].sort(
+        (a, b) => (b._count ?? 0) - (a._count ?? 0)
+      );
+
+      // Sort chunk type stats by count descending
+      const sortedChunkTypeStats = [...chunkTypeStats].sort(
+        (a, b) => (b._count ?? 0) - (a._count ?? 0)
+      );
+
+      // Calculate total lines indexed
+      const totalLines = sortedLanguageStats.reduce((sum, stat) => {
+        const endLineSum = stat._sum?.endLine ?? 0;
+        const startLineSum = stat._sum?.startLine ?? 0;
+        const count = stat._count ?? 0;
+        const lines = endLineSum - startLineSum + count;
+        return sum + lines;
+      }, 0);
+
+      return {
+        repository: repo,
+        overview: {
+          totalFiles: fileStats.length,
+          totalChunks,
+          totalLines,
+          lastIndexedAt: repo.lastIndexedAt,
+        },
+        languageBreakdown: sortedLanguageStats.map((stat) => {
+          const count = stat._count ?? 0;
+          return {
+            language: stat.language ?? "Unknown",
+            count,
+            percentage: totalChunks > 0 ? Math.round((count / totalChunks) * 100) : 0,
+          };
+        }),
+        chunkTypeBreakdown: sortedChunkTypeStats.map((stat) => ({
+          type: stat.chunkType,
+          count: stat._count ?? 0,
+        })),
+        topFiles: topFiles.map((file) => ({
+          filePath: file.filePath,
+          language: file.language ?? "Unknown",
+          chunkCount: Number(file.chunkCount),
+          totalLines: Number(file.totalLines),
+        })),
       };
     }),
 });

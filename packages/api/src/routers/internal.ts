@@ -637,6 +637,97 @@ export const internalRouter = createRouter({
   storeGitHubIndex: internalProcedure
     .input(StoreGitHubIndexSchema)
     .mutation(({ input }) => GitHubService.storeIndexedData(input)),
+
+  // ============================================================
+  // REPOSITORY INDEXING PROCEDURES
+  // ============================================================
+
+  /**
+   * Update repository index status
+   * Called by: repository-index.activities.ts → updateRepositoryIndexStatus
+   */
+  updateRepositoryIndexStatus: internalProcedure
+    .input(z.object({
+      repositoryId: z.string(),
+      status: z.enum(["PENDING", "INDEXING", "READY", "FAILED"]),
+      lastIndexedAt: z.date().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { repositoryId, status, lastIndexedAt } = input;
+
+      const updated = await prisma.gitHubRepository.update({
+        where: { id: repositoryId },
+        data: {
+          indexStatus: status,
+          ...(lastIndexedAt && { lastIndexedAt }),
+        },
+      });
+
+      console.log(`[Internal:updateRepositoryIndexStatus] ${repositoryId} → ${status}`);
+      return updated;
+    }),
+
+  /**
+   * Delete all chunks for a repository (for reindex)
+   * Called by: repository-index.activities.ts → cleanupRepositoryChunks
+   */
+  deleteRepositoryChunks: internalProcedure
+    .input(z.object({
+      repositoryId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { repositoryId } = input;
+
+      const result = await prisma.codeChunk.deleteMany({
+        where: { repoId: repositoryId },
+      });
+
+      console.log(`[Internal:deleteRepositoryChunks] Deleted ${result.count} chunks for ${repositoryId}`);
+      return { deletedCount: result.count };
+    }),
+
+  /**
+   * Store repository chunks
+   * Called by: repository-index.activities.ts → storeRepositoryChunks
+   */
+  storeRepositoryChunks: internalProcedure
+    .input(z.object({
+      repositoryId: z.string(),
+      chunks: z.array(z.object({
+        filePath: z.string(),
+        startLine: z.number(),
+        endLine: z.number(),
+        content: z.string(),
+        contentHash: z.string(),
+        language: z.string().nullable(),
+        chunkType: z.enum(["function", "class", "module", "block"]),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      const { repositoryId, chunks } = input;
+
+      if (chunks.length === 0) {
+        return { chunksCreated: 0 };
+      }
+
+      // Use upsert to handle potential duplicates (same file, same lines)
+      const result = await prisma.codeChunk.createMany({
+        data: chunks.map((chunk) => ({
+          repoId: repositoryId,
+          filePath: chunk.filePath,
+          startLine: chunk.startLine,
+          endLine: chunk.endLine,
+          content: chunk.content,
+          contentHash: chunk.contentHash,
+          language: chunk.language,
+          chunkType: chunk.chunkType,
+        })),
+        skipDuplicates: true, // Skip if hash already exists
+      });
+
+      console.log(`[Internal:storeRepositoryChunks] Created ${result.count} chunks for ${repositoryId}`);
+      return { chunksCreated: result.count };
+    }),
 });
 
 export type InternalRouter = typeof internalRouter;

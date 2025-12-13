@@ -46,15 +46,16 @@ export interface GitHubCallbackParams {
  * Process the GitHub OAuth callback and sync repositories.
  *
  * This function:
- * 1. Validates the state token (CSRF protection)
- * 2. Fetches installation details from GitHub API
- * 3. Fetches accessible repositories
- * 4. Stores installation and repositories in database
+ * 1. Validates the state token (CSRF protection) - for new installs
+ * 2. For updates (setup_action=update), finds existing installation
+ * 3. Fetches installation details from GitHub API
+ * 4. Fetches accessible repositories
+ * 5. Stores installation and repositories in database
  */
 export async function processGitHubCallback(
   params: GitHubCallbackParams
 ): Promise<GitHubCallbackResult> {
-  const { installation_id, state, error } = params;
+  const { installation_id, setup_action, state, error } = params;
 
   // 1. Handle user cancellation
   if (error === "access_denied") {
@@ -66,7 +67,15 @@ export async function processGitHubCallback(
     return { success: false, error: "missing_installation" };
   }
 
-  // 3. Validate state token
+  const installationId = Number(installation_id);
+
+  // 3. Handle setup_action=update (user modified repo access on GitHub)
+  // In this case, there's no state token - find existing installation
+  if (setup_action === "update") {
+    return processInstallationUpdate(installationId);
+  }
+
+  // 4. For new installs, validate state token
   if (!state) {
     return { success: false, error: "invalid_state" };
   }
@@ -80,9 +89,7 @@ export async function processGitHubCallback(
     return { success: false, error: "invalid_state" };
   }
 
-  // 4. Fetch installation details and repositories from GitHub
-  const installationId = Number(installation_id);
-
+  // 5. Fetch installation details and repositories from GitHub
   let installationDetails;
   let repositories;
 
@@ -94,7 +101,7 @@ export async function processGitHubCallback(
     return { success: false, error: "github_api_error" };
   }
 
-  // 5. Store installation in database (upsert to handle re-installs)
+  // 6. Store installation in database (upsert to handle re-installs)
   try {
     const dbInstallation = await prisma.gitHubInstallation.upsert({
       where: { workspaceId: payload.workspaceId },
@@ -137,6 +144,90 @@ export async function processGitHubCallback(
       });
     }
 
+    return { success: true, repoCount: repositories.length };
+  } catch (err) {
+    console.error("[GitHub Callback] Database error:", err);
+    return { success: false, error: "github_api_error" };
+  }
+}
+
+/**
+ * Process an installation update (user modified repo access on GitHub).
+ *
+ * This is called when setup_action=update, which happens when:
+ * - User adds/removes repository access in GitHub settings
+ * - No state token is present (not a new OAuth flow)
+ */
+async function processInstallationUpdate(
+  installationId: number
+): Promise<GitHubCallbackResult> {
+  console.log("[GitHub Callback] Processing installation update:", installationId);
+
+  // 1. Find existing installation in database
+  const existingInstallation = await prisma.gitHubInstallation.findUnique({
+    where: { installationId: BigInt(installationId) },
+  });
+
+  if (!existingInstallation) {
+    console.error("[GitHub Callback] Installation not found for update:", installationId);
+    return { success: false, error: "missing_installation" };
+  }
+
+  // 2. Fetch updated repository list from GitHub
+  let repositories;
+  try {
+    repositories = await fetchAccessibleRepositories(installationId);
+  } catch (err) {
+    console.error("[GitHub Callback] GitHub API error:", err);
+    return { success: false, error: "github_api_error" };
+  }
+
+  // 3. Sync repositories (upsert each, preserving enabled status)
+  try {
+    const currentRepoIds = new Set<bigint>();
+
+    for (const repo of repositories) {
+      const repoId = BigInt(repo.githubId);
+      currentRepoIds.add(repoId);
+
+      await prisma.gitHubRepository.upsert({
+        where: { githubId: repoId },
+        create: {
+          installationId: existingInstallation.id,
+          githubId: repoId,
+          owner: repo.owner,
+          repo: repo.repo,
+          fullName: repo.fullName,
+          defaultBranch: repo.defaultBranch,
+          isPrivate: repo.isPrivate,
+          enabled: false,
+        },
+        update: {
+          owner: repo.owner,
+          repo: repo.repo,
+          fullName: repo.fullName,
+          defaultBranch: repo.defaultBranch,
+          isPrivate: repo.isPrivate,
+          // Preserve enabled status
+        },
+      });
+    }
+
+    // 4. Remove repos that are no longer accessible (user revoked access)
+    const allRepos = await prisma.gitHubRepository.findMany({
+      where: { installationId: existingInstallation.id },
+      select: { id: true, githubId: true },
+    });
+
+    for (const repo of allRepos) {
+      if (!currentRepoIds.has(repo.githubId)) {
+        // Delete chunks first (foreign key constraint)
+        await prisma.codeChunk.deleteMany({ where: { repoId: repo.id } });
+        await prisma.gitHubRepository.delete({ where: { id: repo.id } });
+      }
+    }
+
+    console.log("[GitHub Callback] Updated repositories:", repositories.length);
     return { success: true, repoCount: repositories.length };
   } catch (err) {
     console.error("[GitHub Callback] Database error:", err);

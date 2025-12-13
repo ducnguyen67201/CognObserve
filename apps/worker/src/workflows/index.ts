@@ -21,5 +21,8 @@ export {
   stopEvaluationSignal,
 } from "./alert.workflow";
 
-// GitHub index workflow
+// GitHub index workflow (webhook-triggered)
 export { githubIndexWorkflow } from "./github-index.workflow";
+
+// Repository index workflow (UI-triggered full indexing)
+export { repositoryIndexWorkflow } from "./repository-index.workflow";
