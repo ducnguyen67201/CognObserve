@@ -143,53 +143,38 @@ Core models in `packages/db/prisma/schema.prisma`:
 
 The worker (`apps/worker/`) uses Temporal for durable workflow orchestration. All background processing runs as Temporal workflows with activities.
 
-### Key Components
+### Workflow Documentation (IMPORTANT)
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| Temporal Worker | `apps/worker/src/temporal/worker.ts` | Worker factory and lifecycle |
-| Temporal Client | `apps/worker/src/temporal/client.ts` | Client singleton for workflow operations |
-| Workflows | `apps/worker/src/workflows/*.ts` | Workflow definitions (trace, score, alert) |
-| Activities | `apps/worker/src/temporal/activities/*.ts` | Activity implementations (READ-ONLY) |
-| Startup | `apps/worker/src/startup/index.ts` | Auto-starts workflows on boot |
-| Internal Router | `packages/api/src/routers/internal.ts` | tRPC procedures for mutations |
-| tRPC Caller | `apps/worker/src/lib/trpc-caller.ts` | Internal tRPC caller for activities |
-
-### Workflow Types
-
-| Workflow | File | Purpose | Duration |
-|----------|------|---------|----------|
-| `traceIngestionWorkflow` | `workflows/trace.workflow.ts` | Process trace + spans | Short-lived |
-| `scoreIngestionWorkflow` | `workflows/score.workflow.ts` | Process score | Short-lived |
-| `alertEvaluationWorkflow` | `workflows/alert.workflow.ts` | Evaluate alerts periodically | Long-running |
-
-### Alert System
-
-The alerting system uses a state machine with Temporal for durable evaluation:
-
+**For detailed workflow documentation, ALWAYS read:**
 ```
-State Machine: INACTIVE → PENDING → FIRING → RESOLVED → INACTIVE
-
-Notification Rules:
-- PENDING → FIRING: First notification sent
-- FIRING → FIRING: Re-notify only if cooldown passed (5min for CRITICAL)
-- All other transitions: No notification
+docs/WORKFLOWS.md
 ```
 
-**Severity-based timing:**
-| Severity | Pending Duration | Cooldown | Use Case |
-|----------|------------------|----------|----------|
-| CRITICAL | 1 min | 5 min | System down |
-| HIGH | 2 min | 30 min | Degradation |
-| MEDIUM | 3 min | 2 hours | Performance |
-| LOW | 5 min | 12 hours | Warnings |
+This document contains:
+- Complete workflow registry and types
+- Step-by-step guide for adding new workflows
+- Activity patterns and internal procedures
+- Alert system details
+- Debugging guide
 
-**Key files for alerting:**
-- Workflow: `apps/worker/src/workflows/alert.workflow.ts`
-- Activities: `apps/worker/src/temporal/activities/alert.activities.ts`
-- Internal Router: `packages/api/src/routers/internal.ts` (transitionAlertState, dispatchNotification)
-- Schemas: `packages/api/src/schemas/alerting.ts`
-- Adapters: `packages/api/src/lib/alerting/adapters/` (Discord, Gmail)
+**When adding a new workflow, UPDATE `docs/WORKFLOWS.md`** to keep it current.
+
+### Quick Reference
+
+| Workflow | Purpose | Duration |
+|----------|---------|----------|
+| `traceIngestionWorkflow` | Process trace + spans | Short-lived |
+| `scoreIngestionWorkflow` | Process score | Short-lived |
+| `alertEvaluationWorkflow` | Evaluate alerts | Long-running |
+| `githubIndexWorkflow` | Index GitHub events | Short-lived |
+
+**Key files:**
+| File | Purpose |
+|------|---------|
+| `apps/worker/src/startup/index.ts` | Workflow registry (source of truth) |
+| `apps/worker/src/workflows/*.ts` | Workflow definitions |
+| `apps/worker/src/temporal/activities/*.ts` | Activities (READ-ONLY) |
+| `docs/WORKFLOWS.md` | Full documentation |
 
 ## Temporal Architecture (CRITICAL)
 
@@ -333,97 +318,16 @@ export async function myActivity(data: MyInput): Promise<MyResult> {
 | `internal.transitionAlertState` | `{ alertId, conditionMet }` | Transition alert state |
 | `internal.dispatchNotification` | `{ alertId, state, value, threshold }` | Send notifications |
 
-### Workflow Input Types
+### Additional Temporal Details
 
-All workflow inputs are defined in `apps/worker/src/temporal/types.ts`:
+For detailed information on:
+- Workflow input types and imports
+- Key Temporal files reference
+- ESM compatibility notes
+- Step-by-step workflow creation guide
+- Go ingest service integration
 
-```typescript
-// Import from @/temporal (centralized exports)
-import type {
-  TraceWorkflowInput,
-  AlertWorkflowInput,
-  ScoreWorkflowInput
-} from "@/temporal";
-```
-
-### Key Temporal Files
-
-| File | Purpose |
-|------|---------|
-| `apps/worker/src/temporal/index.ts` | Centralized exports (ALWAYS import from here) |
-| `apps/worker/src/temporal/client.ts` | Temporal client singleton |
-| `apps/worker/src/temporal/worker.ts` | Worker factory with bundler config |
-| `apps/worker/src/temporal/types.ts` | Shared workflow/activity types |
-| `apps/worker/src/temporal/activities/*.ts` | Activity implementations (READ-ONLY) |
-| `apps/worker/src/workflows/*.ts` | Workflow definitions |
-| `apps/worker/src/startup/*.ts` | Workflow starters (run on boot) |
-| `apps/worker/src/lib/trpc-caller.ts` | Internal tRPC caller for activities |
-| `apps/ingest/internal/temporal/` | Go Temporal client for starting workflows |
-| `packages/api/src/routers/internal.ts` | Internal tRPC procedures |
-
-### ESM Compatibility Notes
-
-The worker uses ESM. Key considerations:
-
-```typescript
-// apps/worker/src/temporal/worker.ts
-
-// ESM equivalent of __dirname
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Workflows path for Temporal bundler
-const workflowsPath = resolve(__dirname, "../workflows/index.ts");
-
-// Ignore crypto module (used by shared package, not workflows)
-bundlerOptions: {
-  ignoreModules: ["crypto"],
-}
-```
-
-### Adding New Workflows
-
-1. **Create workflow file** in `apps/worker/src/workflows/`:
-```typescript
-// apps/worker/src/workflows/my.workflow.ts
-import { proxyActivities } from "@temporalio/workflow";
-import type * as activities from "../temporal/activities";
-import type { MyWorkflowInput } from "../temporal/types";
-
-const { myActivity } = proxyActivities<typeof activities>({
-  startToCloseTimeout: "30s",
-});
-
-export async function myWorkflow(input: MyWorkflowInput): Promise<void> {
-  await myActivity(input);
-}
-```
-
-2. **Export from workflows index**:
-```typescript
-// apps/worker/src/workflows/index.ts
-export { myWorkflow } from "./my.workflow";
-```
-
-3. **Add input type**:
-```typescript
-// apps/worker/src/temporal/types.ts
-export interface MyWorkflowInput {
-  id: string;
-  // ...
-}
-```
-
-4. **Start from Go ingest service** (if needed):
-```go
-// apps/ingest/internal/temporal/client.go
-func (c *Client) StartMyWorkflow(ctx context.Context, input MyWorkflowInput) (string, error) {
-    // ...
-}
-```
+**See `docs/WORKFLOWS.md`**
 
 ## Code Style Rules
 
@@ -500,27 +404,38 @@ export const isValidRole = (role: string): role is ProjectRole => {
 import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
 ```
 
-### Zod for Runtime Validation (CRITICAL)
-**ALWAYS use Zod to validate unknown data at runtime.** This includes API responses, JSON parsing, external data, and anything typed as `unknown`. Never use type assertions (`as`) to bypass TypeScript - validate first.
+### Zod for Runtime Validation (CRITICAL - MANDATORY)
+**ALL unknown data MUST be validated through Zod. No exceptions.**
+
+This is a strict enforcement rule. Type assertions (`as`) are FORBIDDEN for unknown data. Every piece of external data entering the system must pass through Zod validation before use.
+
+**The Rule:**
+```
+Unknown Data → Zod Schema → safeParse() → Use validated data
+```
+
+**What counts as unknown data:**
+- `fetch()` responses (external APIs, internal APIs)
+- `response.json()` results
+- `JSON.parse()` output
+- WebSocket messages
+- URL query parameters
+- Environment variables (at runtime)
+- Any data crossing trust boundaries
 
 ```typescript
-// ❌ BAD - Type assertion (lies to TypeScript, no runtime safety)
+// ❌ FORBIDDEN - Type assertion bypasses runtime safety
 const response = await fetch("/api/data");
 const data = (await response.json()) as { users: User[] };
-// If API returns different shape, code silently breaks at runtime
+// NEVER do this - silent runtime failures
 
-// ❌ BAD - Manual type checking (verbose, error-prone, hard to maintain)
+// ❌ FORBIDDEN - Manual type checking
 const json: unknown = await response.json();
-if (
-  json !== null &&
-  typeof json === "object" &&
-  "users" in json &&
-  Array.isArray(json.users)
-) {
-  // Still not fully type-safe, easy to miss edge cases
+if (typeof json === "object" && json !== null && "users" in json) {
+  // Verbose, error-prone, incomplete
 }
 
-// ✅ GOOD - Zod validation (runtime safety + type inference)
+// ✅ REQUIRED - Zod validation (the ONLY acceptable pattern)
 import { z } from "zod";
 
 const ResponseSchema = z.object({
@@ -534,31 +449,32 @@ const ResponseSchema = z.object({
 const json: unknown = await response.json();
 const parsed = ResponseSchema.safeParse(json);
 
-if (parsed.success) {
-  // parsed.data is fully typed as { users: { id: string; name: string; email: string }[] }
-  console.log(parsed.data.users);
-} else {
-  // parsed.error contains detailed validation errors
-  console.error("Invalid response:", parsed.error.issues);
+if (!parsed.success) {
+  console.error("Validation failed:", parsed.error.flatten());
+  return null; // or throw, or return fallback
 }
+
+// NOW it's safe to use - fully typed
+const data = parsed.data;
 ```
 
-**When to use Zod validation:**
-| Scenario | Use Zod? | Example |
-|----------|----------|---------|
-| API response from external service | ✅ Yes | `fetch()` responses |
-| API response from internal service | ✅ Yes | Worker → Web API calls |
-| JSON.parse() result | ✅ Yes | Parsing stored JSON |
-| WebSocket messages | ✅ Yes | Real-time data |
-| URL query params | ✅ Yes | `searchParams.get()` |
-| Form data (tRPC input) | ✅ Already handled | tRPC validates with schema |
-| Database query results | ❌ No | Prisma types are trustworthy |
-| Internal function params | ❌ No | TypeScript handles this |
+**Validation requirements by scenario:**
+| Scenario | Zod Required? | Notes |
+|----------|---------------|-------|
+| External API response | ✅ MANDATORY | Always validate `fetch()` responses |
+| Internal API response | ✅ MANDATORY | Worker → Web, service → service |
+| `JSON.parse()` result | ✅ MANDATORY | Stored JSON, config files |
+| WebSocket messages | ✅ MANDATORY | Real-time data from server |
+| URL query params | ✅ MANDATORY | User-controlled input |
+| GitHub/Webhook payloads | ✅ MANDATORY | Third-party data |
+| Form data (tRPC) | ✅ Auto-handled | tRPC validates with input schema |
+| Database results | ❌ Not needed | Prisma types are trustworthy |
+| Internal function params | ❌ Not needed | TypeScript compile-time safety |
 
-**Zod patterns:**
+**Standard Zod patterns:**
 
 ```typescript
-// Define schema once, reuse everywhere
+// 1. Define schema with type inference
 const UserSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
@@ -566,14 +482,14 @@ const UserSchema = z.object({
 });
 type User = z.infer<typeof UserSchema>;
 
-// For API responses, define response schemas
+// 2. Define API response schemas
 const ApiResponseSchema = z.object({
   success: z.boolean(),
   data: UserSchema.optional(),
   error: z.string().optional(),
 });
 
-// Parse with safeParse (doesn't throw)
+// 3. ALWAYS use safeParse (preferred - doesn't throw)
 const result = ApiResponseSchema.safeParse(json);
 if (!result.success) {
   console.error(result.error.flatten());
@@ -581,7 +497,7 @@ if (!result.success) {
 }
 return result.data;
 
-// Or parse (throws ZodError on failure)
+// 4. Use parse() only when failure should throw
 try {
   const data = ApiResponseSchema.parse(json);
 } catch (e) {
@@ -589,6 +505,28 @@ try {
     // Handle validation error
   }
 }
+```
+
+**Real-world example (GitHub API):**
+```typescript
+// Define schema for external API
+const GitHubContentResponseSchema = z.object({
+  size: z.number(),
+  content: z.string(),
+  encoding: z.string(),
+});
+
+// Fetch and validate
+const response = await fetch(url);
+const json: unknown = await response.json();
+const parsed = GitHubContentResponseSchema.safeParse(json);
+
+if (!parsed.success) {
+  console.warn("Invalid GitHub response:", parsed.error.flatten());
+  return null;
+}
+
+const data = parsed.data; // Safe to use
 ```
 
 ## Frontend Engineering Best Practices

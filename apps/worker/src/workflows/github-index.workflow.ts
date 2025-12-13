@@ -38,6 +38,10 @@ const {
 // ============================================================
 // Constants (inline to avoid bundling issues)
 // ============================================================
+// NOTE: These constants are intentionally duplicated from @cognobserve/shared
+// to avoid Temporal bundler issues. Workflows run in an isolated sandbox and
+// cannot import non-deterministic code or modules with side effects.
+// Keep in sync with packages/shared/src/chunking/index.ts
 
 const INDEXABLE_EXTENSIONS = [
   ".ts", ".tsx", ".js", ".jsx",
@@ -51,6 +55,7 @@ const EXCLUDED_PATTERNS = [
   "build/",
   ".next/",
   ".min.",
+  ".d.ts",
   "package-lock.json",
   "pnpm-lock.yaml",
   "yarn.lock",
