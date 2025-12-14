@@ -22,14 +22,11 @@ import type { CorrelatedCommit, RelevantCodeChunk } from "../../../types";
  * Uses CodeChunks to determine which files were indexed.
  *
  * Note: This is an approximation. In a full implementation,
- * we would store the actual files changed per commit.
+ * we would store the actual files changed per commit (commitSha → files mapping).
  */
-export async function getCommitChangedFiles(
-  repoId: string,
-  _commitSha: string
-): Promise<string[]> {
+export async function getCommitChangedFiles(repoId: string): Promise<string[]> {
   // Query distinct file paths from code chunks for this repo
-  // Note: Ideally we'd have commit → files mapping
+  // TODO: Implement commit → files mapping for accurate results
   const chunks = await prisma.codeChunk.findMany({
     where: { repoId },
     select: { filePath: true },
@@ -66,7 +63,7 @@ export async function scoreCommits(
 
   for (const commit of commits) {
     // Get files changed for this commit from CodeChunks
-    const changedFiles = await getCommitChangedFiles(repoId, commit.sha);
+    const changedFiles = await getCommitChangedFiles(repoId);
 
     const signals = {
       temporal: calculateTemporalScore(commit.timestamp, alertTime),
