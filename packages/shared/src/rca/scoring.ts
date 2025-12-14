@@ -12,6 +12,27 @@ import {
 } from "./constants";
 
 // ============================================
+// Constants
+// ============================================
+
+/**
+ * Regex pattern to extract function names from stack traces.
+ * Matches patterns like: "at functionName" or "at Module.functionName"
+ */
+const STACK_TRACE_FUNCTION_PATTERN =
+  /at\s+([a-zA-Z_$][a-zA-Z0-9_$]*(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*)*)/g;
+
+/** Generic function names to filter out from stack traces */
+const GENERIC_FUNCTION_NAMES = [
+  "Object",
+  "Array",
+  "Function",
+  "Promise",
+  "async",
+  "Module",
+];
+
+// ============================================
 // Types
 // ============================================
 
@@ -331,8 +352,8 @@ export function buildSearchQuery(
  */
 function extractFunctionNames(stackTrace: string): string[] {
   const names: string[] = [];
-  const pattern =
-    /at\s+([a-zA-Z_$][a-zA-Z0-9_$]*(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*)*)/g;
+  // Create fresh regex instance (global regex is stateful)
+  const pattern = new RegExp(STACK_TRACE_FUNCTION_PATTERN.source, "g");
 
   let match;
   while ((match = pattern.exec(stackTrace)) !== null) {
@@ -341,9 +362,7 @@ function extractFunctionNames(stackTrace: string): string[] {
     if (
       name &&
       name.length > 2 &&
-      !["Object", "Array", "Function", "Promise", "async", "Module"].includes(
-        name
-      )
+      !GENERIC_FUNCTION_NAMES.includes(name)
     ) {
       names.push(name);
     }

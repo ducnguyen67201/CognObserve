@@ -16,19 +16,12 @@ import {
   CORRELATION_WEIGHTS,
 } from "@cognobserve/shared";
 import type { CorrelatedPR, RelevantCodeChunk } from "../../../types";
+import { getRepoFilePaths } from "./commit-scoring";
 
-/**
- * Get list of files changed by a PR.
- * Uses CodeChunks as approximation.
- */
-export async function getPRChangedFiles(repoId: string): Promise<string[]> {
-  const chunks = await prisma.codeChunk.findMany({
-    where: { repoId },
-    select: { filePath: true },
-    distinct: ["filePath"],
-  });
-
-  return chunks.map((c) => c.filePath);
+/** Result from scoring PRs */
+export interface ScorePRsResult {
+  prs: CorrelatedPR[];
+  totalAnalyzed: number;
 }
 
 /**
@@ -40,7 +33,7 @@ export async function scorePRs(
   alertTime: Date,
   relevantChunks: RelevantCodeChunk[],
   stackTracePaths: Set<string>
-): Promise<CorrelatedPR[]> {
+): Promise<ScorePRsResult> {
   // Fetch recently merged PRs
   const prs = await prisma.gitPullRequest.findMany({
     where: {
@@ -53,21 +46,20 @@ export async function scorePRs(
 
   console.log(`[scorePRs] Analyzing ${prs.length} merged PRs`);
 
+  // Get all indexed files once (outside the loop for performance)
+  // TODO: Replace with PR-specific file mapping when available
+  const repoFiles = await getRepoFilePaths(repoId);
+
   // Score each PR
   const scored: CorrelatedPR[] = [];
 
   for (const pr of prs) {
     if (!pr.mergedAt) continue;
 
-    // Get files changed for this PR (using PR's commits)
-    // For now, use all repo files as approximation
-    // TODO: Track PR → files mapping
-    const changedFiles = await getPRChangedFiles(repoId);
-
     const signals = {
       temporal: calculateTemporalScore(pr.mergedAt, alertTime),
-      semantic: calculateSemanticScore(changedFiles, relevantChunks),
-      pathMatch: calculatePathMatchScore(changedFiles, stackTracePaths),
+      semantic: calculateSemanticScore(repoFiles, relevantChunks),
+      pathMatch: calculatePathMatchScore(repoFiles, stackTracePaths),
     };
 
     const score = calculateCombinedScore(signals, CORRELATION_WEIGHTS);
@@ -84,5 +76,8 @@ export async function scorePRs(
     }
   }
 
-  return scored.sort((a, b) => b.score - a.score).slice(0, MAX_SUSPECTED_PRS);
+  return {
+    prs: scored.sort((a, b) => b.score - a.score).slice(0, MAX_SUSPECTED_PRS),
+    totalAnalyzed: prs.length,
+  };
 }

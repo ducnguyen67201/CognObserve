@@ -10,6 +10,7 @@ import {
   DEFAULT_LOOKBACK_DAYS,
   MIN_CHUNK_SIMILARITY,
   MAX_RELEVANT_CHUNKS,
+  MAX_CHUNK_CONTENT_LENGTH,
   extractPathsFromStackTraces,
   buildSearchQuery,
 } from "@cognobserve/shared";
@@ -90,7 +91,7 @@ export async function correlateCodeChanges(
 
       relevantCodeChunks = searchResult.results.map((r) => ({
         filePath: r.filePath,
-        content: r.content.slice(0, 500), // Truncate for output
+        content: r.content.slice(0, MAX_CHUNK_CONTENT_LENGTH),
         startLine: r.startLine,
         endLine: r.endLine,
         similarity: r.similarity,
@@ -114,7 +115,7 @@ export async function correlateCodeChanges(
   );
 
   // 5. Fetch and score commits
-  const suspectedCommits = await scoreCommits(
+  const commitResult = await scoreCommits(
     repo.id,
     cutoffDate,
     alertTime,
@@ -123,7 +124,7 @@ export async function correlateCodeChanges(
   );
 
   // 6. Fetch and score PRs
-  const suspectedPRs = await scorePRs(
+  const prResult = await scorePRs(
     repo.id,
     cutoffDate,
     alertTime,
@@ -133,16 +134,17 @@ export async function correlateCodeChanges(
 
   console.log(
     `[correlateCodeChanges] Correlation complete: ` +
-      `${suspectedCommits.length} commits, ${suspectedPRs.length} PRs`
+      `${commitResult.commits.length}/${commitResult.totalAnalyzed} commits, ` +
+      `${prResult.prs.length}/${prResult.totalAnalyzed} PRs`
   );
 
   return {
-    suspectedCommits,
-    suspectedPRs,
+    suspectedCommits: commitResult.commits,
+    suspectedPRs: prResult.prs,
     relevantCodeChunks,
     hasRepository: true,
     searchQuery,
-    commitsAnalyzed: suspectedCommits.length,
-    prsAnalyzed: suspectedPRs.length,
+    commitsAnalyzed: commitResult.totalAnalyzed,
+    prsAnalyzed: prResult.totalAnalyzed,
   };
 }

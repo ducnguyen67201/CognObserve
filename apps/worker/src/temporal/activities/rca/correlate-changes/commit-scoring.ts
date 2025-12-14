@@ -18,13 +18,12 @@ import {
 import type { CorrelatedCommit, RelevantCodeChunk } from "../../../types";
 
 /**
- * Get list of files changed by a commit.
- * Uses CodeChunks to determine which files were indexed.
+ * Get all indexed file paths for a repository.
  *
  * Note: This is an approximation. In a full implementation,
  * we would store the actual files changed per commit (commitSha → files mapping).
  */
-export async function getCommitChangedFiles(repoId: string): Promise<string[]> {
+export async function getRepoFilePaths(repoId: string): Promise<string[]> {
   // Query distinct file paths from code chunks for this repo
   // TODO: Implement commit → files mapping for accurate results
   const chunks = await prisma.codeChunk.findMany({
@@ -36,6 +35,12 @@ export async function getCommitChangedFiles(repoId: string): Promise<string[]> {
   return chunks.map((c) => c.filePath);
 }
 
+/** Result from scoring commits */
+export interface ScoreCommitsResult {
+  commits: CorrelatedCommit[];
+  totalAnalyzed: number;
+}
+
 /**
  * Score commits based on temporal, semantic, and path signals.
  */
@@ -45,7 +50,7 @@ export async function scoreCommits(
   alertTime: Date,
   relevantChunks: RelevantCodeChunk[],
   stackTracePaths: Set<string>
-): Promise<CorrelatedCommit[]> {
+): Promise<ScoreCommitsResult> {
   // Fetch recent commits
   const commits = await prisma.gitCommit.findMany({
     where: {
@@ -58,17 +63,18 @@ export async function scoreCommits(
 
   console.log(`[scoreCommits] Analyzing ${commits.length} commits`);
 
+  // Get all indexed files once (outside the loop for performance)
+  // TODO: Replace with commit-specific file mapping when available
+  const repoFiles = await getRepoFilePaths(repoId);
+
   // Score each commit
   const scored: CorrelatedCommit[] = [];
 
   for (const commit of commits) {
-    // Get files changed for this commit from CodeChunks
-    const changedFiles = await getCommitChangedFiles(repoId);
-
     const signals = {
       temporal: calculateTemporalScore(commit.timestamp, alertTime),
-      semantic: calculateSemanticScore(changedFiles, relevantChunks),
-      pathMatch: calculatePathMatchScore(changedFiles, stackTracePaths),
+      semantic: calculateSemanticScore(repoFiles, relevantChunks),
+      pathMatch: calculatePathMatchScore(repoFiles, stackTracePaths),
     };
 
     const score = calculateCombinedScore(signals, CORRELATION_WEIGHTS);
@@ -83,13 +89,14 @@ export async function scoreCommits(
         timestamp: commit.timestamp.toISOString(),
         score,
         signals,
-        filesChanged: changedFiles.slice(0, 10), // Limit files in output
+        filesChanged: repoFiles.slice(0, 10), // Limit files in output
       });
     }
   }
 
   // Sort by score descending and take top N
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_SUSPECTED_COMMITS);
+  return {
+    commits: scored.sort((a, b) => b.score - a.score).slice(0, MAX_SUSPECTED_COMMITS),
+    totalAnalyzed: commits.length,
+  };
 }

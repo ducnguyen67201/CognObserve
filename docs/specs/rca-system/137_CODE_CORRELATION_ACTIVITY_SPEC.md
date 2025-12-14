@@ -791,7 +791,7 @@ export async function correlateCodeChanges(
   console.log(`[correlateCodeChanges] Extracted ${stackTracePaths.size} paths from stack traces`);
 
   // 5. Fetch and score commits
-  const suspectedCommits = await scoreCommits(
+  const commitResult = await scoreCommits(
     repo.id,
     cutoffDate,
     alertTime,
@@ -800,7 +800,7 @@ export async function correlateCodeChanges(
   );
 
   // 6. Fetch and score PRs
-  const suspectedPRs = await scorePRs(
+  const prResult = await scorePRs(
     repo.id,
     cutoffDate,
     alertTime,
@@ -810,17 +810,18 @@ export async function correlateCodeChanges(
 
   console.log(
     `[correlateCodeChanges] Correlation complete: ` +
-    `${suspectedCommits.length} commits, ${suspectedPRs.length} PRs`
+    `${commitResult.commits.length}/${commitResult.totalAnalyzed} commits, ` +
+    `${prResult.prs.length}/${prResult.totalAnalyzed} PRs`
   );
 
   return {
-    suspectedCommits,
-    suspectedPRs,
+    suspectedCommits: commitResult.commits,
+    suspectedPRs: prResult.prs,
     relevantCodeChunks,
     hasRepository: true,
     searchQuery,
-    commitsAnalyzed: suspectedCommits.length,
-    prsAnalyzed: suspectedPRs.length,
+    commitsAnalyzed: commitResult.totalAnalyzed,  // Total from DB query, not result count
+    prsAnalyzed: prResult.totalAnalyzed,          // Total from DB query, not result count
   };
 }
 
@@ -828,15 +829,19 @@ export async function correlateCodeChanges(
 // Helper: Score Commits
 // ============================================
 
+interface ScoreCommitsResult {
+  commits: CorrelatedCommit[];
+  totalAnalyzed: number;
+}
+
 async function scoreCommits(
   repoId: string,
   cutoffDate: Date,
   alertTime: Date,
   relevantChunks: RelevantCodeChunk[],
   stackTracePaths: Set<string>
-): Promise<CorrelatedCommit[]> {
-  // Fetch recent commits with changed files
-  // Note: filesChanged is stored as JSON in the schema
+): Promise<ScoreCommitsResult> {
+  // Fetch recent commits
   const commits = await prisma.gitCommit.findMany({
     where: {
       repoId,
@@ -848,17 +853,18 @@ async function scoreCommits(
 
   console.log(`[scoreCommits] Analyzing ${commits.length} commits`);
 
+  // Get all indexed files once (outside the loop for performance)
+  // TODO: Replace with commit-specific file mapping when available
+  const repoFiles = await getRepoFilePaths(repoId);
+
   // Score each commit
   const scored: CorrelatedCommit[] = [];
 
   for (const commit of commits) {
-    // Get files changed for this commit from CodeChunks
-    const changedFiles = await getCommitChangedFiles(repoId, commit.sha);
-
     const signals = {
       temporal: calculateTemporalScore(commit.timestamp, alertTime),
-      semantic: calculateSemanticScore(changedFiles, relevantChunks),
-      pathMatch: calculatePathMatchScore(changedFiles, stackTracePaths),
+      semantic: calculateSemanticScore(repoFiles, relevantChunks),
+      pathMatch: calculatePathMatchScore(repoFiles, stackTracePaths),
     };
 
     const score = calculateCombinedScore(signals, CORRELATION_WEIGHTS);
@@ -873,20 +879,26 @@ async function scoreCommits(
         timestamp: commit.timestamp.toISOString(),
         score,
         signals,
-        filesChanged: changedFiles.slice(0, 10), // Limit files in output
+        filesChanged: repoFiles.slice(0, 10), // Limit files in output
       });
     }
   }
 
   // Sort by score descending and take top N
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_SUSPECTED_COMMITS);
+  return {
+    commits: scored.sort((a, b) => b.score - a.score).slice(0, MAX_SUSPECTED_COMMITS),
+    totalAnalyzed: commits.length,
+  };
 }
 
 // ============================================
 // Helper: Score PRs
 // ============================================
+
+interface ScorePRsResult {
+  prs: CorrelatedPR[];
+  totalAnalyzed: number;
+}
 
 async function scorePRs(
   repoId: string,
@@ -894,7 +906,7 @@ async function scorePRs(
   alertTime: Date,
   relevantChunks: RelevantCodeChunk[],
   stackTracePaths: Set<string>
-): Promise<CorrelatedPR[]> {
+): Promise<ScorePRsResult> {
   // Fetch recently merged PRs
   const prs = await prisma.gitPullRequest.findMany({
     where: {
@@ -903,14 +915,13 @@ async function scorePRs(
     },
     orderBy: { mergedAt: "desc" },
     take: MAX_PRS_TO_ANALYZE,
-    include: {
-      commits: {
-        select: { sha: true },
-      },
-    },
   });
 
   console.log(`[scorePRs] Analyzing ${prs.length} merged PRs`);
+
+  // Get all indexed files once (outside the loop for performance)
+  // TODO: Replace with PR-specific file mapping when available
+  const repoFiles = await getRepoFilePaths(repoId);
 
   // Score each PR
   const scored: CorrelatedPR[] = [];
@@ -918,18 +929,10 @@ async function scorePRs(
   for (const pr of prs) {
     if (!pr.mergedAt) continue;
 
-    // Get all files changed by PR commits
-    const allChangedFiles = new Set<string>();
-    for (const commit of pr.commits) {
-      const files = await getCommitChangedFiles(repoId, commit.sha);
-      files.forEach((f) => allChangedFiles.add(f));
-    }
-    const changedFiles = Array.from(allChangedFiles);
-
     const signals = {
       temporal: calculateTemporalScore(pr.mergedAt, alertTime),
-      semantic: calculateSemanticScore(changedFiles, relevantChunks),
-      pathMatch: calculatePathMatchScore(changedFiles, stackTracePaths),
+      semantic: calculateSemanticScore(repoFiles, relevantChunks),
+      pathMatch: calculatePathMatchScore(repoFiles, stackTracePaths),
     };
 
     const score = calculateCombinedScore(signals, CORRELATION_WEIGHTS);
@@ -946,30 +949,25 @@ async function scorePRs(
     }
   }
 
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_SUSPECTED_PRS);
+  return {
+    prs: scored.sort((a, b) => b.score - a.score).slice(0, MAX_SUSPECTED_PRS),
+    totalAnalyzed: prs.length,
+  };
 }
 
 // ============================================
-// Helper: Get Commit Changed Files
+// Helper: Get Repository File Paths
 // ============================================
 
 /**
- * Get list of files changed by a commit.
- * Uses CodeChunks to determine which files were indexed for the commit.
+ * Get all indexed file paths for a repository.
+ *
+ * Note: This is an approximation. In a full implementation,
+ * we would store the actual files changed per commit (commitSha → files mapping).
  */
-async function getCommitChangedFiles(
-  repoId: string,
-  commitSha: string
-): Promise<string[]> {
-  // Query distinct file paths from code chunks for this commit
-  // Note: CodeChunks don't directly link to commits, so we need to
-  // track this separately or use a join table in future
-  //
-  // For now, we'll use a heuristic: files that were updated around
-  // the commit time are likely changed by the commit
-
+async function getRepoFilePaths(repoId: string): Promise<string[]> {
+  // Query distinct file paths from code chunks for this repo
+  // TODO: Implement commit → files mapping for accurate results
   const chunks = await prisma.codeChunk.findMany({
     where: { repoId },
     select: { filePath: true },
@@ -1005,8 +1003,10 @@ function createEmptyOutput(hasRepository: boolean): CodeCorrelationOutput {
 Add to existing exports:
 
 ```typescript
-export { correlateCodeChanges } from "./rca.activities";
+export { analyzeTraces, correlateCodeChanges } from "./rca";
 ```
+
+> **Note:** Activities are now organized in a modular folder structure under `rca/`.
 
 ---
 

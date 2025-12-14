@@ -9,7 +9,7 @@ import type { TimeDistributionBucket } from "../../../types";
 import type { SpanRow } from "../types";
 
 /**
- * Calculate time distribution in 5-minute buckets.
+ * Calculate time distribution using configurable bucket size (TIME_BUCKET_MINUTES).
  */
 export function calculateTimeDistribution(
   spans: SpanRow[],

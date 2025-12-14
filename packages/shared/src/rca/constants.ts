@@ -92,6 +92,12 @@ export const MAX_SUSPECTED_PRS = 5;
 export const MAX_RELEVANT_CHUNKS = 20;
 
 /**
+ * Maximum length for code chunk content in output.
+ * Truncates to reduce payload size.
+ */
+export const MAX_CHUNK_CONTENT_LENGTH = 500;
+
+/**
  * Maximum length for search query string.
  */
 export const MAX_SEARCH_QUERY_LENGTH = 2000;

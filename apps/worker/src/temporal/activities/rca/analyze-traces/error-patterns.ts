@@ -5,8 +5,20 @@
  */
 
 import type { Prisma } from "@cognobserve/db";
+import { z } from "zod";
 import type { ErrorPattern } from "../../../types";
 import type { SpanRow } from "../types";
+
+/** Schema for extracting stack trace from span output */
+const StackTraceOutputSchema = z.object({
+  stack: z.string().optional(),
+  stackTrace: z.string().optional(),
+  error: z
+    .object({
+      stack: z.string().optional(),
+    })
+    .optional(),
+});
 
 /**
  * Normalize error message for grouping.
@@ -27,17 +39,17 @@ export function normalizeErrorMessage(msg: string): string {
 
 /**
  * Extract stack trace from span output if available.
+ * Uses Zod validation for runtime safety.
  */
 export function extractStackTrace(output: Prisma.JsonValue): string | undefined {
-  if (!output || typeof output !== "object" || Array.isArray(output)) {
+  const parsed = StackTraceOutputSchema.safeParse(output);
+  if (!parsed.success) {
     return undefined;
   }
 
-  const obj = output as Record<string, unknown>;
-  const errorObj = obj.error as Record<string, unknown> | undefined;
-
-  const stack = obj.stack ?? obj.stackTrace ?? errorObj?.stack;
-  return typeof stack === "string" ? stack.slice(0, 500) : undefined;
+  const { stack, stackTrace, error } = parsed.data;
+  const result = stack ?? stackTrace ?? error?.stack;
+  return result?.slice(0, 500);
 }
 
 /**
