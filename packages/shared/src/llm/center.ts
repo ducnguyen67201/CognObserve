@@ -24,11 +24,16 @@ import type {
   UsageStats,
 } from "./types";
 import type { LLMCenterConfig } from "./config.types";
-import { OpenAIProvider } from "./providers/openai";
-import { AnthropicProvider } from "./providers/anthropic";
 import { SmartRouter } from "./router";
 import { RateLimiter } from "./utils/rate-limiter";
-import { ProviderNotConfiguredError } from "./errors";
+import {
+  createProviders,
+  getProvider,
+  hasProvider,
+  shutdownProviders,
+  type ProviderRegistry,
+} from "./provider-factory";
+import { UsageTracker } from "./usage-tracker";
 
 // ============================================
 // LLM Center
@@ -65,39 +70,21 @@ import { ProviderNotConfiguredError } from "./errors";
  * ```
  */
 export class LLMCenter {
-  private providers: Map<ProviderName, LLMProvider> = new Map();
+  private registry: ProviderRegistry;
   private router: SmartRouter;
   private config: LLMCenterConfig;
   private rateLimiter?: RateLimiter;
-  private usageEvents: UsageEvent[] = [];
+  private usageTracker: UsageTracker;
 
   constructor(config: LLMCenterConfig) {
     this.config = config;
 
-    // Initialize providers
-    if (config.providers.openai) {
-      this.providers.set("openai", new OpenAIProvider(config.providers.openai));
-    }
-    if (config.providers.anthropic) {
-      this.providers.set(
-        "anthropic",
-        new AnthropicProvider(config.providers.anthropic)
-      );
-    }
-
-    // Validate that at least one provider is configured
-    if (this.providers.size === 0) {
-      throw new Error("At least one LLM provider must be configured");
-    }
-
-    // Validate default provider is configured
-    if (!this.providers.has(config.defaultProvider)) {
-      throw new ProviderNotConfiguredError(config.defaultProvider);
-    }
+    // Initialize providers via factory
+    this.registry = createProviders(config);
 
     // Initialize router
     this.router = new SmartRouter({
-      providers: this.providers,
+      providers: this.registry.providers,
       config,
     });
 
@@ -108,34 +95,37 @@ export class LLMCenter {
         tokensPerMinute: config.rateLimiting.tokensPerMinute,
       });
     }
+
+    // Initialize usage tracker
+    this.usageTracker = new UsageTracker({
+      enabled: config.tracking?.enabled,
+      onUsage: config.tracking?.onUsage,
+    });
   }
 
   /**
    * Generate embeddings for texts.
-   *
-   * @param texts - Array of texts to embed
-   * @param options - Embedding options (provider, model, batchSize)
-   * @returns Embedding result with vectors and usage info
-   *
-   * @example
-   * ```typescript
-   * const result = await llm.embed(["Hello", "World"]);
-   * console.log(result.embeddings); // [[0.1, 0.2, ...], [0.3, 0.4, ...]]
-   * console.log(result.usage.estimatedCost); // 0.0000002
-   * ```
    */
   async embed(texts: string[], options?: EmbedOptions): Promise<EmbedResult> {
-    const startTime = Date.now();
+    // Fast path: empty input returns empty result (no API call)
+    if (texts.length === 0) {
+      return this.createEmptyEmbedResult(options);
+    }
 
-    // Apply rate limiting
+    // Filter out empty strings to avoid wasting tokens
+    const validTexts = texts.filter((t) => t.trim().length > 0);
+    if (validTexts.length === 0) {
+      return this.createEmptyEmbedResult(options);
+    }
+
+    const startTime = Date.now();
     await this.rateLimiter?.acquire();
 
     try {
-      const result = await this.router.routeEmbed(texts, options);
+      const result = await this.router.routeEmbed(validTexts, options);
 
-      // Track usage
-      this.trackUsage({
-        provider: result.provider,
+      this.usageTracker.track({
+        provider: result.provider as ProviderName,
         model: result.model,
         operation: "embed",
         tokens: { total: result.usage.totalTokens },
@@ -146,8 +136,7 @@ export class LLMCenter {
 
       return result;
     } catch (error) {
-      // Track failed attempt
-      this.trackUsage({
+      this.usageTracker.track({
         provider: options?.provider ?? this.config.defaultProvider,
         model: options?.model ?? "unknown",
         operation: "embed",
@@ -157,45 +146,25 @@ export class LLMCenter {
         success: false,
         error: error instanceof Error ? error.message : String(error),
       });
-
       throw error;
     }
   }
 
   /**
    * Generate completion with optional structured output.
-   *
-   * @param prompt - The prompt text
-   * @param options - Completion options (provider, model, schema, temperature)
-   * @returns Completion result with data and usage info
-   *
-   * @example
-   * ```typescript
-   * // Simple completion
-   * const result = await llm.complete("Write a haiku about coding");
-   *
-   * // Structured output
-   * const schema = z.object({
-   *   sentiment: z.enum(["positive", "negative", "neutral"]),
-   *   confidence: z.number(),
-   * });
-   * const result = await llm.complete("Analyze: I love this!", { schema });
-   * console.log(result.data.sentiment); // "positive"
-   * ```
    */
   async complete<T>(
     prompt: string,
     options?: CompleteOptions<z.ZodType<T>>
   ): Promise<CompleteResult<T>> {
     const startTime = Date.now();
-
     await this.rateLimiter?.acquire();
 
     try {
       const result = await this.router.routeComplete<T>(prompt, options);
 
-      this.trackUsage({
-        provider: result.provider,
+      this.usageTracker.track({
+        provider: result.provider as ProviderName,
         model: result.model,
         operation: "complete",
         tokens: {
@@ -210,7 +179,7 @@ export class LLMCenter {
 
       return result;
     } catch (error) {
-      this.trackUsage({
+      this.usageTracker.track({
         provider: options?.provider ?? this.config.defaultProvider,
         model: options?.model ?? "unknown",
         operation: "complete",
@@ -220,40 +189,25 @@ export class LLMCenter {
         success: false,
         error: error instanceof Error ? error.message : String(error),
       });
-
       throw error;
     }
   }
 
   /**
    * Chat with optional structured output.
-   *
-   * @param messages - Array of chat messages
-   * @param options - Chat options (provider, model, schema, temperature)
-   * @returns Chat result with response message and usage info
-   *
-   * @example
-   * ```typescript
-   * const result = await llm.chat([
-   *   { role: "system", content: "You are a helpful assistant" },
-   *   { role: "user", content: "Hello!" },
-   * ]);
-   * console.log(result.message.content); // "Hello! How can I help?"
-   * ```
    */
   async chat<T>(
     messages: Message[],
     options?: ChatOptions<z.ZodType<T>>
   ): Promise<ChatResult<T>> {
     const startTime = Date.now();
-
     await this.rateLimiter?.acquire();
 
     try {
       const result = await this.router.routeChat<T>(messages, options);
 
-      this.trackUsage({
-        provider: result.provider,
+      this.usageTracker.track({
+        provider: result.provider as ProviderName,
         model: result.model,
         operation: "chat",
         tokens: {
@@ -268,7 +222,7 @@ export class LLMCenter {
 
       return result;
     } catch (error) {
-      this.trackUsage({
+      this.usageTracker.track({
         provider: options?.provider ?? this.config.defaultProvider,
         model: options?.model ?? "unknown",
         operation: "chat",
@@ -278,131 +232,68 @@ export class LLMCenter {
         success: false,
         error: error instanceof Error ? error.message : String(error),
       });
-
       throw error;
     }
   }
 
   /**
    * Get aggregated usage statistics.
-   *
-   * @returns Usage stats by provider and operation
    */
   getUsage(): UsageStats {
-    const stats: UsageStats = {
-      totalRequests: this.usageEvents.length,
-      successfulRequests: 0,
-      failedRequests: 0,
-      totalTokens: 0,
-      totalCost: 0,
-      byProvider: {},
-      byOperation: {},
-    };
-
-    for (const event of this.usageEvents) {
-      if (event.success) {
-        stats.successfulRequests++;
-      } else {
-        stats.failedRequests++;
-      }
-
-      stats.totalTokens += event.tokens.total;
-      stats.totalCost += event.cost;
-
-      // By provider
-      let providerStats = stats.byProvider[event.provider];
-      if (!providerStats) {
-        providerStats = { requests: 0, tokens: 0, cost: 0 };
-        stats.byProvider[event.provider] = providerStats;
-      }
-      providerStats.requests++;
-      providerStats.tokens += event.tokens.total;
-      providerStats.cost += event.cost;
-
-      // By operation
-      let operationStats = stats.byOperation[event.operation];
-      if (!operationStats) {
-        operationStats = { requests: 0, tokens: 0, cost: 0 };
-        stats.byOperation[event.operation] = operationStats;
-      }
-      operationStats.requests++;
-      operationStats.tokens += event.tokens.total;
-      operationStats.cost += event.cost;
-    }
-
-    return stats;
+    return this.usageTracker.getStats();
   }
 
   /**
    * Get raw usage events.
-   *
-   * @returns Array of all usage events
    */
   getUsageEvents(): UsageEvent[] {
-    return [...this.usageEvents];
+    return this.usageTracker.getEvents();
   }
 
   /**
-   * Clear usage history.
+   * Clear usage history and reset stats.
    */
   clearUsage(): void {
-    this.usageEvents = [];
+    this.usageTracker.clear();
   }
 
   /**
    * Get a specific provider instance.
-   *
-   * @param name - Provider name
-   * @returns The provider instance
    */
   getProvider(name: ProviderName): LLMProvider {
-    const provider = this.providers.get(name);
-    if (!provider) {
-      throw new ProviderNotConfiguredError(name);
-    }
-    return provider;
+    return getProvider(this.registry, name);
   }
 
   /**
    * Check if a provider is configured.
-   *
-   * @param name - Provider name
-   * @returns True if provider is configured
    */
   hasProvider(name: ProviderName): boolean {
-    return this.providers.has(name);
+    return hasProvider(this.registry, name);
   }
 
   /**
    * Shutdown all providers.
    */
   async shutdown(): Promise<void> {
-    for (const provider of this.providers.values()) {
-      await provider.shutdown?.();
-    }
+    await shutdownProviders(this.registry);
   }
 
-  /**
-   * Track usage event.
-   */
-  private trackUsage(event: Omit<UsageEvent, "timestamp">): void {
-    if (this.config.tracking?.enabled === false) return;
+  // ============================================
+  // Private Methods
+  // ============================================
 
-    const usageEvent: UsageEvent = {
-      ...event,
-      timestamp: new Date(),
+  private createEmptyEmbedResult(options?: EmbedOptions): EmbedResult {
+    return {
+      embeddings: [],
+      model: options?.model ?? "none",
+      provider: options?.provider ?? this.config.defaultProvider,
+      usage: { totalTokens: 0, estimatedCost: 0 },
     };
-
-    this.usageEvents.push(usageEvent);
-    this.config.tracking?.onUsage?.(usageEvent);
   }
 }
 
 /**
  * Create LLM Center instance.
- *
- * @param config - LLM Center configuration
- * @returns LLMCenter instance
  */
 export function createLLMCenter(config: LLMCenterConfig): LLMCenter {
   return new LLMCenter(config);

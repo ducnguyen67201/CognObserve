@@ -2,17 +2,13 @@
  * Embedding Generation Activities
  *
  * Activities for generating and storing code chunk embeddings.
- * Uses LLM Center for provider-agnostic embedding generation.
+ * Uses centralized LLM Manager for provider-agnostic embedding generation.
  *
  * IMPORTANT: Follows READ-ONLY pattern - all storage via tRPC internal procedures.
  */
 
-import {
-  createLLMCenter,
-  getConfig,
-  type LLMCenter,
-  type EmbedResult,
-} from "@cognobserve/shared/llm";
+import type { EmbedResult } from "@cognobserve/shared/llm";
+import { getLLM } from "@/lib/llm-manager";
 import { getInternalCaller } from "@/lib/trpc-caller";
 import type {
   GenerateEmbeddingsInput,
@@ -43,19 +39,6 @@ const MAX_CHARS_PER_CHUNK = MAX_TOKENS_PER_CHUNK * CHARS_PER_TOKEN;
 
 /** Delay between batches in ms (for rate limiting) */
 const BATCH_DELAY_MS = 200;
-
-// ============================================
-// LLM Center (Lazy Initialization)
-// ============================================
-
-let _llmCenter: LLMCenter | null = null;
-
-function getLLMCenter(): LLMCenter {
-  if (!_llmCenter) {
-    _llmCenter = createLLMCenter(getConfig());
-  }
-  return _llmCenter;
-}
 
 // ============================================
 // Helper Functions
@@ -127,7 +110,7 @@ export async function generateEmbeddings(
     };
   }
 
-  const llm = getLLMCenter();
+  const llm = getLLM();
   const effectiveBatchSize = Math.min(batchSize, MAX_BATCH_SIZE);
   const batches = batchArray(chunks, effectiveBatchSize);
 

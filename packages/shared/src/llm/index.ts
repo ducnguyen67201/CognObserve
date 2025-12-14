@@ -28,6 +28,25 @@ export { LLMCenter, createLLMCenter } from "./center";
 export { SmartRouter, createSmartRouter } from "./router";
 
 // ============================================
+// Internal Modules (for advanced usage)
+// ============================================
+
+export {
+  createProviders,
+  getProvider,
+  hasProvider,
+  shutdownProviders,
+  type ProviderRegistry,
+} from "./provider-factory";
+
+export {
+  UsageTracker,
+  createUsageTracker,
+  type UsageTrackerConfig,
+  type TrackUsageInput,
+} from "./usage-tracker";
+
+// ============================================
 // Types
 // ============================================
 

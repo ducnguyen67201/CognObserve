@@ -105,8 +105,9 @@ export class AnthropicProvider extends BaseLLMProvider {
     // Build system prompt with optional schema instructions
     let systemPrompt = options?.systemPrompt ?? "";
     if (options?.schema) {
+      // Use compact JSON to minimize token usage
       const jsonSchema = z.toJSONSchema(options.schema);
-      systemPrompt += `\n\nYou must respond with valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}\n\nRespond ONLY with the JSON object, no other text.`;
+      systemPrompt += `\nRespond with valid JSON matching: ${JSON.stringify(jsonSchema)}\nJSON only.`;
     }
 
     try {
@@ -171,10 +172,10 @@ export class AnthropicProvider extends BaseLLMProvider {
       }
     }
 
-    // Add schema instructions for structured output
+    // Add schema instructions for structured output (compact to save tokens)
     if (options?.schema) {
       const jsonSchema = z.toJSONSchema(options.schema);
-      systemPrompt += `\n\nYou must respond with valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}\n\nRespond ONLY with the JSON object, no other text.`;
+      systemPrompt += `\nRespond with valid JSON matching: ${JSON.stringify(jsonSchema)}\nJSON only.`;
     }
 
     try {

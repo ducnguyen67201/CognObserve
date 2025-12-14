@@ -349,3 +349,77 @@ export interface StoreEmbeddingsInput {
 export interface StoreEmbeddingsOutput {
   storedCount: number;
 }
+
+// ============================================
+// Vector Search Types
+// ============================================
+
+/**
+ * Input for searchCodebase activity
+ */
+export interface SearchCodebaseInput {
+  /** Repository ID to search within */
+  repoId: string;
+  /** Natural language or code query */
+  query: string;
+  /** Maximum number of results (default: 10, max: 100) */
+  topK?: number;
+  /** Minimum similarity threshold 0-1 (default: 0.5) */
+  minSimilarity?: number;
+  /** Optional file patterns to filter (e.g., ["*.ts", "src/**"]) */
+  filePatterns?: string[];
+}
+
+/**
+ * Single search result
+ */
+export interface SearchResult {
+  /** Code chunk ID */
+  chunkId: string;
+  /** Repository ID */
+  repoId: string;
+  /** File path within repository */
+  filePath: string;
+  /** Start line number (1-based) */
+  startLine: number;
+  /** End line number (1-based) */
+  endLine: number;
+  /** Code content */
+  content: string;
+  /** Programming language */
+  language: string | null;
+  /** Chunk type (function, class, module, block) */
+  chunkType: string;
+  /** Cosine similarity score (0-1, higher is better) */
+  similarity: number;
+}
+
+/**
+ * Output from searchCodebase activity
+ */
+export interface SearchCodebaseOutput {
+  /** Search results ordered by similarity */
+  results: SearchResult[];
+  /** Query embedding tokens used */
+  queryTokens: number;
+  /** Total search latency in milliseconds */
+  searchLatencyMs: number;
+  /** Whether query was truncated */
+  queryTruncated: boolean;
+}
+
+/**
+ * Input for project-level search (resolves repo from project)
+ */
+export interface SearchProjectCodebaseInput {
+  /** Project ID (will resolve to repository) */
+  projectId: string;
+  /** Natural language or code query */
+  query: string;
+  /** Maximum number of results */
+  topK?: number;
+  /** Minimum similarity threshold */
+  minSimilarity?: number;
+  /** Optional file patterns */
+  filePatterns?: string[];
+}

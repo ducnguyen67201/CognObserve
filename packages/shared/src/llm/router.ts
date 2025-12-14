@@ -22,7 +22,20 @@ import type {
 } from "./types";
 import type { LLMCenterConfig, ModelRef, OperationRouting } from "./config.types";
 import { AllProvidersFailedError, isRetryableError } from "./errors";
-import { withRetry } from "./utils/retry";
+import { withRetry, sleep } from "./utils";
+
+// ============================================
+// Constants
+// ============================================
+
+/** Default max retries per model before moving to fallback */
+const DEFAULT_MAX_RETRIES = 2;
+
+/** Base delay for exponential backoff (ms) */
+const DEFAULT_BASE_DELAY_MS = 1000;
+
+/** Maximum delay cap for exponential backoff (ms) */
+const DEFAULT_MAX_DELAY_MS = 30_000;
 
 // ============================================
 // Types
@@ -181,7 +194,7 @@ export class SmartRouter {
 
         // Wait before trying next fallback
         if (fallbackConfig?.retryDelay) {
-          await this.sleep(fallbackConfig.retryDelay);
+          await sleep(fallbackConfig.retryDelay);
         }
       }
     }
@@ -198,9 +211,9 @@ export class SmartRouter {
    */
   private async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
     return withRetry(fn, {
-      maxAttempts: this.config.settings?.maxRetries ?? 2,
-      baseDelayMs: 1000,
-      maxDelayMs: 30000,
+      maxAttempts: this.config.settings?.maxRetries ?? DEFAULT_MAX_RETRIES,
+      baseDelayMs: DEFAULT_BASE_DELAY_MS,
+      maxDelayMs: DEFAULT_MAX_DELAY_MS,
     });
   }
 
@@ -242,13 +255,6 @@ export class SmartRouter {
       throw new Error(`Provider "${name}" not configured`);
     }
     return provider;
-  }
-
-  /**
-   * Sleep for specified milliseconds.
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

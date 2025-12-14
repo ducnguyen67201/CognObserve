@@ -37,6 +37,7 @@ import {
 const DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small";
 const DEFAULT_CHAT_MODEL = "gpt-4o-mini";
 const EMBEDDING_DIMENSIONS = 1536;
+const DEFAULT_TEMPERATURE = 0.7;
 
 /**
  * Cost per 1M tokens (as of December 2024)
@@ -132,7 +133,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         const response = await this.client.beta.chat.completions.parse({
           model,
           messages,
-          temperature: options?.temperature ?? 0.7,
+          temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
           max_tokens: options?.maxTokens,
           response_format: zodResponseFormat(options.schema, "response"),
         });
@@ -167,7 +168,7 @@ export class OpenAIProvider extends BaseLLMProvider {
       const response = await this.client.chat.completions.create({
         model,
         messages,
-        temperature: options?.temperature ?? 0.7,
+        temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens,
       });
 
@@ -221,7 +222,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         const response = await this.client.beta.chat.completions.parse({
           model,
           messages: openaiMessages,
-          temperature: options?.temperature ?? 0.7,
+          temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
           max_tokens: options?.maxTokens,
           response_format: zodResponseFormat(options.schema, "response"),
         });
@@ -259,7 +260,7 @@ export class OpenAIProvider extends BaseLLMProvider {
       const response = await this.client.chat.completions.create({
         model,
         messages: openaiMessages,
-        temperature: options?.temperature ?? 0.7,
+        temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens,
       });
 

@@ -114,12 +114,9 @@ function calculateDelay(
   return Math.min(exponentialDelay + jitter, maxDelayMs);
 }
 
-/**
- * Sleep for specified milliseconds.
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+/** Internal sleep to avoid circular imports with utils/index.ts */
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 // ============================================
 // Retry Builder

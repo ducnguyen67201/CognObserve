@@ -48,7 +48,7 @@ export class RateLimiter {
     if (this.requestTokens < 1) {
       // Calculate wait time until we have a token
       const waitTime = Math.ceil((1 - this.requestTokens) / this.requestRefillRate);
-      await this.sleep(waitTime);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
       this.refill();
     }
 
@@ -104,13 +104,6 @@ export class RateLimiter {
       this.requestTokens + tokensToAdd
     );
     this.lastRefill = now;
-  }
-
-  /**
-   * Sleep for specified milliseconds.
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

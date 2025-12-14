@@ -7,7 +7,16 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { prisma } from "@cognobserve/db";
+import {
+  prisma,
+  searchSimilarChunks,
+  searchSimilarChunksWithPatterns,
+} from "@cognobserve/db";
+import {
+  createLLMCenter,
+  getConfig,
+  type LLMCenter,
+} from "@cognobserve/shared/llm";
 import {
   createRouter,
   protectedProcedure,
@@ -15,6 +24,19 @@ import {
 } from "../trpc";
 import { WORKSPACE_ADMIN_ROLES, type WorkspaceRole } from "../middleware/workspace";
 import { getTemporalClient, getTaskQueue } from "../lib/temporal";
+
+// ============================================
+// LLM Center (Lazy Initialization)
+// ============================================
+
+let _llmCenter: LLMCenter | null = null;
+
+function getLLMCenter(): LLMCenter {
+  if (!_llmCenter) {
+    _llmCenter = createLLMCenter(getConfig());
+  }
+  return _llmCenter;
+}
 
 // ============================================
 // Input Schemas
@@ -35,6 +57,15 @@ const ListRepositoriesSchema = z.object({
 const RepositoryActionSchema = z.object({
   workspaceSlug: z.string(),
   repositoryId: z.string(),
+});
+
+const SearchCodebaseSchema = z.object({
+  workspaceSlug: z.string(),
+  repositoryId: z.string(),
+  query: z.string().min(1).max(10000),
+  topK: z.number().min(1).max(100).default(10),
+  minSimilarity: z.number().min(0).max(1).default(0.5),
+  filePatterns: z.array(z.string()).optional(),
 });
 
 // ============================================
@@ -499,6 +530,96 @@ export const githubRouter = createRouter({
           chunkCount: Number(file.chunkCount),
           totalLines: Number(file.totalLines),
         })),
+      };
+    }),
+
+  /**
+   * Search codebase using vector similarity
+   *
+   * Performs semantic search on indexed code chunks.
+   * Uses LLM Center for embedding generation.
+   */
+  searchCodebase: protectedProcedure
+    .input(SearchCodebaseSchema)
+    .use(workspaceMiddleware)
+    .query(async ({ ctx, input }) => {
+      const { repositoryId, query, topK, minSimilarity, filePatterns } = input;
+      const startTime = Date.now();
+
+      // Verify repository belongs to workspace
+      const repo = await prisma.gitHubRepository.findFirst({
+        where: {
+          id: repositoryId,
+          installation: {
+            workspaceId: ctx.workspace.id,
+          },
+        },
+        select: { id: true, indexStatus: true },
+      });
+
+      if (!repo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repository not found",
+        });
+      }
+
+      if (repo.indexStatus !== "READY") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Repository is not indexed. Status: ${repo.indexStatus}`,
+        });
+      }
+
+      // Truncate query if too long (~8K tokens max)
+      const queryText = query.slice(0, 24000);
+
+      // Generate query embedding using LLM Center
+      const llm = getLLMCenter();
+      const embedResult = await llm.embed([queryText]);
+
+      const queryEmbedding = embedResult.embeddings[0];
+      if (!queryEmbedding) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to generate query embedding",
+        });
+      }
+
+      const queryTokens = embedResult.usage.totalTokens;
+
+      // Perform vector search
+      let results;
+      if (filePatterns && filePatterns.length > 0) {
+        results = await searchSimilarChunksWithPatterns(
+          repositoryId,
+          queryEmbedding,
+          filePatterns,
+          topK,
+          minSimilarity
+        );
+      } else {
+        results = await searchSimilarChunks(
+          repositoryId,
+          queryEmbedding,
+          topK,
+          minSimilarity
+        );
+      }
+
+      return {
+        results: results.map((r) => ({
+          chunkId: r.id,
+          filePath: r.filePath,
+          startLine: r.startLine,
+          endLine: r.endLine,
+          content: r.content,
+          language: r.language,
+          chunkType: r.chunkType,
+          similarity: r.similarity,
+        })),
+        queryTokens,
+        searchLatencyMs: Date.now() - startTime,
       };
     }),
 });

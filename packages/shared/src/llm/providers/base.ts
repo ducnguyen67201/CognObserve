@@ -18,6 +18,7 @@ import type {
   Message,
 } from "../types";
 import { SchemaValidationError } from "../errors";
+import { sleep } from "../utils";
 
 /**
  * Base class for LLM providers.
@@ -124,8 +125,9 @@ export abstract class BaseLLMProvider implements LLMProvider {
 
   /**
    * Sleep for specified milliseconds.
+   * @deprecated Use `sleep` from "../utils" instead
    */
   protected sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return sleep(ms);
   }
 }
