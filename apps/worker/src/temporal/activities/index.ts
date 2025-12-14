@@ -45,3 +45,9 @@ export {
   fetchRepositoryContents,
   storeRepositoryChunks,
 } from "./repository-index.activities";
+
+// Embedding generation activities
+export {
+  generateEmbeddings,
+  storeEmbeddings,
+} from "./embedding.activities";

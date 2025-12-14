@@ -234,7 +234,8 @@ export async function getDetails(id: string): Promise<Details | null> {
 | `internal.storeGitHubIndex` | `{ repoId, chunks, ... }` | Store indexed code |
 | `internal.updateRepositoryIndexStatus` | `{ repositoryId, status, lastIndexedAt? }` | Update repo index status |
 | `internal.deleteRepositoryChunks` | `{ repositoryId }` | Delete chunks for reindex |
-| `internal.storeRepositoryChunks` | `{ repositoryId, chunks }` | Store code chunks |
+| `internal.storeRepositoryChunks` | `{ repositoryId, chunks }` | Store code chunks (returns chunkIds) |
+| `internal.storeChunkEmbeddings` | `{ embeddings: [{ chunkId, embedding }] }` | Store embeddings in pgvector |
 
 ## Startup Summary Output
 

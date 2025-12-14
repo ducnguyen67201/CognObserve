@@ -287,3 +287,65 @@ export interface StoreRepositoryChunksInput {
   repositoryId: string;
   chunks: CodeChunkData[];
 }
+
+/**
+ * Result from storeRepositoryChunks (includes chunk IDs for embedding)
+ */
+export interface StoreRepositoryChunksResult {
+  chunksCreated: number;
+  chunkIds: string[];
+}
+
+// ============================================
+// Embedding Generation Types
+// ============================================
+
+/**
+ * Input for generateEmbeddings activity
+ */
+export interface GenerateEmbeddingsInput {
+  chunks: EmbeddingChunk[];
+  batchSize?: number;
+}
+
+/**
+ * Chunk data for embedding generation
+ */
+export interface EmbeddingChunk {
+  id: string;
+  content: string;
+  contentHash: string;
+}
+
+/**
+ * Single embedding result
+ */
+export interface EmbeddingResult {
+  chunkId: string;
+  embedding: number[];
+}
+
+/**
+ * Output from generateEmbeddings activity
+ */
+export interface GenerateEmbeddingsOutput {
+  embeddings: EmbeddingResult[];
+  tokensUsed: number;
+  estimatedCost: number;
+  chunksProcessed: number;
+  batchCount: number;
+}
+
+/**
+ * Input for storeEmbeddings activity
+ */
+export interface StoreEmbeddingsInput {
+  embeddings: EmbeddingResult[];
+}
+
+/**
+ * Output from storeEmbeddings activity
+ */
+export interface StoreEmbeddingsOutput {
+  storedCount: number;
+}

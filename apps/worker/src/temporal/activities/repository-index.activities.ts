@@ -17,6 +17,7 @@ import type {
   FetchContentsInput,
   FileContent,
   StoreRepositoryChunksInput,
+  StoreRepositoryChunksResult,
 } from "../types";
 
 // ============================================
@@ -274,10 +275,11 @@ async function fetchSingleFile(
 /**
  * Store chunks via tRPC internal procedure.
  * Mutations go through internal router - NOT direct database access.
+ * Returns chunk IDs for embedding generation.
  */
 export async function storeRepositoryChunks(
   input: StoreRepositoryChunksInput
-): Promise<{ chunksCreated: number }> {
+): Promise<StoreRepositoryChunksResult> {
   const caller = getInternalCaller();
   return caller.internal.storeRepositoryChunks(input);
 }
