@@ -234,7 +234,8 @@ export async function getDetails(id: string): Promise<Details | null> {
 | `internal.storeGitHubIndex` | `{ repoId, chunks, ... }` | Store indexed code |
 | `internal.updateRepositoryIndexStatus` | `{ repositoryId, status, lastIndexedAt? }` | Update repo index status |
 | `internal.deleteRepositoryChunks` | `{ repositoryId }` | Delete chunks for reindex |
-| `internal.storeRepositoryChunks` | `{ repositoryId, chunks }` | Store code chunks |
+| `internal.storeRepositoryChunks` | `{ repositoryId, chunks }` | Store code chunks (returns chunkIds) |
+| `internal.storeChunkEmbeddings` | `{ embeddings: [{ chunkId, embedding }] }` | Store embeddings in pgvector |
 
 ## Startup Summary Output
 
@@ -332,6 +333,59 @@ interface RepositoryIndexInput {
 - Batches GitHub API requests (20 files per batch)
 - 100ms delay between batches to avoid rate limits
 - 100KB max file size limit
+
+## Embedding and Search Details
+
+Generates embeddings for code chunks and provides semantic search:
+
+### Embedding Generation Flow
+
+```
+storeRepositoryChunks → generateEmbeddings → storeEmbeddings
+```
+
+**Activities:**
+- `generateEmbeddings`: Uses LLM Center to generate embeddings for code chunks
+- `storeEmbeddings`: Stores embeddings in pgvector via `internal.storeChunkEmbeddings`
+
+**Configuration:**
+- Model: `text-embedding-3-small` (1536 dimensions)
+- Batch size: 50 chunks (max 100)
+- Rate limiting: 200ms between batches
+
+### Vector Search Activities
+
+```
+searchCodebase → LLM Center (embed query) → pgvector (similarity search) → results
+```
+
+**Activities:**
+- `searchCodebase`: Search by repository ID
+- `searchProjectCodebase`: Search by project ID (resolves to repository)
+
+**Input types:**
+```typescript
+interface SearchCodebaseInput {
+  repoId: string;
+  query: string;
+  topK?: number;        // default: 10, max: 100
+  minSimilarity?: number; // default: 0.5
+  filePatterns?: string[]; // e.g., ["*.ts", "src/**"]
+}
+```
+
+**tRPC endpoint:**
+- `github.searchCodebase`: UI-accessible search endpoint
+
+**Key files:**
+- Embedding Activities: `apps/worker/src/temporal/activities/embedding.activities.ts`
+- Search Activities: `apps/worker/src/temporal/activities/search.activities.ts`
+- Vector Operations: `packages/db/src/vector.ts`
+- tRPC Router: `packages/api/src/routers/github.ts`
+
+**Performance Targets:**
+- P95 latency < 500ms for 100K chunks
+- Uses HNSW index with cosine similarity
 
 ## Debugging
 

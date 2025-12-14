@@ -287,3 +287,139 @@ export interface StoreRepositoryChunksInput {
   repositoryId: string;
   chunks: CodeChunkData[];
 }
+
+/**
+ * Result from storeRepositoryChunks (includes chunk IDs for embedding)
+ */
+export interface StoreRepositoryChunksResult {
+  chunksCreated: number;
+  chunkIds: string[];
+}
+
+// ============================================
+// Embedding Generation Types
+// ============================================
+
+/**
+ * Input for generateEmbeddings activity
+ */
+export interface GenerateEmbeddingsInput {
+  chunks: EmbeddingChunk[];
+  batchSize?: number;
+}
+
+/**
+ * Chunk data for embedding generation
+ */
+export interface EmbeddingChunk {
+  id: string;
+  content: string;
+  contentHash: string;
+}
+
+/**
+ * Single embedding result
+ */
+export interface EmbeddingResult {
+  chunkId: string;
+  embedding: number[];
+}
+
+/**
+ * Output from generateEmbeddings activity
+ */
+export interface GenerateEmbeddingsOutput {
+  embeddings: EmbeddingResult[];
+  tokensUsed: number;
+  estimatedCost: number;
+  chunksProcessed: number;
+  batchCount: number;
+}
+
+/**
+ * Input for storeEmbeddings activity
+ */
+export interface StoreEmbeddingsInput {
+  embeddings: EmbeddingResult[];
+}
+
+/**
+ * Output from storeEmbeddings activity
+ */
+export interface StoreEmbeddingsOutput {
+  storedCount: number;
+}
+
+// ============================================
+// Vector Search Types
+// ============================================
+
+/**
+ * Input for searchCodebase activity
+ */
+export interface SearchCodebaseInput {
+  /** Repository ID to search within */
+  repoId: string;
+  /** Natural language or code query */
+  query: string;
+  /** Maximum number of results (default: 10, max: 100) */
+  topK?: number;
+  /** Minimum similarity threshold 0-1 (default: 0.5) */
+  minSimilarity?: number;
+  /** Optional file patterns to filter (e.g., ["*.ts", "src/**"]) */
+  filePatterns?: string[];
+}
+
+/**
+ * Single search result
+ */
+export interface SearchResult {
+  /** Code chunk ID */
+  chunkId: string;
+  /** Repository ID */
+  repoId: string;
+  /** File path within repository */
+  filePath: string;
+  /** Start line number (1-based) */
+  startLine: number;
+  /** End line number (1-based) */
+  endLine: number;
+  /** Code content */
+  content: string;
+  /** Programming language */
+  language: string | null;
+  /** Chunk type (function, class, module, block) */
+  chunkType: string;
+  /** Cosine similarity score (0-1, higher is better) */
+  similarity: number;
+}
+
+/**
+ * Output from searchCodebase activity
+ */
+export interface SearchCodebaseOutput {
+  /** Search results ordered by similarity */
+  results: SearchResult[];
+  /** Query embedding tokens used */
+  queryTokens: number;
+  /** Total search latency in milliseconds */
+  searchLatencyMs: number;
+  /** Whether query was truncated */
+  queryTruncated: boolean;
+}
+
+/**
+ * Input for project-level search (resolves repo from project)
+ */
+export interface SearchProjectCodebaseInput {
+  /** Project ID (will resolve to repository) */
+  projectId: string;
+  /** Natural language or code query */
+  query: string;
+  /** Maximum number of results */
+  topK?: number;
+  /** Minimum similarity threshold */
+  minSimilarity?: number;
+  /** Optional file patterns */
+  filePatterns?: string[];
+}

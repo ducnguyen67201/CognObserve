@@ -329,6 +329,49 @@ For detailed information on:
 
 **See `docs/WORKFLOWS.md`**
 
+## LLM Center (CRITICAL)
+
+The LLM Center (`packages/shared/src/llm/`) is the centralized abstraction for all LLM operations. **All LLM calls MUST go through the LLM Center.**
+
+**Full documentation:** [`docs/LLM_CENTER.md`](docs/LLM_CENTER.md)
+
+**IMPORTANT:** When editing any files in `packages/shared/src/llm/`:
+1. **Read** `docs/LLM_CENTER.md` first to understand the architecture
+2. **Update** `docs/LLM_CENTER.md` if you add/change functionality
+3. **Follow** the established patterns for errors, logging, and providers
+
+### Quick Reference
+
+```typescript
+// Get LLM instance
+import { getLLM } from "@/lib/llm-manager";
+const llm = getLLM();
+
+// Operations
+await llm.embed(["text"]);                    // Embeddings
+await llm.chat([{ role: "user", content }]);  // Chat
+await llm.complete(prompt, { schema });       // Structured output
+```
+
+### Key Rules
+
+| Rule | Description |
+|------|-------------|
+| **Single Entry Point** | Always use `getLLM()` - never import SDKs directly |
+| **Centralized Errors** | Use `LLMError` subclasses from `@cognobserve/shared/llm` |
+| **Centralized Logging** | Use `getLogger()` from `@cognobserve/shared/llm` |
+| **Update Docs** | Update `docs/LLM_CENTER.md` when adding features |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `docs/LLM_CENTER.md` | Full documentation (READ THIS FIRST) |
+| `packages/shared/src/llm/center.ts` | Main LLMCenter class |
+| `packages/shared/src/llm/errors.ts` | Centralized error classes |
+| `packages/shared/src/llm/utils/logger.ts` | Configurable logger |
+| `apps/worker/src/lib/llm-manager.ts` | Singleton accessor for worker |
+
 ## Code Style Rules
 
 ### No Inline Functions

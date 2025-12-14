@@ -11,8 +11,10 @@
 // 4. Filter to indexable files
 // 5. Fetch file contents
 // 6. Chunk files
-// 7. Store chunks
-// 8. Update status to READY (or FAILED on error)
+// 7. Store chunks -> returns chunk IDs
+// 8. Generate embeddings for chunks (via LLM Center)
+// 9. Store embeddings in pgvector
+// 10. Update status to READY (or FAILED on error)
 // ============================================================
 
 import {
@@ -21,13 +23,14 @@ import {
   ApplicationFailure,
 } from "@temporalio/workflow";
 import type * as activities from "../temporal/activities";
-import type { RepositoryIndexInput, RepositoryIndexResult } from "../temporal/types";
+import type { RepositoryIndexInput, RepositoryIndexResult, EmbeddingChunk } from "../temporal/types";
 import { ACTIVITY_RETRY } from "@cognobserve/shared";
 
 // ============================================================
 // Activity Configuration
 // ============================================================
 
+// Standard activities with 30m timeout
 const {
   updateRepositoryIndexStatus,
   cleanupRepositoryChunks,
@@ -40,6 +43,18 @@ const {
   retry: {
     ...ACTIVITY_RETRY.DEFAULT,
     maximumAttempts: 3,
+  },
+});
+
+// Embedding activities with longer timeout (LLM API calls can be slow)
+const {
+  generateEmbeddings,
+  storeEmbeddings,
+} = proxyActivities<typeof activities>({
+  startToCloseTimeout: "60m", // Longer timeout for embedding generation
+  retry: {
+    ...ACTIVITY_RETRY.DEFAULT,
+    maximumAttempts: 5, // More retries for LLM API calls
   },
 });
 
@@ -168,25 +183,60 @@ export async function repositoryIndexWorkflow(
     // Step 7: Store chunks in database
     if (chunks.length > 0) {
       log.info("Storing chunks");
-      const result = await storeRepositoryChunks({
+      const storeResult = await storeRepositoryChunks({
         repositoryId,
         chunks,
       });
-      log.info("Stored chunks", { count: result.chunksCreated });
+      log.info("Stored chunks", { count: storeResult.chunksCreated });
 
-      // Step 8: Update status to READY
+      // Step 8: Generate embeddings for chunks
+      if (storeResult.chunkIds.length > 0) {
+        log.info("Generating embeddings for chunks");
+
+        // Create EmbeddingChunk array by matching IDs with original chunks
+        const embeddingChunks: EmbeddingChunk[] = storeResult.chunkIds.map(
+          (id, index) => {
+            const originalChunk = chunks[index]!;
+            return {
+              id,
+              content: originalChunk.content,
+              contentHash: originalChunk.contentHash,
+            };
+          }
+        );
+
+        const embeddingResult = await generateEmbeddings({
+          chunks: embeddingChunks,
+        });
+        log.info("Generated embeddings", {
+          count: embeddingResult.chunksProcessed,
+          tokensUsed: embeddingResult.tokensUsed,
+          estimatedCost: embeddingResult.estimatedCost,
+        });
+
+        // Step 9: Store embeddings in pgvector
+        if (embeddingResult.embeddings.length > 0) {
+          log.info("Storing embeddings");
+          const storeEmbeddingsResult = await storeEmbeddings({
+            embeddings: embeddingResult.embeddings,
+          });
+          log.info("Stored embeddings", { count: storeEmbeddingsResult.storedCount });
+        }
+      }
+
+      // Step 10: Update status to READY
       await updateRepositoryIndexStatus(repositoryId, "READY");
 
       log.info("Repository indexing completed successfully", {
         repositoryId,
         filesProcessed: fileContents.length,
-        chunksCreated: result.chunksCreated,
+        chunksCreated: storeResult.chunksCreated,
       });
 
       return {
         success: true,
         filesProcessed: fileContents.length,
-        chunksCreated: result.chunksCreated,
+        chunksCreated: storeResult.chunksCreated,
       };
     }
 

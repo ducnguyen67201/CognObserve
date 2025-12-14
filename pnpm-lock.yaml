@@ -281,10 +281,13 @@ importers:
         version: 1.13.2
       '@temporalio/worker':
         specifier: ^1.13.2
-        version: 1.13.2(esbuild@0.27.0)
+        version: 1.13.2
       '@temporalio/workflow':
         specifier: ^1.13.2
         version: 1.13.2
+      openai:
+        specifier: ^4.76.0
+        version: 4.104.0(ws@8.18.3)(zod@4.1.13)
       zod:
         specifier: ^4.1.13
         version: 4.1.13
@@ -492,6 +495,19 @@ importers:
         version: 2.1.9(@types/node@22.19.1)(jsdom@27.2.0)(terser@5.44.1)
 
   packages/shared:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.32.0
+        version: 0.32.1
+      ioredis:
+        specifier: ^5.8.2
+        version: 5.8.2
+      openai:
+        specifier: ^4.76.0
+        version: 4.104.0(ws@8.18.3)(zod@4.1.13)
+      zod:
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@cognobserve/config-eslint':
         specifier: workspace:*
@@ -532,6 +548,9 @@ packages:
 
   '@anthropic-ai/sdk@0.20.9':
     resolution: {integrity: sha512-Lq74+DhiEQO6F9/gdVOLmHx57pX45ebK2Q/zH14xYe1157a7QeUVknRqIp0Jz5gQI01o7NKbuv9Dag2uQsLjDg==}
+
+  '@anthropic-ai/sdk@0.32.1':
+    resolution: {integrity: sha512-U9JwTrDvdQ9iWuABVsMLj8nJVwAyQz6QXvgLsVhryhCEPkLsbcP/MXxm+jYcAwLoV8ESbaTTjnD4kuAFa+Hyjg==}
 
   '@asamuzakjp/css-color@4.1.0':
     resolution: {integrity: sha512-9xiBAtLn4aNsa4mDnpovJvBn72tNEIACyvlqaNJ+ADemR+yeMJWnBudOi2qGDviJa7SwcDOU/TRh5dnET7qk0w==}
@@ -1511,6 +1530,9 @@ packages:
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
+
+  '@ioredis/commands@1.4.0':
+    resolution: {integrity: sha512-aFT2yemJJo+TZCmieA7qnYGQooOS7QfNmYrzGtsYd3g9j5iDP8AimYYAesf79ohjbLG12XxC4nG5DyEnC88AsQ==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -3418,6 +3440,10 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
+  cluster-key-slot@1.1.2:
+    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
+    engines: {node: '>=0.10.0'}
+
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
     engines: {node: '>=7.0.0'}
@@ -4144,6 +4170,10 @@ packages:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
     engines: {node: '>=12'}
 
+  ioredis@5.8.2:
+    resolution: {integrity: sha512-C6uC+kleiIMmjViJINWk80sOQw5lEzse1ZmvD+S/s8p8CWapftSaC+kocGTx6xrbrJ4WmYQGC08ffHLr6ToR6Q==}
+    engines: {node: '>=12.22.0'}
+
   is-array-buffer@3.0.5:
     resolution: {integrity: sha512-DDfANUiiG2wC1qawP66qlTugJeL5HyzMpfr8lLK+jMQirGzNod0B12cFB/9q838Ru27sBwfw78/rdoU7RERz6A==}
     engines: {node: '>= 0.4'}
@@ -4412,8 +4442,14 @@ packages:
   lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
 
+  lodash.defaults@4.2.0:
+    resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
+
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
+
+  lodash.isarguments@3.1.0:
+    resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
 
   lodash.isboolean@3.0.3:
     resolution: {integrity: sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==}
@@ -5104,6 +5140,14 @@ packages:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
 
+  redis-errors@1.2.0:
+    resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
+    engines: {node: '>=4'}
+
+  redis-parser@3.0.0:
+    resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
+    engines: {node: '>=4'}
+
   reflect.getprototypeof@1.0.10:
     resolution: {integrity: sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==}
     engines: {node: '>= 0.4'}
@@ -5300,6 +5344,9 @@ packages:
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
+
+  standard-as-callback@2.1.0:
+    resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
 
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
@@ -6012,6 +6059,18 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
       web-streams-polyfill: 3.3.3
+    transitivePeerDependencies:
+      - encoding
+
+  '@anthropic-ai/sdk@0.32.1':
+    dependencies:
+      '@types/node': 18.19.130
+      '@types/node-fetch': 2.6.13
+      abort-controller: 3.0.0
+      agentkeepalive: 4.6.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
@@ -7011,6 +7070,8 @@ snapshots:
 
   '@img/sharp-win32-x64@0.34.5':
     optional: true
+
+  '@ioredis/commands@1.4.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -8359,7 +8420,7 @@ snapshots:
       long: 5.3.2
       protobufjs: 7.5.4
 
-  '@temporalio/worker@1.13.2(esbuild@0.27.0)':
+  '@temporalio/worker@1.13.2':
     dependencies:
       '@grpc/grpc-js': 1.14.2
       '@swc/core': 1.15.3
@@ -8378,11 +8439,11 @@ snapshots:
       protobufjs: 7.5.4
       rxjs: 7.8.2
       source-map: 0.7.6
-      source-map-loader: 4.0.2(webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0))
+      source-map-loader: 4.0.2(webpack@5.103.0(@swc/core@1.15.3))
       supports-color: 8.1.1
-      swc-loader: 0.2.6(@swc/core@1.15.3)(webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0))
+      swc-loader: 0.2.6(@swc/core@1.15.3)(webpack@5.103.0(@swc/core@1.15.3))
       unionfs: 4.6.0
-      webpack: 5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)
+      webpack: 5.103.0(@swc/core@1.15.3)
     transitivePeerDependencies:
       - '@swc/helpers'
       - esbuild
@@ -9236,6 +9297,8 @@ snapshots:
       wrap-ansi: 7.0.0
 
   clsx@2.1.1: {}
+
+  cluster-key-slot@1.1.2: {}
 
   color-convert@2.0.1:
     dependencies:
@@ -10137,6 +10200,20 @@ snapshots:
 
   internmap@2.0.3: {}
 
+  ioredis@5.8.2:
+    dependencies:
+      '@ioredis/commands': 1.4.0
+      cluster-key-slot: 1.1.2
+      debug: 4.4.3
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+
   is-array-buffer@3.0.5:
     dependencies:
       call-bind: 1.0.8
@@ -10420,7 +10497,11 @@ snapshots:
 
   lodash.camelcase@4.3.0: {}
 
+  lodash.defaults@4.2.0: {}
+
   lodash.includes@4.3.0: {}
+
+  lodash.isarguments@3.1.0: {}
 
   lodash.isboolean@3.0.3: {}
 
@@ -10704,6 +10785,21 @@ snapshots:
     optionalDependencies:
       ws: 8.18.3
       zod: 3.25.76
+    transitivePeerDependencies:
+      - encoding
+
+  openai@4.104.0(ws@8.18.3)(zod@4.1.13):
+    dependencies:
+      '@types/node': 18.19.130
+      '@types/node-fetch': 2.6.13
+      abort-controller: 3.0.0
+      agentkeepalive: 4.6.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0
+    optionalDependencies:
+      ws: 8.18.3
+      zod: 4.1.13
     transitivePeerDependencies:
       - encoding
 
@@ -11084,6 +11180,12 @@ snapshots:
       indent-string: 4.0.0
       strip-indent: 3.0.0
 
+  redis-errors@1.2.0: {}
+
+  redis-parser@3.0.0:
+    dependencies:
+      redis-errors: 1.2.0
+
   reflect.getprototypeof@1.0.10:
     dependencies:
       call-bind: 1.0.8
@@ -11321,11 +11423,11 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
-  source-map-loader@4.0.2(webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)):
+  source-map-loader@4.0.2(webpack@5.103.0(@swc/core@1.15.3)):
     dependencies:
       iconv-lite: 0.6.3
       source-map-js: 1.2.1
-      webpack: 5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)
+      webpack: 5.103.0(@swc/core@1.15.3)
 
   source-map-support@0.5.21:
     dependencies:
@@ -11341,6 +11443,8 @@ snapshots:
   sqlstring@2.3.3: {}
 
   stackback@0.0.2: {}
+
+  standard-as-callback@2.1.0: {}
 
   std-env@3.10.0: {}
 
@@ -11446,11 +11550,11 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  swc-loader@0.2.6(@swc/core@1.15.3)(webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)):
+  swc-loader@0.2.6(@swc/core@1.15.3)(webpack@5.103.0(@swc/core@1.15.3)):
     dependencies:
       '@swc/core': 1.15.3
       '@swc/counter': 0.1.3
-      webpack: 5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)
+      webpack: 5.103.0(@swc/core@1.15.3)
 
   symbol-tree@3.2.4: {}
 
@@ -11490,17 +11594,16 @@ snapshots:
 
   tapable@2.3.0: {}
 
-  terser-webpack-plugin@5.3.15(@swc/core@1.15.3)(esbuild@0.27.0)(webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)):
+  terser-webpack-plugin@5.3.15(@swc/core@1.15.3)(webpack@5.103.0(@swc/core@1.15.3)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.44.1
-      webpack: 5.103.0(@swc/core@1.15.3)(esbuild@0.27.0)
+      webpack: 5.103.0(@swc/core@1.15.3)
     optionalDependencies:
       '@swc/core': 1.15.3
-      esbuild: 0.27.0
 
   terser@5.44.1:
     dependencies:
@@ -12049,7 +12152,7 @@ snapshots:
 
   webpack-sources@3.3.3: {}
 
-  webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0):
+  webpack@5.103.0(@swc/core@1.15.3):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.8
@@ -12073,7 +12176,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.0
-      terser-webpack-plugin: 5.3.15(@swc/core@1.15.3)(esbuild@0.27.0)(webpack@5.103.0(@swc/core@1.15.3)(esbuild@0.27.0))
+      terser-webpack-plugin: 5.3.15(@swc/core@1.15.3)(webpack@5.103.0(@swc/core@1.15.3))
       watchpack: 2.4.4
       webpack-sources: 3.3.3
     transitivePeerDependencies:

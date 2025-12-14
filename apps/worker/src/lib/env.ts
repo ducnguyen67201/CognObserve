@@ -40,6 +40,9 @@ export const env = createEnv({
     // Required for fetching repository contents via installation token
     GITHUB_APP_ID: z.string().optional(),
     GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+
+    // OpenAI API (for embedding generation)
+    OPENAI_API_KEY: z.string().min(1, "OPENAI_API_KEY is required"),
   },
 
   /**
@@ -67,6 +70,9 @@ export const env = createEnv({
     // GitHub App Configuration
     GITHUB_APP_ID: process.env.GITHUB_APP_ID,
     GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+
+    // OpenAI API
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
 
   /**

@@ -10,7 +10,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { prisma, Prisma, SpanLevel } from "@cognobserve/db";
+import { prisma, Prisma, SpanLevel, setChunkEmbeddings } from "@cognobserve/db";
 import { createRouter, publicProcedure, middleware } from "../trpc";
 import { calculateSpanCost } from "../lib/cost";
 import { SEVERITY_DEFAULTS, type AlertPayload, type ChannelProvider } from "../schemas/alerting";
@@ -687,8 +687,11 @@ export const internalRouter = createRouter({
     }),
 
   /**
-   * Store repository chunks
+   * Store repository chunks and return chunk IDs
    * Called by: repository-index.activities.ts → storeRepositoryChunks
+   *
+   * IMPORTANT: Uses individual creates in transaction (not createMany)
+   * to retrieve generated chunk IDs for embedding storage.
    */
   storeRepositoryChunks: internalProcedure
     .input(z.object({
@@ -707,26 +710,82 @@ export const internalRouter = createRouter({
       const { repositoryId, chunks } = input;
 
       if (chunks.length === 0) {
-        return { chunksCreated: 0 };
+        return { chunksCreated: 0, chunkIds: [] };
       }
 
-      // Use upsert to handle potential duplicates (same file, same lines)
-      const result = await prisma.codeChunk.createMany({
-        data: chunks.map((chunk) => ({
-          repoId: repositoryId,
-          filePath: chunk.filePath,
-          startLine: chunk.startLine,
-          endLine: chunk.endLine,
-          content: chunk.content,
-          contentHash: chunk.contentHash,
-          language: chunk.language,
-          chunkType: chunk.chunkType,
-        })),
-        skipDuplicates: true, // Skip if hash already exists
+      // Use transaction with individual creates to get IDs
+      const createdChunks = await prisma.$transaction(async (tx) => {
+        const results: { id: string }[] = [];
+
+        for (const chunk of chunks) {
+          // Check if chunk already exists (by contentHash for this repo)
+          const existing = await tx.codeChunk.findFirst({
+            where: {
+              repoId: repositoryId,
+              contentHash: chunk.contentHash,
+            },
+            select: { id: true },
+          });
+
+          if (existing) {
+            // Skip duplicate, but still return ID for embedding
+            results.push({ id: existing.id });
+            continue;
+          }
+
+          const created = await tx.codeChunk.create({
+            data: {
+              repoId: repositoryId,
+              filePath: chunk.filePath,
+              startLine: chunk.startLine,
+              endLine: chunk.endLine,
+              content: chunk.content,
+              contentHash: chunk.contentHash,
+              language: chunk.language,
+              chunkType: chunk.chunkType,
+            },
+            select: { id: true },
+          });
+          results.push(created);
+        }
+
+        return results;
       });
 
-      console.log(`[Internal:storeRepositoryChunks] Created ${result.count} chunks for ${repositoryId}`);
-      return { chunksCreated: result.count };
+      const chunkIds = createdChunks.map((c) => c.id);
+      console.log(`[Internal:storeRepositoryChunks] Created/found ${chunkIds.length} chunks for ${repositoryId}`);
+
+      return { chunksCreated: chunkIds.length, chunkIds };
+    }),
+
+  /**
+   * Store embeddings for code chunks
+   * Called by: embedding.activities.ts → storeEmbeddings
+   */
+  storeChunkEmbeddings: internalProcedure
+    .input(z.object({
+      embeddings: z.array(z.object({
+        chunkId: z.string(),
+        embedding: z.array(z.number()),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      const { embeddings } = input;
+
+      if (embeddings.length === 0) {
+        return { storedCount: 0 };
+      }
+
+      // Use batch operation from vector utilities
+      await setChunkEmbeddings(
+        embeddings.map((e) => ({
+          chunkId: e.chunkId,
+          embedding: e.embedding,
+        }))
+      );
+
+      console.log(`[Internal:storeChunkEmbeddings] Stored ${embeddings.length} embeddings`);
+      return { storedCount: embeddings.length };
     }),
 });
 
