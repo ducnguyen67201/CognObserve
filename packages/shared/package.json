@@ -21,6 +21,10 @@
     "./llm/configs": {
       "types": "./src/llm/configs/index.ts",
       "default": "./src/llm/configs/index.ts"
+    },
+    "./rca": {
+      "types": "./src/rca/index.ts",
+      "default": "./src/rca/index.ts"
     }
   },
   "dependencies": {

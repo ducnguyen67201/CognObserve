@@ -586,3 +586,110 @@ export interface TraceAnalysisOutput {
   /** Detected anomalies (top 10) */
   anomalies: DetectedAnomaly[];
 }
+
+// ============================================
+// Code Correlation Types
+// ============================================
+
+/**
+ * Input for correlateCodeChanges activity.
+ * Receives trace analysis output and project context.
+ */
+export interface CodeCorrelationInput {
+  /** Project ID to search commits/PRs for */
+  projectId: string;
+  /** Trace analysis output from analyzeTraces */
+  traceAnalysis: TraceAnalysisOutput;
+  /** When the alert was triggered (ISO 8601 datetime) */
+  alertTriggeredAt: string;
+  /** Lookback window in days (default: 7) */
+  lookbackDays?: number;
+}
+
+/**
+ * Individual signal scores for correlation transparency.
+ */
+export interface CorrelationSignals {
+  /** Temporal proximity score (0-1) - higher = more recent */
+  temporal: number;
+  /** Semantic similarity score (0-1) - higher = more related to error */
+  semantic: number;
+  /** File path match score (0-1) - higher = more stack trace matches */
+  pathMatch: number;
+}
+
+/**
+ * Correlated commit with scoring breakdown.
+ */
+export interface CorrelatedCommit {
+  /** Commit SHA */
+  sha: string;
+  /** Commit message (truncated to 200 chars) */
+  message: string;
+  /** Author name */
+  author: string;
+  /** Author email */
+  authorEmail: string | null;
+  /** Commit timestamp (ISO 8601) */
+  timestamp: string;
+  /** Combined correlation score (0-1) */
+  score: number;
+  /** Individual signal scores */
+  signals: CorrelationSignals;
+  /** Files changed in this commit */
+  filesChanged: string[];
+}
+
+/**
+ * Correlated pull request with scoring breakdown.
+ */
+export interface CorrelatedPR {
+  /** PR number */
+  number: number;
+  /** PR title */
+  title: string;
+  /** PR author login */
+  author: string;
+  /** When the PR was merged (ISO 8601) */
+  mergedAt: string;
+  /** Combined correlation score (0-1) */
+  score: number;
+  /** Individual signal scores */
+  signals: CorrelationSignals;
+}
+
+/**
+ * Relevant code chunk from vector search.
+ */
+export interface RelevantCodeChunk {
+  /** File path */
+  filePath: string;
+  /** Code content (truncated) */
+  content: string;
+  /** Start line number */
+  startLine: number;
+  /** End line number */
+  endLine: number;
+  /** Cosine similarity score */
+  similarity: number;
+}
+
+/**
+ * Output from correlateCodeChanges activity.
+ */
+export interface CodeCorrelationOutput {
+  /** Commits ranked by correlation score (top 10) */
+  suspectedCommits: CorrelatedCommit[];
+  /** PRs ranked by correlation score (top 5) */
+  suspectedPRs: CorrelatedPR[];
+  /** Relevant code chunks from vector search (top 20) */
+  relevantCodeChunks: RelevantCodeChunk[];
+  /** Whether repository was found for project */
+  hasRepository: boolean;
+  /** Search query used for vector search */
+  searchQuery: string;
+  /** Total commits analyzed */
+  commitsAnalyzed: number;
+  /** Total PRs analyzed */
+  prsAnalyzed: number;
+}

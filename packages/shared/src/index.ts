@@ -5,6 +5,7 @@ export * from "./constants";
 export * from "./utils";
 export * from "./api-keys";
 export * from "./chunking";
+export * from "./rca";
 
 // LLM Center - import from "@cognobserve/shared/llm"
 // Cache utilities - import from "@cognobserve/shared/cache"
