@@ -10,6 +10,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./cache": {
+      "types": "./src/cache/index.ts",
+      "default": "./src/cache/index.ts"
+    },
     "./llm": {
       "types": "./src/llm/index.ts",
       "default": "./src/llm/index.ts"

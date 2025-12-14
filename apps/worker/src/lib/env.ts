@@ -42,7 +42,12 @@ export const env = createEnv({
     GITHUB_APP_PRIVATE_KEY: z.string().optional(),
 
     // OpenAI API (for embedding generation)
-    OPENAI_API_KEY: z.string().min(1, "OPENAI_API_KEY is required"),
+    // Optional: Worker can start without it, but embedding generation will fail
+    OPENAI_API_KEY: z.string().optional(),
+
+    // Redis (for embedding cache)
+    // Optional: Falls back to localhost:6379 if not set
+    REDIS_URL: z.string().url().optional(),
   },
 
   /**
@@ -73,6 +78,9 @@ export const env = createEnv({
 
     // OpenAI API
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
+    // Redis
+    REDIS_URL: process.env.REDIS_URL,
   },
 
   /**
