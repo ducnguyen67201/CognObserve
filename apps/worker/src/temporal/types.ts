@@ -334,6 +334,10 @@ export interface GenerateEmbeddingsOutput {
   estimatedCost: number;
   chunksProcessed: number;
   batchCount: number;
+  /** Number of embeddings retrieved from cache */
+  cached: number;
+  /** Number of embeddings generated via API */
+  generated: number;
 }
 
 /**
