@@ -20,8 +20,9 @@
     }
   },
   "dependencies": {
-    "openai": "^4.76.0",
     "@anthropic-ai/sdk": "^0.32.0",
+    "ioredis": "^5.8.2",
+    "openai": "^4.76.0",
     "zod": "^4.1.13"
   },
   "scripts": {

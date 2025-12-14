@@ -9,7 +9,7 @@ import type { LLMProvider, ProviderName } from "./types";
 import type { LLMCenterConfig } from "./config.types";
 import { OpenAIProvider } from "./providers/openai";
 import { AnthropicProvider } from "./providers/anthropic";
-import { ProviderNotConfiguredError } from "./errors";
+import { ProviderNotConfiguredError, LLMError } from "./errors";
 
 // ============================================
 // Types
@@ -21,33 +21,76 @@ export interface ProviderRegistry {
 }
 
 // ============================================
+// Validation
+// ============================================
+
+/**
+ * Check if a string is a non-empty API key.
+ */
+function isValidApiKey(apiKey: string | undefined): boolean {
+  return Boolean(apiKey && apiKey.trim().length > 0);
+}
+
+/**
+ * Throw an error for missing/invalid API key.
+ * Call this only when the provider is required (e.g., default provider).
+ */
+function throwMissingApiKeyError(provider: ProviderName): never {
+  throw new LLMError(
+    `Missing API key for provider: ${provider}. Set the ${provider === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY"} environment variable.`,
+    { code: "missing_api_key", provider, retryable: false }
+  );
+}
+
+// ============================================
 // Factory
 // ============================================
 
 /**
  * Create provider instances from configuration.
  *
+ * Validates API keys at creation time to fail fast instead of
+ * getting 401 errors at runtime.
+ *
  * @param config - LLM Center configuration
  * @returns Provider registry with initialized providers
+ * @throws LLMError if API key is missing or empty
  * @throws Error if no providers configured
  * @throws ProviderNotConfiguredError if default provider not configured
  */
 export function createProviders(config: LLMCenterConfig): ProviderRegistry {
   const providers = new Map<ProviderName, LLMProvider>();
 
-  // Initialize OpenAI provider if configured
-  if (config.providers.openai) {
-    providers.set("openai", new OpenAIProvider(config.providers.openai));
+  // Initialize OpenAI provider if configured (with API key validation)
+  const openaiConfig = config.providers.openai;
+  if (openaiConfig) {
+    if (isValidApiKey(openaiConfig.apiKey)) {
+      providers.set("openai", new OpenAIProvider(openaiConfig));
+    } else if (config.defaultProvider === "openai") {
+      // Config exists but API key is invalid - error because it's the default provider
+      throwMissingApiKeyError("openai");
+    }
+    // Otherwise silently skip (optional provider with invalid key)
   }
 
-  // Initialize Anthropic provider if configured
-  if (config.providers.anthropic) {
-    providers.set("anthropic", new AnthropicProvider(config.providers.anthropic));
+  // Initialize Anthropic provider if configured (with API key validation)
+  const anthropicConfig = config.providers.anthropic;
+  if (anthropicConfig) {
+    if (isValidApiKey(anthropicConfig.apiKey)) {
+      providers.set("anthropic", new AnthropicProvider(anthropicConfig));
+    } else if (config.defaultProvider === "anthropic") {
+      // Config exists but API key is invalid - error because it's the default provider
+      throwMissingApiKeyError("anthropic");
+    }
+    // Otherwise silently skip (optional provider with invalid key)
   }
 
   // Validate at least one provider is configured
   if (providers.size === 0) {
-    throw new Error("At least one LLM provider must be configured");
+    throw new LLMError(
+      "No LLM providers configured. At least one provider must have a valid API key.",
+      { code: "no_providers", retryable: false }
+    );
   }
 
   // Validate default provider is configured

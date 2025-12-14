@@ -16,12 +16,16 @@ export interface OpenAIConfig {
   baseURL?: string;
   defaultModel?: string;
   embeddingModel?: string;
+  /** Request timeout in milliseconds (default: 60000) */
+  timeout?: number;
 }
 
 export interface AnthropicConfig {
   apiKey: string;
   baseURL?: string;
   defaultModel?: string;
+  /** Request timeout in milliseconds (default: 60000) */
+  timeout?: number;
 }
 
 // ============================================

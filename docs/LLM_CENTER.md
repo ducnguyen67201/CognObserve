@@ -349,39 +349,117 @@ console.log(stats.totalCost);          // 0.003
 console.log(stats.byProvider.openai);  // { requests: 1, tokens: 150, cost: 0.003 }
 ```
 
-## Error Handling
+## Error Handling (Centralized)
+
+**All LLM errors use the centralized error hierarchy.** Never create custom error classes for LLM operations.
 
 ### Error Types
 
-| Error | Retryable | Description |
-|-------|-----------|-------------|
-| `RateLimitError` | Yes | Provider rate limit hit |
-| `TimeoutError` | Yes | Request timed out |
-| `ServiceUnavailableError` | Yes | Provider temporarily down |
-| `AuthenticationError` | No | Invalid API key |
-| `ModelNotFoundError` | No | Model doesn't exist |
-| `ContentFilterError` | No | Content blocked by provider |
-| `SchemaValidationError` | No | Response doesn't match schema |
-| `AllProvidersFailedError` | No | All providers in chain failed |
+| Error | Retryable | HTTP Code | Description |
+|-------|-----------|-----------|-------------|
+| `LLMError` | - | - | Base class for all LLM errors |
+| `RateLimitError` | Yes | 429 | Provider rate limit hit |
+| `TimeoutError` | Yes | 408 | Request timed out |
+| `ServiceUnavailableError` | Yes | 503/529 | Provider temporarily down |
+| `AuthenticationError` | No | 401 | Invalid API key |
+| `ModelNotFoundError` | No | 404 | Model doesn't exist |
+| `ContentFilterError` | No | - | Content blocked by provider |
+| `SchemaValidationError` | No | - | Response doesn't match schema |
+| `AllProvidersFailedError` | No | - | All providers in chain failed |
+| `ProviderNotConfiguredError` | No | - | Provider not in config |
 
-### Error Utilities
+### Error Properties
 
 ```typescript
-import { isRetryableError, getErrorCode } from "@cognobserve/shared/llm";
+// All LLMError instances have:
+error.code       // "rate_limit", "timeout", "authentication_error", etc.
+error.provider   // "openai" | "anthropic" | undefined
+error.model      // Model that failed (if applicable)
+error.retryable  // Whether this error type should trigger retry
+error.cause      // Original error from SDK
 
-try {
-  await llm.chat(messages);
-} catch (error) {
-  if (isRetryableError(error)) {
-    // Wait and retry
-    await sleep(1000);
-    return llm.chat(messages);
-  }
-
-  const code = getErrorCode(error);
-  console.log(`Error code: ${code}`);  // "rate_limit", "timeout", etc.
-}
+// Specific error properties:
+RateLimitError.retryAfterMs        // Suggested wait time (ms)
+SchemaValidationError.validationErrors  // Array of validation messages
+AllProvidersFailedError.attempts   // Array of { model, error } for each attempt
 ```
+
+### Error Handling Pattern
+
+```typescript
+import {
+  LLMError,
+  RateLimitError,
+  AuthenticationError,
+  isRetryableError,
+  getErrorCode,
+} from "@cognobserve/shared/llm";
+
+// ✅ GOOD - Use centralized errors
+try {
+  const result = await llm.embed(texts);
+} catch (error) {
+  if (error instanceof RateLimitError) {
+    // Wait and retry
+    await sleep(error.retryAfterMs ?? 1000);
+    // Retry logic...
+  } else if (error instanceof AuthenticationError) {
+    // Don't retry, log critical error
+    logger.error("Invalid API key", { provider: error.provider });
+    throw error;
+  } else if (isRetryableError(error)) {
+    // Generic retryable error handling
+  } else {
+    // Non-retryable error
+    const code = getErrorCode(error);
+    logger.error(`LLM Error: ${code}`, { message: error.message });
+    throw error;
+  }
+}
+
+// ❌ BAD - Don't create custom errors
+throw new Error("OpenAI rate limited");  // Never do this
+```
+
+## Logging (Configurable)
+
+Use the centralized logger for all LLM-related logging:
+
+### Configuration
+
+```typescript
+import { configureLogger, getLogger } from "@cognobserve/shared/llm";
+
+// Configure at startup (once)
+configureLogger({
+  enabled: process.env.NODE_ENV !== "production",  // Default
+  level: "info",  // "debug" | "info" | "warn" | "error"
+  handler: (level, message, meta) => {
+    // Optional: custom handler for external logging service
+    externalLogger.log(level, message, meta);
+  },
+});
+```
+
+### Usage
+
+```typescript
+const logger = getLogger();
+
+logger.debug("[Search] Query details", { query, topK });
+logger.info("[Embedding] Starting batch", { count: texts.length });
+logger.warn("[Router] Primary failed, trying fallback", { provider });
+logger.error("[Provider] API error", { error: err.message, code: err.code });
+```
+
+### Log Levels
+
+| Level | When to Use | Production |
+|-------|-------------|------------|
+| `debug` | Detailed debugging info | Disabled |
+| `info` | Normal operations | Optional |
+| `warn` | Recoverable issues | Enabled |
+| `error` | Failures needing attention | Enabled |
 
 ## Usage in Worker (Temporal Activities)
 
@@ -523,7 +601,50 @@ try {
 3. Add more specific instructions in system prompt
 4. Try a more capable model
 
+## Requirements
+
+| Dependency | Minimum Version | Purpose |
+|------------|-----------------|---------|
+| `zod` | 4.0.0 | `z.toJSONSchema()` for structured outputs |
+| `openai` | 4.x | OpenAI SDK |
+| `@anthropic-ai/sdk` | 0.32.0 | Anthropic SDK |
+
+## Adding a New Provider
+
+1. **Create provider class** in `providers/newprovider.ts`:
+```typescript
+export class NewProvider extends BaseLLMProvider {
+  readonly name = "newprovider" as const;
+
+  async embed(texts, options) { /* ... */ }
+  async chat(messages, options) { /* ... */ }
+  async complete(prompt, options) { /* ... */ }
+}
+```
+
+2. **Update types** in `types.ts`:
+```typescript
+export type ProviderName = "openai" | "anthropic" | "newprovider";
+```
+
+3. **Update provider factory** in `provider-factory.ts`
+
+4. **Add config options** in `config.types.ts`
+
+5. **Update this documentation**
+
 ## Related Documentation
 
 - [WORKFLOWS.md](./WORKFLOWS.md) - Temporal workflow integration
-- [TYPE_SYSTEM.md](./TYPE_SYSTEM.md) - Type sharing across packages
+- [CLAUDE.md](../CLAUDE.md) - Project guidelines (references this doc)
+
+---
+
+## Changelog
+
+### 2024-12-13
+- Added centralized error hierarchy documentation
+- Added configurable logger (`utils/logger.ts`)
+- Added API key validation (fail-fast in provider factory)
+- Added configurable timeout per provider
+- Documented Zod 4.0+ requirement for `z.toJSONSchema()`

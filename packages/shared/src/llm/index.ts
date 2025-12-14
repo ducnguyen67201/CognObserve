@@ -116,8 +116,10 @@ export {
 
 export { RateLimiter, createRateLimiter } from "./utils/rate-limiter";
 export { withRetry, retry } from "./utils/retry";
+export { Logger, createLogger, getLogger, configureLogger } from "./utils/logger";
 export type { RateLimiterOptions } from "./utils/rate-limiter";
 export type { RetryOptions } from "./utils/retry";
+export type { LogLevel, LoggerConfig } from "./utils/logger";
 
 // ============================================
 // Configs

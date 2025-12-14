@@ -6,6 +6,8 @@
  * - Structured outputs with Zod schemas (via JSON mode)
  *
  * Note: Anthropic does NOT support embeddings. Use OpenAI for embeddings.
+ *
+ * @requires zod>=4.0.0 - Uses z.toJSONSchema() for structured outputs
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -37,6 +39,7 @@ import {
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 const DEFAULT_MAX_TOKENS = 4096;
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 /**
  * Cost per 1M tokens (as of December 2024)
@@ -63,13 +66,16 @@ export class AnthropicProvider extends BaseLLMProvider {
   readonly name = "anthropic" as const;
   private client: Anthropic;
   private config: AnthropicConfig;
+  private timeoutMs: number;
 
   constructor(config: AnthropicConfig) {
     super();
     this.config = config;
+    this.timeoutMs = config.timeout ?? DEFAULT_TIMEOUT_MS;
     this.client = new Anthropic({
       apiKey: config.apiKey,
       baseURL: config.baseURL,
+      timeout: this.timeoutMs,
     });
   }
 
@@ -273,7 +279,7 @@ export class AnthropicProvider extends BaseLLMProvider {
       }
 
       if (message.includes("timeout") || status === 408) {
-        return new TimeoutError(this.name, model, 30000, error);
+        return new TimeoutError(this.name, model, this.timeoutMs, error);
       }
 
       if (message.includes("overloaded")) {

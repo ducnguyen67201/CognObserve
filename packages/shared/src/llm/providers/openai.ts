@@ -38,6 +38,7 @@ const DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small";
 const DEFAULT_CHAT_MODEL = "gpt-4o-mini";
 const EMBEDDING_DIMENSIONS = 1536;
 const DEFAULT_TEMPERATURE = 0.7;
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 /**
  * Cost per 1M tokens (as of December 2024)
@@ -68,14 +69,17 @@ export class OpenAIProvider extends BaseLLMProvider {
   readonly name = "openai" as const;
   private client: OpenAI;
   private config: OpenAIConfig;
+  private timeoutMs: number;
 
   constructor(config: OpenAIConfig) {
     super();
     this.config = config;
+    this.timeoutMs = config.timeout ?? DEFAULT_TIMEOUT_MS;
     this.client = new OpenAI({
       apiKey: config.apiKey,
       organization: config.organization,
       baseURL: config.baseURL,
+      timeout: this.timeoutMs,
     });
   }
 
@@ -355,7 +359,7 @@ export class OpenAIProvider extends BaseLLMProvider {
       }
 
       if (message.includes("timeout") || status === 408) {
-        return new TimeoutError(this.name, model, 30000, error);
+        return new TimeoutError(this.name, model, this.timeoutMs, error);
       }
     }
 

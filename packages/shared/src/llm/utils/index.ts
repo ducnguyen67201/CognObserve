@@ -4,6 +4,14 @@
 
 export { RateLimiter, createRateLimiter, type RateLimiterOptions } from "./rate-limiter";
 export { withRetry, retry, type RetryOptions } from "./retry";
+export {
+  Logger,
+  createLogger,
+  getLogger,
+  configureLogger,
+  type LogLevel,
+  type LoggerConfig,
+} from "./logger";
 
 // ============================================
 // Common Utilities
