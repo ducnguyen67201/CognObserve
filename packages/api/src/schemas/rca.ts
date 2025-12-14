@@ -229,3 +229,115 @@ export const ANOMALY_THRESHOLDS = {
   /** Minimum latency to consider for spike (ms) */
   minLatencyForSpike: 100,
 } as const;
+
+// ============================================================
+// CODE CORRELATION SCHEMAS
+// ============================================================
+
+/**
+ * Individual signal scores for correlation transparency
+ */
+export const CorrelationSignalsSchema = z.object({
+  /** Temporal proximity score (0-1) - higher = more recent */
+  temporal: z.number().min(0).max(1),
+  /** Semantic similarity score (0-1) - higher = more related to error */
+  semantic: z.number().min(0).max(1),
+  /** File path match score (0-1) - higher = more stack trace matches */
+  pathMatch: z.number().min(0).max(1),
+});
+export type CorrelationSignals = z.infer<typeof CorrelationSignalsSchema>;
+
+/**
+ * Correlated commit with scoring breakdown
+ */
+export const CorrelatedCommitSchema = z.object({
+  /** Commit SHA */
+  sha: z.string(),
+  /** Commit message (truncated to 200 chars) */
+  message: z.string().max(200),
+  /** Author name */
+  author: z.string(),
+  /** Author email */
+  authorEmail: z.string().nullable(),
+  /** Commit timestamp (ISO 8601) */
+  timestamp: z.string().datetime(),
+  /** Combined correlation score (0-1) */
+  score: z.number().min(0).max(1),
+  /** Individual signal scores */
+  signals: CorrelationSignalsSchema,
+  /** Files changed in this commit */
+  filesChanged: z.array(z.string()),
+});
+export type CorrelatedCommit = z.infer<typeof CorrelatedCommitSchema>;
+
+/**
+ * Correlated pull request with scoring breakdown
+ */
+export const CorrelatedPRSchema = z.object({
+  /** PR number */
+  number: z.number().int().positive(),
+  /** PR title */
+  title: z.string().max(200),
+  /** PR author login */
+  author: z.string(),
+  /** When the PR was merged (ISO 8601) */
+  mergedAt: z.string().datetime(),
+  /** Combined correlation score (0-1) */
+  score: z.number().min(0).max(1),
+  /** Individual signal scores */
+  signals: CorrelationSignalsSchema,
+});
+export type CorrelatedPR = z.infer<typeof CorrelatedPRSchema>;
+
+/**
+ * Relevant code chunk from vector search
+ */
+export const RelevantCodeChunkSchema = z.object({
+  /** File path */
+  filePath: z.string(),
+  /** Code content (truncated) */
+  content: z.string(),
+  /** Start line number */
+  startLine: z.number().int().positive(),
+  /** End line number */
+  endLine: z.number().int().positive(),
+  /** Cosine similarity score */
+  similarity: z.number().min(0).max(1),
+});
+export type RelevantCodeChunk = z.infer<typeof RelevantCodeChunkSchema>;
+
+/**
+ * Input for correlateCodeChanges activity
+ */
+export const CodeCorrelationInputSchema = z.object({
+  /** Project ID to search commits/PRs for */
+  projectId: z.string(),
+  /** Trace analysis output from analyzeTraces */
+  traceAnalysis: TraceAnalysisOutputSchema,
+  /** When the alert was triggered (ISO 8601 datetime) */
+  alertTriggeredAt: z.string().datetime(),
+  /** Lookback window in days (default: 7) */
+  lookbackDays: z.number().int().positive().optional().default(7),
+});
+export type CodeCorrelationInput = z.infer<typeof CodeCorrelationInputSchema>;
+
+/**
+ * Output from correlateCodeChanges activity
+ */
+export const CodeCorrelationOutputSchema = z.object({
+  /** Commits ranked by correlation score (top 10) */
+  suspectedCommits: z.array(CorrelatedCommitSchema).max(10),
+  /** PRs ranked by correlation score (top 5) */
+  suspectedPRs: z.array(CorrelatedPRSchema).max(5),
+  /** Relevant code chunks from vector search (top 20) */
+  relevantCodeChunks: z.array(RelevantCodeChunkSchema).max(20),
+  /** Whether repository was found for project */
+  hasRepository: z.boolean(),
+  /** Search query used for vector search */
+  searchQuery: z.string(),
+  /** Total commits analyzed */
+  commitsAnalyzed: z.number().int().min(0),
+  /** Total PRs analyzed */
+  prsAnalyzed: z.number().int().min(0),
+});
+export type CodeCorrelationOutput = z.infer<typeof CodeCorrelationOutputSchema>;

@@ -59,4 +59,4 @@ export {
 } from "./search.activities";
 
 // RCA (Root Cause Analysis) activities
-export { analyzeTraces } from "./rca.activities";
+export { analyzeTraces, correlateCodeChanges } from "./rca";
