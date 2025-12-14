@@ -18,7 +18,7 @@ USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 
 -- Create partial index for filtering by repo before vector search
--- This optimizes queries that filter by repo_id first
+-- This optimizes queries that filter by repoId first
 CREATE INDEX IF NOT EXISTS code_chunks_repo_has_embedding_idx
-ON code_chunks (repo_id)
+ON code_chunks ("repoId")
 WHERE embedding IS NOT NULL;

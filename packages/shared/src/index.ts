@@ -8,5 +8,4 @@ export * from "./chunking";
 
 // LLM Center - import from "@cognobserve/shared/llm"
 // Cache utilities - import from "@cognobserve/shared/cache"
-export { createLLMCenter, LLMCenter } from "./llm";
-export type { LLMCenterConfig, EmbedResult, ChatResult, CompleteResult } from "./llm";
+// NOTE: These are NOT exported here to avoid pulling OpenAI/Redis into Temporal workflows

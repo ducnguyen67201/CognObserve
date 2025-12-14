@@ -690,8 +690,11 @@ export const internalRouter = createRouter({
    * Store repository chunks and return chunk IDs
    * Called by: repository-index.activities.ts → storeRepositoryChunks
    *
-   * IMPORTANT: Uses individual creates in transaction (not createMany)
-   * to retrieve generated chunk IDs for embedding storage.
+   * Optimized for batch operations:
+   * 1. Batch lookup existing chunks by contentHash
+   * 2. Filter to only new chunks
+   * 3. Batch insert new chunks
+   * 4. Return all chunk IDs (existing + new)
    */
   storeRepositoryChunks: internalProcedure
     .input(z.object({
@@ -713,49 +716,73 @@ export const internalRouter = createRouter({
         return { chunksCreated: 0, chunkIds: [] };
       }
 
-      // Use transaction with individual creates to get IDs
-      const createdChunks = await prisma.$transaction(async (tx) => {
-        const results: { id: string }[] = [];
+      console.log(`[Internal:storeRepositoryChunks] Processing ${chunks.length} chunks for ${repositoryId}`);
 
-        for (const chunk of chunks) {
-          // Check if chunk already exists (by contentHash for this repo)
-          const existing = await tx.codeChunk.findFirst({
-            where: {
-              repoId: repositoryId,
-              contentHash: chunk.contentHash,
-            },
-            select: { id: true },
-          });
-
-          if (existing) {
-            // Skip duplicate, but still return ID for embedding
-            results.push({ id: existing.id });
-            continue;
-          }
-
-          const created = await tx.codeChunk.create({
-            data: {
-              repoId: repositoryId,
-              filePath: chunk.filePath,
-              startLine: chunk.startLine,
-              endLine: chunk.endLine,
-              content: chunk.content,
-              contentHash: chunk.contentHash,
-              language: chunk.language,
-              chunkType: chunk.chunkType,
-            },
-            select: { id: true },
-          });
-          results.push(created);
-        }
-
-        return results;
+      // Step 1: Batch lookup existing chunks by contentHash
+      const contentHashes = chunks.map((c) => c.contentHash);
+      const existingChunks = await prisma.codeChunk.findMany({
+        where: {
+          repoId: repositoryId,
+          contentHash: { in: contentHashes },
+        },
+        select: { id: true, contentHash: true },
       });
 
-      const chunkIds = createdChunks.map((c) => c.id);
-      console.log(`[Internal:storeRepositoryChunks] Created/found ${chunkIds.length} chunks for ${repositoryId}`);
+      // Create lookup map: contentHash -> id
+      const existingMap = new Map(existingChunks.map((c) => [c.contentHash, c.id]));
+      console.log(`[Internal:storeRepositoryChunks] Found ${existingMap.size} existing chunks`);
 
-      return { chunksCreated: chunkIds.length, chunkIds };
+      // Step 2: Filter to only new chunks
+      const newChunks = chunks.filter((c) => !existingMap.has(c.contentHash));
+      console.log(`[Internal:storeRepositoryChunks] Creating ${newChunks.length} new chunks`);
+
+      // Step 3: Batch insert new chunks (in batches of 100 for safety)
+      const BATCH_SIZE = 100;
+      const createdIds: string[] = [];
+
+      for (let i = 0; i < newChunks.length; i += BATCH_SIZE) {
+        const batch = newChunks.slice(i, i + BATCH_SIZE);
+
+        // Use createMany then fetch IDs (Prisma limitation: createMany doesn't return IDs)
+        await prisma.codeChunk.createMany({
+          data: batch.map((chunk) => ({
+            repoId: repositoryId,
+            filePath: chunk.filePath,
+            startLine: chunk.startLine,
+            endLine: chunk.endLine,
+            content: chunk.content,
+            contentHash: chunk.contentHash,
+            language: chunk.language,
+            chunkType: chunk.chunkType,
+          })),
+          skipDuplicates: true,
+        });
+
+        // Fetch IDs for this batch
+        const batchHashes = batch.map((c) => c.contentHash);
+        const created = await prisma.codeChunk.findMany({
+          where: {
+            repoId: repositoryId,
+            contentHash: { in: batchHashes },
+          },
+          select: { id: true },
+        });
+        createdIds.push(...created.map((c) => c.id));
+
+        if (i + BATCH_SIZE < newChunks.length) {
+          console.log(`[Internal:storeRepositoryChunks] Batch ${Math.floor(i / BATCH_SIZE) + 1} complete`);
+        }
+      }
+
+      // Step 4: Combine existing + new IDs
+      const existingIds = chunks
+        .filter((c) => existingMap.has(c.contentHash))
+        .map((c) => existingMap.get(c.contentHash)!);
+
+      const allChunkIds = [...existingIds, ...createdIds];
+      console.log(`[Internal:storeRepositoryChunks] Total: ${allChunkIds.length} chunks (${existingIds.length} existing, ${createdIds.length} new)`);
+
+      return { chunksCreated: allChunkIds.length, chunkIds: allChunkIds };
     }),
 
   /**

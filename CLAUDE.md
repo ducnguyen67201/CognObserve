@@ -975,7 +975,27 @@ import { type IngestRequest } from "@cognobserve/proto";
 | `@cognobserve/api/schemas` | Zod schemas & derived types (client-safe) | `ProjectRoleSchema`, `AlertTypeSchema` |
 | `@cognobserve/api` | tRPC routers & server utilities | `appRouter`, `createContext` |
 | `@cognobserve/proto` | Protobuf-generated types | `IngestRequest`, `TokenUsage` |
-| `@cognobserve/shared` | Cross-app utilities | `formatDuration`, `parseError` |
+| `@cognobserve/shared` | Cross-app utilities & constants | `ACTIVITY_RETRY`, `APP_NAME`, `chunkCodeFiles` |
+| `@cognobserve/shared/llm` | LLM Center (OpenAI wrapper) | `createLLMCenter`, `getLLM` |
+| `@cognobserve/shared/cache` | Redis cache (embeddings) | `getEmbeddingCache`, `closeRedis` |
+
+**⚠️ CRITICAL: Temporal Workflow Imports**
+
+Temporal workflows are sandboxed and cannot use non-deterministic modules (OpenAI, Redis, fs, net, etc.).
+
+```typescript
+// ❌ BAD - Pulls OpenAI into workflow bundle (breaks determinism)
+import { createLLMCenter } from "@cognobserve/shared";  // Main index re-exports LLM
+
+// ✅ GOOD - Import only constants from main package
+import { ACTIVITY_RETRY } from "@cognobserve/shared";
+
+// ✅ GOOD - Import LLM/Cache in ACTIVITIES only (not workflows)
+import { getLLM } from "@cognobserve/shared/llm";           // Activities only
+import { getEmbeddingCache } from "@cognobserve/shared/cache"; // Activities only
+```
+
+The main `@cognobserve/shared` index only exports deterministic utilities (constants, pure functions). LLM and Cache are only available via sub-path imports to prevent accidental inclusion in workflow bundles.
 
 ### Frontend Architecture
 
