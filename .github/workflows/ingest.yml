@@ -5,7 +5,7 @@ on:
 
 jobs:
   vet-lint:
-    name: Vet & Lint
+    name: Vet & Lint & Temporal
     runs-on: ubuntu-latest
 
     defaults:
@@ -54,3 +54,15 @@ jobs:
             gofmt -l .
             exit 1
           fi
+
+      # Temporal check
+      - name: Verify Temporal client
+        run: |
+          echo "Checking Temporal client..."
+          [ -d "internal/temporal" ] || { echo "Error: internal/temporal/ missing"; exit 1; }
+          [ -f "internal/temporal/client.go" ] || { echo "Error: client.go missing"; exit 1; }
+          grep -q "go.temporal.io/sdk" internal/temporal/client.go || { echo "Error: Temporal SDK not imported"; exit 1; }
+          echo "✓ Temporal client verified"
+
+      - name: Build
+        run: go build -o /dev/null ./cmd/ingest

@@ -9,7 +9,7 @@ export const SessionInputSchema = z.object({
   /** Optional display name */
   name: z.string().max(255).optional(),
   /** Optional metadata */
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type SessionInput = z.infer<typeof SessionInputSchema>;
 
@@ -20,7 +20,7 @@ export const CreateSessionSchema = z.object({
   projectId: z.string(),
   externalId: z.string().min(1).max(255).optional(),
   name: z.string().max(255).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;
 
@@ -30,7 +30,7 @@ export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;
 export const UpdateSessionSchema = z.object({
   id: z.string(),
   name: z.string().max(255).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type UpdateSessionInput = z.infer<typeof UpdateSessionSchema>;
 
@@ -58,7 +58,7 @@ export const SessionWithStatsSchema = z.object({
   projectId: z.string(),
   externalId: z.string().nullable(),
   name: z.string().nullable(),
-  metadata: z.record(z.unknown()).nullable(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   // Aggregated stats

@@ -5,7 +5,36 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./cache": {
+      "types": "./src/cache/index.ts",
+      "default": "./src/cache/index.ts"
+    },
+    "./llm": {
+      "types": "./src/llm/index.ts",
+      "default": "./src/llm/index.ts"
+    },
+    "./llm/configs": {
+      "types": "./src/llm/configs/index.ts",
+      "default": "./src/llm/configs/index.ts"
+    },
+    "./rca": {
+      "types": "./src/rca/index.ts",
+      "default": "./src/rca/index.ts"
+    }
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "ioredis": "^5.8.2",
+    "openai": "^4.76.0",
+    "zod": "^4.1.13"
+  },
   "scripts": {
+    "build": "tsc --project tsconfig.build.json",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest",

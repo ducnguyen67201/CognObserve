@@ -13,10 +13,19 @@
  *   3. Register it in SEEDS below
  */
 
-import "dotenv/config";
-import { prisma } from "../src/index.js";
-import { seedTraces } from "./traces.js";
-import { seedModelPricing } from "./model-pricing.js";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+// Load .env from monorepo root BEFORE any other imports
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: resolve(__dirname, "../../../.env") });
+
+// Dynamic imports to ensure env is loaded first
+const { prisma } = await import("../src/index.js");
+const { seedTraces } = await import("./traces.js");
+const { seedModelPricing } = await import("./model-pricing.js");
 
 // Registry of available seeds
 const SEEDS: Record<string, { name: string; description: string; fn: () => Promise<void> }> = {

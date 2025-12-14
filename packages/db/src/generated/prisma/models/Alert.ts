@@ -328,6 +328,7 @@ export type AlertWhereInput = {
   channels?: Prisma.AlertChannelListRelationFilter
   channelLinks?: Prisma.AlertChannelLinkListRelationFilter
   history?: Prisma.AlertHistoryListRelationFilter
+  rcaAnalyses?: Prisma.AlertRCAListRelationFilter
 }
 
 export type AlertOrderByWithRelationInput = {
@@ -352,6 +353,7 @@ export type AlertOrderByWithRelationInput = {
   channels?: Prisma.AlertChannelOrderByRelationAggregateInput
   channelLinks?: Prisma.AlertChannelLinkOrderByRelationAggregateInput
   history?: Prisma.AlertHistoryOrderByRelationAggregateInput
+  rcaAnalyses?: Prisma.AlertRCAOrderByRelationAggregateInput
 }
 
 export type AlertWhereUniqueInput = Prisma.AtLeast<{
@@ -379,6 +381,7 @@ export type AlertWhereUniqueInput = Prisma.AtLeast<{
   channels?: Prisma.AlertChannelListRelationFilter
   channelLinks?: Prisma.AlertChannelLinkListRelationFilter
   history?: Prisma.AlertHistoryListRelationFilter
+  rcaAnalyses?: Prisma.AlertRCAListRelationFilter
 }, "id">
 
 export type AlertOrderByWithAggregationInput = {
@@ -450,6 +453,7 @@ export type AlertCreateInput = {
   channels?: Prisma.AlertChannelCreateNestedManyWithoutAlertInput
   channelLinks?: Prisma.AlertChannelLinkCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCACreateNestedManyWithoutAlertInput
 }
 
 export type AlertUncheckedCreateInput = {
@@ -473,6 +477,7 @@ export type AlertUncheckedCreateInput = {
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
   channelLinks?: Prisma.AlertChannelLinkUncheckedCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryUncheckedCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedCreateNestedManyWithoutAlertInput
 }
 
 export type AlertUpdateInput = {
@@ -496,6 +501,7 @@ export type AlertUpdateInput = {
   channels?: Prisma.AlertChannelUpdateManyWithoutAlertNestedInput
   channelLinks?: Prisma.AlertChannelLinkUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertUncheckedUpdateInput = {
@@ -519,6 +525,7 @@ export type AlertUncheckedUpdateInput = {
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
   channelLinks?: Prisma.AlertChannelLinkUncheckedUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUncheckedUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertCreateManyInput = {
@@ -777,6 +784,20 @@ export type AlertUpdateOneRequiredWithoutChannelLinksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AlertUpdateToOneWithWhereWithoutChannelLinksInput, Prisma.AlertUpdateWithoutChannelLinksInput>, Prisma.AlertUncheckedUpdateWithoutChannelLinksInput>
 }
 
+export type AlertCreateNestedOneWithoutRcaAnalysesInput = {
+  create?: Prisma.XOR<Prisma.AlertCreateWithoutRcaAnalysesInput, Prisma.AlertUncheckedCreateWithoutRcaAnalysesInput>
+  connectOrCreate?: Prisma.AlertCreateOrConnectWithoutRcaAnalysesInput
+  connect?: Prisma.AlertWhereUniqueInput
+}
+
+export type AlertUpdateOneRequiredWithoutRcaAnalysesNestedInput = {
+  create?: Prisma.XOR<Prisma.AlertCreateWithoutRcaAnalysesInput, Prisma.AlertUncheckedCreateWithoutRcaAnalysesInput>
+  connectOrCreate?: Prisma.AlertCreateOrConnectWithoutRcaAnalysesInput
+  upsert?: Prisma.AlertUpsertWithoutRcaAnalysesInput
+  connect?: Prisma.AlertWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AlertUpdateToOneWithWhereWithoutRcaAnalysesInput, Prisma.AlertUpdateWithoutRcaAnalysesInput>, Prisma.AlertUncheckedUpdateWithoutRcaAnalysesInput>
+}
+
 export type AlertCreateWithoutProjectInput = {
   id?: string
   name: string
@@ -797,6 +818,7 @@ export type AlertCreateWithoutProjectInput = {
   channels?: Prisma.AlertChannelCreateNestedManyWithoutAlertInput
   channelLinks?: Prisma.AlertChannelLinkCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCACreateNestedManyWithoutAlertInput
 }
 
 export type AlertUncheckedCreateWithoutProjectInput = {
@@ -819,6 +841,7 @@ export type AlertUncheckedCreateWithoutProjectInput = {
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
   channelLinks?: Prisma.AlertChannelLinkUncheckedCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryUncheckedCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedCreateNestedManyWithoutAlertInput
 }
 
 export type AlertCreateOrConnectWithoutProjectInput = {
@@ -890,6 +913,7 @@ export type AlertCreateWithoutChannelsInput = {
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
   channelLinks?: Prisma.AlertChannelLinkCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCACreateNestedManyWithoutAlertInput
 }
 
 export type AlertUncheckedCreateWithoutChannelsInput = {
@@ -912,6 +936,7 @@ export type AlertUncheckedCreateWithoutChannelsInput = {
   updatedAt?: Date | string
   channelLinks?: Prisma.AlertChannelLinkUncheckedCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryUncheckedCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedCreateNestedManyWithoutAlertInput
 }
 
 export type AlertCreateOrConnectWithoutChannelsInput = {
@@ -950,6 +975,7 @@ export type AlertUpdateWithoutChannelsInput = {
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
   channelLinks?: Prisma.AlertChannelLinkUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertUncheckedUpdateWithoutChannelsInput = {
@@ -972,6 +998,7 @@ export type AlertUncheckedUpdateWithoutChannelsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelLinks?: Prisma.AlertChannelLinkUncheckedUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUncheckedUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertCreateWithoutHistoryInput = {
@@ -994,6 +1021,7 @@ export type AlertCreateWithoutHistoryInput = {
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
   channels?: Prisma.AlertChannelCreateNestedManyWithoutAlertInput
   channelLinks?: Prisma.AlertChannelLinkCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCACreateNestedManyWithoutAlertInput
 }
 
 export type AlertUncheckedCreateWithoutHistoryInput = {
@@ -1016,6 +1044,7 @@ export type AlertUncheckedCreateWithoutHistoryInput = {
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
   channelLinks?: Prisma.AlertChannelLinkUncheckedCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedCreateNestedManyWithoutAlertInput
 }
 
 export type AlertCreateOrConnectWithoutHistoryInput = {
@@ -1054,6 +1083,7 @@ export type AlertUpdateWithoutHistoryInput = {
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
   channels?: Prisma.AlertChannelUpdateManyWithoutAlertNestedInput
   channelLinks?: Prisma.AlertChannelLinkUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertUncheckedUpdateWithoutHistoryInput = {
@@ -1076,6 +1106,7 @@ export type AlertUncheckedUpdateWithoutHistoryInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
   channelLinks?: Prisma.AlertChannelLinkUncheckedUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertCreateWithoutChannelLinksInput = {
@@ -1098,6 +1129,7 @@ export type AlertCreateWithoutChannelLinksInput = {
   project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
   channels?: Prisma.AlertChannelCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCACreateNestedManyWithoutAlertInput
 }
 
 export type AlertUncheckedCreateWithoutChannelLinksInput = {
@@ -1120,6 +1152,7 @@ export type AlertUncheckedCreateWithoutChannelLinksInput = {
   updatedAt?: Date | string
   channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
   history?: Prisma.AlertHistoryUncheckedCreateNestedManyWithoutAlertInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedCreateNestedManyWithoutAlertInput
 }
 
 export type AlertCreateOrConnectWithoutChannelLinksInput = {
@@ -1158,6 +1191,7 @@ export type AlertUpdateWithoutChannelLinksInput = {
   project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
   channels?: Prisma.AlertChannelUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertUncheckedUpdateWithoutChannelLinksInput = {
@@ -1179,6 +1213,115 @@ export type AlertUncheckedUpdateWithoutChannelLinksInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
+  history?: Prisma.AlertHistoryUncheckedUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedUpdateManyWithoutAlertNestedInput
+}
+
+export type AlertCreateWithoutRcaAnalysesInput = {
+  id?: string
+  name: string
+  type: $Enums.AlertType
+  threshold: number
+  operator?: $Enums.AlertOperator
+  windowMins?: number
+  cooldownMins?: number
+  enabled?: boolean
+  lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.ProjectCreateNestedOneWithoutAlertsInput
+  channels?: Prisma.AlertChannelCreateNestedManyWithoutAlertInput
+  channelLinks?: Prisma.AlertChannelLinkCreateNestedManyWithoutAlertInput
+  history?: Prisma.AlertHistoryCreateNestedManyWithoutAlertInput
+}
+
+export type AlertUncheckedCreateWithoutRcaAnalysesInput = {
+  id?: string
+  projectId: string
+  name: string
+  type: $Enums.AlertType
+  threshold: number
+  operator?: $Enums.AlertOperator
+  windowMins?: number
+  cooldownMins?: number
+  enabled?: boolean
+  lastTriggeredAt?: Date | string | null
+  severity?: $Enums.AlertSeverity
+  pendingMins?: number
+  state?: $Enums.AlertState
+  stateChangedAt?: Date | string | null
+  lastEvaluatedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  channels?: Prisma.AlertChannelUncheckedCreateNestedManyWithoutAlertInput
+  channelLinks?: Prisma.AlertChannelLinkUncheckedCreateNestedManyWithoutAlertInput
+  history?: Prisma.AlertHistoryUncheckedCreateNestedManyWithoutAlertInput
+}
+
+export type AlertCreateOrConnectWithoutRcaAnalysesInput = {
+  where: Prisma.AlertWhereUniqueInput
+  create: Prisma.XOR<Prisma.AlertCreateWithoutRcaAnalysesInput, Prisma.AlertUncheckedCreateWithoutRcaAnalysesInput>
+}
+
+export type AlertUpsertWithoutRcaAnalysesInput = {
+  update: Prisma.XOR<Prisma.AlertUpdateWithoutRcaAnalysesInput, Prisma.AlertUncheckedUpdateWithoutRcaAnalysesInput>
+  create: Prisma.XOR<Prisma.AlertCreateWithoutRcaAnalysesInput, Prisma.AlertUncheckedCreateWithoutRcaAnalysesInput>
+  where?: Prisma.AlertWhereInput
+}
+
+export type AlertUpdateToOneWithWhereWithoutRcaAnalysesInput = {
+  where?: Prisma.AlertWhereInput
+  data: Prisma.XOR<Prisma.AlertUpdateWithoutRcaAnalysesInput, Prisma.AlertUncheckedUpdateWithoutRcaAnalysesInput>
+}
+
+export type AlertUpdateWithoutRcaAnalysesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumAlertTypeFieldUpdateOperationsInput | $Enums.AlertType
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
+  operator?: Prisma.EnumAlertOperatorFieldUpdateOperationsInput | $Enums.AlertOperator
+  windowMins?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.ProjectUpdateOneRequiredWithoutAlertsNestedInput
+  channels?: Prisma.AlertChannelUpdateManyWithoutAlertNestedInput
+  channelLinks?: Prisma.AlertChannelLinkUpdateManyWithoutAlertNestedInput
+  history?: Prisma.AlertHistoryUpdateManyWithoutAlertNestedInput
+}
+
+export type AlertUncheckedUpdateWithoutRcaAnalysesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumAlertTypeFieldUpdateOperationsInput | $Enums.AlertType
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
+  operator?: Prisma.EnumAlertOperatorFieldUpdateOperationsInput | $Enums.AlertOperator
+  windowMins?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownMins?: Prisma.IntFieldUpdateOperationsInput | number
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastTriggeredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  severity?: Prisma.EnumAlertSeverityFieldUpdateOperationsInput | $Enums.AlertSeverity
+  pendingMins?: Prisma.IntFieldUpdateOperationsInput | number
+  state?: Prisma.EnumAlertStateFieldUpdateOperationsInput | $Enums.AlertState
+  stateChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastEvaluatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
+  channelLinks?: Prisma.AlertChannelLinkUncheckedUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUncheckedUpdateManyWithoutAlertNestedInput
 }
 
@@ -1221,6 +1364,7 @@ export type AlertUpdateWithoutProjectInput = {
   channels?: Prisma.AlertChannelUpdateManyWithoutAlertNestedInput
   channelLinks?: Prisma.AlertChannelLinkUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertUncheckedUpdateWithoutProjectInput = {
@@ -1243,6 +1387,7 @@ export type AlertUncheckedUpdateWithoutProjectInput = {
   channels?: Prisma.AlertChannelUncheckedUpdateManyWithoutAlertNestedInput
   channelLinks?: Prisma.AlertChannelLinkUncheckedUpdateManyWithoutAlertNestedInput
   history?: Prisma.AlertHistoryUncheckedUpdateManyWithoutAlertNestedInput
+  rcaAnalyses?: Prisma.AlertRCAUncheckedUpdateManyWithoutAlertNestedInput
 }
 
 export type AlertUncheckedUpdateManyWithoutProjectInput = {
@@ -1273,12 +1418,14 @@ export type AlertCountOutputType = {
   channels: number
   channelLinks: number
   history: number
+  rcaAnalyses: number
 }
 
 export type AlertCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   channels?: boolean | AlertCountOutputTypeCountChannelsArgs
   channelLinks?: boolean | AlertCountOutputTypeCountChannelLinksArgs
   history?: boolean | AlertCountOutputTypeCountHistoryArgs
+  rcaAnalyses?: boolean | AlertCountOutputTypeCountRcaAnalysesArgs
 }
 
 /**
@@ -1312,6 +1459,13 @@ export type AlertCountOutputTypeCountHistoryArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.AlertHistoryWhereInput
 }
 
+/**
+ * AlertCountOutputType without action
+ */
+export type AlertCountOutputTypeCountRcaAnalysesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AlertRCAWhereInput
+}
+
 
 export type AlertSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1335,6 +1489,7 @@ export type AlertSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   channels?: boolean | Prisma.Alert$channelsArgs<ExtArgs>
   channelLinks?: boolean | Prisma.Alert$channelLinksArgs<ExtArgs>
   history?: boolean | Prisma.Alert$historyArgs<ExtArgs>
+  rcaAnalyses?: boolean | Prisma.Alert$rcaAnalysesArgs<ExtArgs>
   _count?: boolean | Prisma.AlertCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["alert"]>
 
@@ -1406,6 +1561,7 @@ export type AlertInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   channels?: boolean | Prisma.Alert$channelsArgs<ExtArgs>
   channelLinks?: boolean | Prisma.Alert$channelLinksArgs<ExtArgs>
   history?: boolean | Prisma.Alert$historyArgs<ExtArgs>
+  rcaAnalyses?: boolean | Prisma.Alert$rcaAnalysesArgs<ExtArgs>
   _count?: boolean | Prisma.AlertCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AlertIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1422,6 +1578,7 @@ export type $AlertPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     channels: Prisma.$AlertChannelPayload<ExtArgs>[]
     channelLinks: Prisma.$AlertChannelLinkPayload<ExtArgs>[]
     history: Prisma.$AlertHistoryPayload<ExtArgs>[]
+    rcaAnalyses: Prisma.$AlertRCAPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1839,6 +1996,7 @@ export interface Prisma__AlertClient<T, Null = never, ExtArgs extends runtime.Ty
   channels<T extends Prisma.Alert$channelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Alert$channelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlertChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   channelLinks<T extends Prisma.Alert$channelLinksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Alert$channelLinksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlertChannelLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   history<T extends Prisma.Alert$historyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Alert$historyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlertHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rcaAnalyses<T extends Prisma.Alert$rcaAnalysesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Alert$rcaAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlertRCAPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2350,6 +2508,30 @@ export type Alert$historyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.AlertHistoryScalarFieldEnum | Prisma.AlertHistoryScalarFieldEnum[]
+}
+
+/**
+ * Alert.rcaAnalyses
+ */
+export type Alert$rcaAnalysesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AlertRCA
+   */
+  select?: Prisma.AlertRCASelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AlertRCA
+   */
+  omit?: Prisma.AlertRCAOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AlertRCAInclude<ExtArgs> | null
+  where?: Prisma.AlertRCAWhereInput
+  orderBy?: Prisma.AlertRCAOrderByWithRelationInput | Prisma.AlertRCAOrderByWithRelationInput[]
+  cursor?: Prisma.AlertRCAWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AlertRCAScalarFieldEnum | Prisma.AlertRCAScalarFieldEnum[]
 }
 
 /**

@@ -27,6 +27,8 @@ import { costsRouter } from "./costs";
 import { alertsRouter } from "./alerts";
 import { channelsRouter } from "./channels";
 import { trackedUsersRouter } from "./trackedUsers";
+import { internalRouter } from "./internal";
+import { githubRouter } from "./github";
 
 /**
  * Main application router.
@@ -175,6 +177,38 @@ export const appRouter = createRouter({
   trackedUsers: trackedUsersRouter,
 
   /**
+   * Internal API (Server-to-Server)
+   * @see ./internal.ts
+   *
+   * Used by Temporal activities for database mutations.
+   * Requires INTERNAL_API_SECRET authentication.
+   *
+   * - internal.ingestTrace         - Persist trace + spans
+   * - internal.calculateTraceCosts - Calculate span costs
+   * - internal.updateCostSummaries - Update daily summaries
+   * - internal.ingestScore         - Persist score (TODO: Issue #104)
+   * - internal.validateScoreConfig - Validate score config (TODO: Issue #104)
+   * - internal.transitionAlertState - Transition alert state
+   * - internal.dispatchNotification - Dispatch notification
+   */
+  internal: internalRouter,
+
+  /**
+   * GitHub Integration (RCA System)
+   * @see ./github.ts
+   *
+   * Workspace-level GitHub repository management.
+   *
+   * - github.getInstallation    - Get GitHub App installation
+   * - github.listRepositories   - List repos with filter/search
+   * - github.enableRepository   - Enable indexing
+   * - github.disableRepository  - Disable indexing
+   * - github.reindexRepository  - Trigger re-index
+   * - github.getRepository      - Get repo details
+   */
+  github: githubRouter,
+
+  /**
    * Future modules:
    *
    * billing: billingRouter,    // Billing & subscriptions
@@ -202,4 +236,6 @@ export {
   alertsRouter,
   channelsRouter,
   trackedUsersRouter,
+  internalRouter,
+  githubRouter,
 };

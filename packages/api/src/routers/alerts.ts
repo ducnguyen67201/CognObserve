@@ -61,7 +61,7 @@ const AddChannelSchema = z.object({
   workspaceSlug: z.string(),
   alertId: z.string(),
   provider: ChannelProviderSchema,
-  config: z.record(z.unknown()),
+  config: z.record(z.string(), z.unknown()),
 });
 
 /**

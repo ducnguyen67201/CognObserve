@@ -145,7 +145,7 @@ export const trackedUsersRouter = createRouter({
         id: z.string(),
         name: z.string().max(255).optional(),
         email: z.string().email().optional(),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .use(workspaceMiddleware)

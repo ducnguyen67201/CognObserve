@@ -404,7 +404,13 @@ export const ModelName = {
   NotificationChannel: 'NotificationChannel',
   AlertChannelLink: 'AlertChannelLink',
   TrackedUser: 'TrackedUser',
-  TraceSession: 'TraceSession'
+  TraceSession: 'TraceSession',
+  GitHubInstallation: 'GitHubInstallation',
+  GitHubRepository: 'GitHubRepository',
+  GitCommit: 'GitCommit',
+  GitPullRequest: 'GitPullRequest',
+  CodeChunk: 'CodeChunk',
+  AlertRCA: 'AlertRCA'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -420,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "trackedUser" | "traceSession"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "workspace" | "workspaceMember" | "allowedDomain" | "project" | "projectMember" | "apiKey" | "trace" | "span" | "modelPricing" | "costDailySummary" | "alert" | "alertChannel" | "alertHistory" | "notificationChannel" | "alertChannelLink" | "trackedUser" | "traceSession" | "gitHubInstallation" | "gitHubRepository" | "gitCommit" | "gitPullRequest" | "codeChunk" | "alertRCA"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1978,6 +1984,450 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    GitHubInstallation: {
+      payload: Prisma.$GitHubInstallationPayload<ExtArgs>
+      fields: Prisma.GitHubInstallationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GitHubInstallationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GitHubInstallationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        findFirst: {
+          args: Prisma.GitHubInstallationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GitHubInstallationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        findMany: {
+          args: Prisma.GitHubInstallationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>[]
+        }
+        create: {
+          args: Prisma.GitHubInstallationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        createMany: {
+          args: Prisma.GitHubInstallationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GitHubInstallationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>[]
+        }
+        delete: {
+          args: Prisma.GitHubInstallationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        update: {
+          args: Prisma.GitHubInstallationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        deleteMany: {
+          args: Prisma.GitHubInstallationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GitHubInstallationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GitHubInstallationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>[]
+        }
+        upsert: {
+          args: Prisma.GitHubInstallationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubInstallationPayload>
+        }
+        aggregate: {
+          args: Prisma.GitHubInstallationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGitHubInstallation>
+        }
+        groupBy: {
+          args: Prisma.GitHubInstallationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitHubInstallationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GitHubInstallationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitHubInstallationCountAggregateOutputType> | number
+        }
+      }
+    }
+    GitHubRepository: {
+      payload: Prisma.$GitHubRepositoryPayload<ExtArgs>
+      fields: Prisma.GitHubRepositoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GitHubRepositoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GitHubRepositoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>
+        }
+        findFirst: {
+          args: Prisma.GitHubRepositoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GitHubRepositoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>
+        }
+        findMany: {
+          args: Prisma.GitHubRepositoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>[]
+        }
+        create: {
+          args: Prisma.GitHubRepositoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>
+        }
+        createMany: {
+          args: Prisma.GitHubRepositoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GitHubRepositoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>[]
+        }
+        delete: {
+          args: Prisma.GitHubRepositoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>
+        }
+        update: {
+          args: Prisma.GitHubRepositoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.GitHubRepositoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GitHubRepositoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GitHubRepositoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.GitHubRepositoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitHubRepositoryPayload>
+        }
+        aggregate: {
+          args: Prisma.GitHubRepositoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGitHubRepository>
+        }
+        groupBy: {
+          args: Prisma.GitHubRepositoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitHubRepositoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GitHubRepositoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitHubRepositoryCountAggregateOutputType> | number
+        }
+      }
+    }
+    GitCommit: {
+      payload: Prisma.$GitCommitPayload<ExtArgs>
+      fields: Prisma.GitCommitFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GitCommitFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GitCommitFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>
+        }
+        findFirst: {
+          args: Prisma.GitCommitFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GitCommitFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>
+        }
+        findMany: {
+          args: Prisma.GitCommitFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>[]
+        }
+        create: {
+          args: Prisma.GitCommitCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>
+        }
+        createMany: {
+          args: Prisma.GitCommitCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GitCommitCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>[]
+        }
+        delete: {
+          args: Prisma.GitCommitDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>
+        }
+        update: {
+          args: Prisma.GitCommitUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>
+        }
+        deleteMany: {
+          args: Prisma.GitCommitDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GitCommitUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GitCommitUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>[]
+        }
+        upsert: {
+          args: Prisma.GitCommitUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitCommitPayload>
+        }
+        aggregate: {
+          args: Prisma.GitCommitAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGitCommit>
+        }
+        groupBy: {
+          args: Prisma.GitCommitGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitCommitGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GitCommitCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitCommitCountAggregateOutputType> | number
+        }
+      }
+    }
+    GitPullRequest: {
+      payload: Prisma.$GitPullRequestPayload<ExtArgs>
+      fields: Prisma.GitPullRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GitPullRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GitPullRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.GitPullRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GitPullRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>
+        }
+        findMany: {
+          args: Prisma.GitPullRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>[]
+        }
+        create: {
+          args: Prisma.GitPullRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>
+        }
+        createMany: {
+          args: Prisma.GitPullRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GitPullRequestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>[]
+        }
+        delete: {
+          args: Prisma.GitPullRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>
+        }
+        update: {
+          args: Prisma.GitPullRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.GitPullRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GitPullRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GitPullRequestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>[]
+        }
+        upsert: {
+          args: Prisma.GitPullRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GitPullRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.GitPullRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGitPullRequest>
+        }
+        groupBy: {
+          args: Prisma.GitPullRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitPullRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GitPullRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GitPullRequestCountAggregateOutputType> | number
+        }
+      }
+    }
+    CodeChunk: {
+      payload: Prisma.$CodeChunkPayload<ExtArgs>
+      fields: Prisma.CodeChunkFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CodeChunkFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CodeChunkFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>
+        }
+        findFirst: {
+          args: Prisma.CodeChunkFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CodeChunkFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>
+        }
+        findMany: {
+          args: Prisma.CodeChunkFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>[]
+        }
+        create: {
+          args: Prisma.CodeChunkCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>
+        }
+        createMany: {
+          args: Prisma.CodeChunkCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CodeChunkCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>[]
+        }
+        delete: {
+          args: Prisma.CodeChunkDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>
+        }
+        update: {
+          args: Prisma.CodeChunkUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>
+        }
+        deleteMany: {
+          args: Prisma.CodeChunkDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CodeChunkUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CodeChunkUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>[]
+        }
+        upsert: {
+          args: Prisma.CodeChunkUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeChunkPayload>
+        }
+        aggregate: {
+          args: Prisma.CodeChunkAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCodeChunk>
+        }
+        groupBy: {
+          args: Prisma.CodeChunkGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CodeChunkGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CodeChunkCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CodeChunkCountAggregateOutputType> | number
+        }
+      }
+    }
+    AlertRCA: {
+      payload: Prisma.$AlertRCAPayload<ExtArgs>
+      fields: Prisma.AlertRCAFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AlertRCAFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AlertRCAFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>
+        }
+        findFirst: {
+          args: Prisma.AlertRCAFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AlertRCAFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>
+        }
+        findMany: {
+          args: Prisma.AlertRCAFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>[]
+        }
+        create: {
+          args: Prisma.AlertRCACreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>
+        }
+        createMany: {
+          args: Prisma.AlertRCACreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AlertRCACreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>[]
+        }
+        delete: {
+          args: Prisma.AlertRCADeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>
+        }
+        update: {
+          args: Prisma.AlertRCAUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>
+        }
+        deleteMany: {
+          args: Prisma.AlertRCADeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AlertRCAUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AlertRCAUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>[]
+        }
+        upsert: {
+          args: Prisma.AlertRCAUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AlertRCAPayload>
+        }
+        aggregate: {
+          args: Prisma.AlertRCAAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAlertRCA>
+        }
+        groupBy: {
+          args: Prisma.AlertRCAGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AlertRCAGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AlertRCACountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AlertRCACountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2323,6 +2773,103 @@ export const TraceSessionScalarFieldEnum = {
 export type TraceSessionScalarFieldEnum = (typeof TraceSessionScalarFieldEnum)[keyof typeof TraceSessionScalarFieldEnum]
 
 
+export const GitHubInstallationScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  installationId: 'installationId',
+  accountLogin: 'accountLogin',
+  accountType: 'accountType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitHubInstallationScalarFieldEnum = (typeof GitHubInstallationScalarFieldEnum)[keyof typeof GitHubInstallationScalarFieldEnum]
+
+
+export const GitHubRepositoryScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  projectId: 'projectId',
+  githubId: 'githubId',
+  owner: 'owner',
+  repo: 'repo',
+  fullName: 'fullName',
+  defaultBranch: 'defaultBranch',
+  isPrivate: 'isPrivate',
+  enabled: 'enabled',
+  indexStatus: 'indexStatus',
+  lastIndexedAt: 'lastIndexedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitHubRepositoryScalarFieldEnum = (typeof GitHubRepositoryScalarFieldEnum)[keyof typeof GitHubRepositoryScalarFieldEnum]
+
+
+export const GitCommitScalarFieldEnum = {
+  id: 'id',
+  repoId: 'repoId',
+  sha: 'sha',
+  message: 'message',
+  author: 'author',
+  authorEmail: 'authorEmail',
+  timestamp: 'timestamp',
+  createdAt: 'createdAt'
+} as const
+
+export type GitCommitScalarFieldEnum = (typeof GitCommitScalarFieldEnum)[keyof typeof GitCommitScalarFieldEnum]
+
+
+export const GitPullRequestScalarFieldEnum = {
+  id: 'id',
+  repoId: 'repoId',
+  number: 'number',
+  title: 'title',
+  body: 'body',
+  state: 'state',
+  author: 'author',
+  baseBranch: 'baseBranch',
+  headBranch: 'headBranch',
+  mergedAt: 'mergedAt',
+  closedAt: 'closedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitPullRequestScalarFieldEnum = (typeof GitPullRequestScalarFieldEnum)[keyof typeof GitPullRequestScalarFieldEnum]
+
+
+export const CodeChunkScalarFieldEnum = {
+  id: 'id',
+  repoId: 'repoId',
+  filePath: 'filePath',
+  startLine: 'startLine',
+  endLine: 'endLine',
+  content: 'content',
+  contentHash: 'contentHash',
+  language: 'language',
+  chunkType: 'chunkType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CodeChunkScalarFieldEnum = (typeof CodeChunkScalarFieldEnum)[keyof typeof CodeChunkScalarFieldEnum]
+
+
+export const AlertRCAScalarFieldEnum = {
+  id: 'id',
+  alertId: 'alertId',
+  triggeredAt: 'triggeredAt',
+  analysisJson: 'analysisJson',
+  suspectedPRs: 'suspectedPRs',
+  suspectedCommits: 'suspectedCommits',
+  confidence: 'confidence',
+  createdAt: 'createdAt'
+} as const
+
+export type AlertRCAScalarFieldEnum = (typeof AlertRCAScalarFieldEnum)[keyof typeof AlertRCAScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2593,6 +3140,20 @@ export type EnumChannelProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$
 export type ListEnumChannelProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChannelProvider[]'>
     
 
+
+/**
+ * Reference to a field of type 'IndexStatus'
+ */
+export type EnumIndexStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IndexStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'IndexStatus[]'
+ */
+export type ListEnumIndexStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IndexStatus[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -2693,6 +3254,12 @@ export type GlobalOmitConfig = {
   alertChannelLink?: Prisma.AlertChannelLinkOmit
   trackedUser?: Prisma.TrackedUserOmit
   traceSession?: Prisma.TraceSessionOmit
+  gitHubInstallation?: Prisma.GitHubInstallationOmit
+  gitHubRepository?: Prisma.GitHubRepositoryOmit
+  gitCommit?: Prisma.GitCommitOmit
+  gitPullRequest?: Prisma.GitPullRequestOmit
+  codeChunk?: Prisma.CodeChunkOmit
+  alertRCA?: Prisma.AlertRCAOmit
 }
 
 /* Types for Logging */

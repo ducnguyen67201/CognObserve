@@ -1,4 +1,4 @@
-.PHONY: setup proto proto-lint proto-breaking install-buf dev build clean
+.PHONY: setup proto proto-lint proto-breaking install-buf dev build clean check-doppler doppler-setup doppler-check install-hooks
 
 # ============================================================================
 # QUICK START
@@ -9,11 +9,39 @@ setup:
 	@./scripts/setup.sh
 
 # ============================================================================
+# DOPPLER (Secret Management)
+# ============================================================================
+
+# Check if Doppler CLI is installed
+check-doppler:
+	@which doppler > /dev/null || (echo "❌ Doppler CLI not installed. Run: brew install dopplerhq/cli/doppler" && exit 1)
+	@echo "✅ Doppler CLI installed"
+
+# Setup Doppler for this project
+doppler-setup: check-doppler
+	@doppler setup --no-interactive
+	@echo "✅ Doppler configured"
+
+# Verify Doppler can fetch secrets
+doppler-check: check-doppler
+	@doppler run -- printenv DATABASE_URL > /dev/null 2>&1 && echo "✅ Doppler secrets accessible" || (echo "❌ Cannot fetch Doppler secrets. Run: doppler login && make doppler-setup" && exit 1)
+
+# ============================================================================
+# GIT HOOKS
+# ============================================================================
+
+# Install git hooks (prevents committing .env files)
+install-hooks:
+	@cp scripts/pre-commit .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "✅ Git hooks installed"
+
+# ============================================================================
 # DEVELOPMENT
 # ============================================================================
 
-# Development - run all TypeScript services
-dev:
+# Development - run all TypeScript services (requires Doppler)
+dev: doppler-check
 	pnpm dev
 
 # Development - run Go ingest service (run in separate terminal)
@@ -118,6 +146,14 @@ help:
 	@echo "Quick Start:"
 	@echo "  make setup          - One command setup (recommended for new devs)"
 	@echo ""
+	@echo "Doppler (Secret Management):"
+	@echo "  make check-doppler  - Check if Doppler CLI is installed"
+	@echo "  make doppler-setup  - Configure Doppler for this project"
+	@echo "  make doppler-check  - Verify Doppler can fetch secrets"
+	@echo ""
+	@echo "Git Hooks:"
+	@echo "  make install-hooks  - Install pre-commit hook (.env protection)"
+	@echo ""
 	@echo "Development:"
 	@echo "  make dev            - Run TypeScript apps (web, worker)"
 	@echo "  make dev-ingest     - Run Go ingest service"
@@ -135,7 +171,7 @@ help:
 	@echo "  make db-studio      - Open Prisma Studio GUI"
 	@echo ""
 	@echo "Docker:"
-	@echo "  make docker-up      - Start PostgreSQL + Redis"
+	@echo "  make docker-up      - Start PostgreSQL + Temporal"
 	@echo "  make docker-down    - Stop containers"
 	@echo "  make docker-reset   - Stop and remove volumes"
 	@echo ""

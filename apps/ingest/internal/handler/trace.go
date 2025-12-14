@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cognobserve/ingest/internal/model"
+	"github.com/cognobserve/ingest/internal/temporal"
 )
 
 // UserInfoInput represents user information in the request
@@ -56,9 +56,10 @@ type TokenUsageInput struct {
 
 // IngestTraceResponse represents the response after ingesting
 type IngestTraceResponse struct {
-	TraceID string   `json:"trace_id"`
-	SpanIDs []string `json:"span_ids"`
-	Success bool     `json:"success"`
+	TraceID    string   `json:"trace_id"`
+	SpanIDs    []string `json:"span_ids"`
+	WorkflowID string   `json:"workflow_id,omitempty"` // Present when using Temporal
+	Success    bool     `json:"success"`
 }
 
 // IngestTrace handles POST /v1/traces
@@ -88,32 +89,39 @@ func (h *Handler) IngestTrace(w http.ResponseWriter, r *http.Request) {
 		traceID = *req.TraceID
 	}
 
-	// Convert user info if provided
-	var userInfo *model.UserInfo
+	// Build workflow input
+	input := temporal.TraceWorkflowInput{
+		ID:        traceID,
+		ProjectID: projectID,
+		Name:      req.Name,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Metadata:  req.Metadata,
+	}
+
+	if req.SessionID != nil {
+		input.SessionID = *req.SessionID
+	}
+
+	if req.UserID != nil {
+		input.UserID = *req.UserID
+	}
+
 	if req.User != nil {
-		userInfo = &model.UserInfo{
-			Name:     req.User.Name,
-			Email:    req.User.Email,
-			Metadata: req.User.Metadata,
+		input.User = &temporal.UserInput{}
+		if req.User.Name != nil {
+			input.User.Name = *req.User.Name
+		}
+		if req.User.Email != nil {
+			input.User.Email = *req.User.Email
 		}
 	}
 
-	// Convert to internal model
-	trace := &model.Trace{
-		ID:        traceID,
-		ProjectID: projectID,
-		SessionID: req.SessionID,
-		UserID:    req.UserID,
-		User:      userInfo,
-		Name:      req.Name,
-		Timestamp: time.Now().UTC(),
-		Metadata:  req.Metadata,
-		Spans:     make([]model.Span, 0, len(req.Spans)),
-	}
-
+	// Convert spans
 	spanIDs := make([]string, 0, len(req.Spans))
 	now := time.Now().UTC()
-	for _, s := range req.Spans {
+	input.Spans = make([]temporal.SpanInput, len(req.Spans))
+
+	for i, s := range req.Spans {
 		spanID := generateID()
 		if s.SpanID != nil && *s.SpanID != "" {
 			spanID = *s.SpanID
@@ -126,55 +134,65 @@ func (h *Handler) IngestTrace(w http.ResponseWriter, r *http.Request) {
 			startTime = *s.StartTime
 		}
 
-		// Default end_time to now if not provided
-		var endTime *time.Time
-		if s.EndTime != nil {
-			endTime = s.EndTime
-		} else {
-			endTime = &now
-		}
-
-		span := model.Span{
+		span := temporal.SpanInput{
 			ID:              spanID,
-			TraceID:         traceID,
-			ParentSpanID:    s.ParentSpanID,
 			Name:            s.Name,
-			StartTime:       startTime,
-			EndTime:         endTime,
+			StartTime:       startTime.Format(time.RFC3339),
 			Input:           s.Input,
 			Output:          s.Output,
 			Metadata:        s.Metadata,
-			Model:           s.Model,
 			ModelParameters: s.ModelParameters,
-			Level:           parseSpanLevel(s.Level),
-			StatusMessage:   s.StatusMessage,
+			Level:           s.Level,
+		}
+
+		if s.ParentSpanID != nil {
+			span.ParentSpanID = *s.ParentSpanID
+		}
+
+		if s.EndTime != nil {
+			span.EndTime = s.EndTime.Format(time.RFC3339)
+		} else {
+			span.EndTime = now.Format(time.RFC3339)
+		}
+
+		if s.Model != nil {
+			span.Model = *s.Model
+		}
+
+		if s.StatusMessage != nil {
+			span.StatusMessage = *s.StatusMessage
 		}
 
 		if s.Usage != nil {
-			span.Usage = &model.TokenUsage{
-				PromptTokens:     s.Usage.PromptTokens,
-				CompletionTokens: s.Usage.CompletionTokens,
-				TotalTokens:      s.Usage.TotalTokens,
+			if s.Usage.PromptTokens != nil {
+				span.PromptTokens = int(*s.Usage.PromptTokens)
+			}
+			if s.Usage.CompletionTokens != nil {
+				span.CompletionTokens = int(*s.Usage.CompletionTokens)
+			}
+			if s.Usage.TotalTokens != nil {
+				span.TotalTokens = int(*s.Usage.TotalTokens)
 			}
 		}
 
-		trace.Spans = append(trace.Spans, span)
+		input.Spans[i] = span
 	}
 
-	// Publish to queue
-	if err := h.producer.PublishTrace(r.Context(), trace); err != nil {
-		slog.Error("failed to publish trace", "error", err, "trace_id", traceID)
+	// Start Temporal workflow
+	workflowID, err := h.temporalClient.StartTraceWorkflow(r.Context(), input)
+	if err != nil {
+		slog.Error("failed to start trace workflow", "error", err, "trace_id", traceID)
 		http.Error(w, "failed to process trace", http.StatusInternalServerError)
 		return
 	}
-
-	slog.Info("trace ingested", "trace_id", traceID, "spans", len(trace.Spans))
+	slog.Info("trace workflow started", "trace_id", traceID, "workflow_id", workflowID, "spans", len(input.Spans))
 
 	// Send response
 	resp := IngestTraceResponse{
-		TraceID: traceID,
-		SpanIDs: spanIDs,
-		Success: true,
+		TraceID:    traceID,
+		SpanIDs:    spanIDs,
+		WorkflowID: workflowID,
+		Success:    true,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -187,20 +205,4 @@ func generateID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
-}
-
-// parseSpanLevel converts string to SpanLevel
-func parseSpanLevel(level string) model.SpanLevel {
-	switch level {
-	case "DEBUG":
-		return model.SpanLevelDebug
-	case "DEFAULT", "":
-		return model.SpanLevelDefault
-	case "WARNING":
-		return model.SpanLevelWarning
-	case "ERROR":
-		return model.SpanLevelError
-	default:
-		return model.SpanLevelDefault
-	}
 }

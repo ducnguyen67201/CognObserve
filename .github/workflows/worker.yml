@@ -5,7 +5,7 @@ on:
 
 jobs:
   ci:
-    name: Build → Lint → Typecheck
+    name: Build → Lint → Typecheck → Temporal
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm db:generate
+        run: pnpm db:generate:ci
 
       - name: Type check
         run: pnpm --filter @cognobserve/worker typecheck
@@ -35,3 +35,33 @@ jobs:
 
       - name: Lint
         run: pnpm --filter @cognobserve/worker lint
+
+      # Temporal architecture checks
+      - name: Verify Temporal structure
+        run: |
+          echo "Checking Temporal architecture..."
+
+          # Verify required directories exist
+          [ -d "apps/worker/src/temporal" ] || { echo "Error: temporal/ directory missing"; exit 1; }
+          [ -d "apps/worker/src/workflows" ] || { echo "Error: workflows/ directory missing"; exit 1; }
+          [ -d "apps/worker/src/temporal/activities" ] || { echo "Error: activities/ directory missing"; exit 1; }
+
+          # Verify key files exist
+          [ -f "apps/worker/src/temporal/index.ts" ] || { echo "Error: temporal/index.ts missing"; exit 1; }
+          [ -f "apps/worker/src/temporal/types.ts" ] || { echo "Error: temporal/types.ts missing"; exit 1; }
+          [ -f "apps/worker/src/workflows/index.ts" ] || { echo "Error: workflows/index.ts missing"; exit 1; }
+          [ -f "apps/worker/src/lib/trpc-caller.ts" ] || { echo "Error: trpc-caller.ts missing"; exit 1; }
+
+          echo "✓ Temporal structure verified"
+
+      - name: Verify activities use tRPC caller (no direct DB writes)
+        run: |
+          echo "Checking activities for direct DB mutations..."
+          FORBIDDEN="prisma\.\(create\|update\|delete\|upsert\)"
+
+          if grep -rE "$FORBIDDEN" apps/worker/src/temporal/activities/ 2>/dev/null; then
+            echo "Error: Activities contain direct database mutations!"
+            echo "Use getInternalCaller() to call tRPC internal procedures instead."
+            exit 1
+          fi
+          echo "✓ No direct DB mutations in activities"

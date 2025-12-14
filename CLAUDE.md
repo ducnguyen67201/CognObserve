@@ -7,9 +7,10 @@ CognObserve is an AI Platform Monitoring & Observability system. It provides tra
 - **Monorepo**: pnpm 9.15 workspaces + Turborepo 2.5
 - **Web**: Next.js 16, React 19, TypeScript 5.7, Tailwind CSS 3.4, shadcn/ui (yellow theme)
 - **Ingest**: Go 1.23 (high-performance ingestion service)
-- **Worker**: Node.js 24+ with TypeScript 5.7
+- **Worker**: Node.js 24+ with TypeScript 5.7 + Temporal SDK
+- **Orchestration**: Temporal (durable workflow engine)
 - **Database**: PostgreSQL with Prisma 7 (Rust-free, ESM)
-- **Cache/Queue**: Redis
+- **Cache**: Redis
 - **Type Sharing**: Protocol Buffers (Buf)
 - **Containerization**: Docker Compose
 - **Linting**: ESLint 9, Prettier 3.4
@@ -25,23 +26,32 @@ CognObserve/
 ├── apps/
 │   ├── web/                     # Next.js dashboard & API
 │   │   └── src/app/
-│   ├── ingest/                  # Go ingestion service (github.com/cognobserve/ingest)
+│   ├── ingest/                  # Go ingestion service
 │   │   ├── cmd/ingest/          # Entry point
 │   │   └── internal/
 │   │       ├── config/          # Configuration
 │   │       ├── handler/         # HTTP handlers
-│   │       ├── model/           # Internal models
-│   │       ├── queue/           # Redis queue producer
+│   │       ├── temporal/        # Temporal client for starting workflows
 │   │       ├── server/          # HTTP server setup
 │   │       └── proto/cognobservev1/  # Generated Go types
-│   └── worker/                  # Background job processing
+│   └── worker/                  # Temporal worker (TypeScript)
+│       └── src/
+│           ├── temporal/        # Temporal config (client, worker, types)
+│           │   └── activities/  # Activity implementations (READ-ONLY)
+│           ├── workflows/       # Workflow definitions
+│           ├── startup/         # Workflow starters on boot
+│           └── lib/             # Utilities (env, trpc-caller)
 ├── packages/
 │   ├── proto/                   # Generated TypeScript types
 │   │   └── src/generated/
+│   ├── api/                     # tRPC routers + schemas
+│   │   └── src/
+│   │       ├── routers/         # tRPC routers (including internal.ts)
+│   │       └── schemas/         # Zod schemas (source of truth)
 │   ├── config-eslint/
 │   ├── config-typescript/
 │   ├── db/                      # Prisma schema & client
-│   └── shared/                  # Shared utilities
+│   └── shared/                  # Shared utilities & constants
 ├── buf.yaml                     # Buf configuration
 ├── buf.gen.yaml                 # Code generation config
 ├── turbo.json
@@ -69,7 +79,7 @@ make proto-breaking
 # Install all dependencies
 make install
 
-# Start databases (PostgreSQL, Redis)
+# Start databases (PostgreSQL, Redis, Temporal)
 make docker-up
 
 # Copy environment file
@@ -78,12 +88,17 @@ cp .env.example .env
 # Generate Prisma client
 pnpm db:generate
 
-# Run TypeScript apps (web, worker)
+# Terminal 1: Run TypeScript apps (web + worker)
 pnpm dev
 
-# Run Go ingest service
+# Terminal 2: Run Go ingest service
 cd apps/ingest && make dev
 ```
+
+### Temporal UI
+- **URL**: http://localhost:8088
+- **Purpose**: Monitor workflows, view execution history, debug failures
+- **Namespace**: `default`
 
 ### Build & Deploy
 ```bash
@@ -98,20 +113,24 @@ cd apps/ingest && make docker-build
 
 ### Data Flow
 ```
-SDK → [Ingest (Go)] → Redis Queue → [Worker (TS)] → PostgreSQL
-                                          ↓
-                                    [Web (Next.js)]
+SDK → [Ingest (Go)] → [Temporal] → [Worker (TS)] → [Web API] → PostgreSQL
+                                                       ↑
+                                                 [Web (Next.js)]
+
+Note: Worker activities are READ-ONLY. All mutations go through Web API.
 ```
 
 ## Services
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Web | 3000 | Dashboard, API |
+| Web | 3000 | Dashboard, API (authoritative for mutations) |
 | Ingest | 8080 | High-throughput trace ingestion |
-| Worker | - | Background jobs, queue processing |
+| Worker | - | Temporal worker (READ-ONLY activities) |
+| Temporal | 7233 | Workflow orchestration |
+| Temporal UI | 8088 | Workflow monitoring dashboard |
 | PostgreSQL | 5432 | Primary database |
-| Redis | 6379 | Queue, cache |
+| Redis | 6379 | Cache (Temporal uses PostgreSQL) |
 
 ## Database Schema
 Core models in `packages/db/prisma/schema.prisma`:
@@ -120,48 +139,238 @@ Core models in `packages/db/prisma/schema.prisma`:
 - **Trace**: Top-level trace for a request/operation
 - **Span**: Individual operations within a trace (LLM calls, etc.)
 
-## Worker Architecture
+## Worker Architecture (Temporal-based)
 
-The worker (`apps/worker/`) handles background processing including trace ingestion and alerting.
+The worker (`apps/worker/`) uses Temporal for durable workflow orchestration. All background processing runs as Temporal workflows with activities.
 
-### Key Components
+### Workflow Documentation (IMPORTANT)
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| TraceProcessor | `apps/worker/src/processors/trace.ts` | Processes traces from Redis queue, calculates costs |
-| AlertEvaluator | `apps/worker/src/jobs/alert-evaluator.ts` | State machine for alert evaluation and notification |
-| Alerting Interfaces | `packages/api/src/lib/alerting/interfaces.ts` | IAlertStore, ITriggerQueue, IDispatcher, IScheduler |
-| Alerting Implementations | `packages/api/src/lib/alerting/stores/`, `queues/`, `dispatchers/`, `schedulers/` | Concrete implementations |
-
-### Alert System v2
-
-**Full spec**: `docs/specs/issue-99-alert-system-v2.md`
-
-The alerting system uses a state machine with queue-based batching:
-
+**For detailed workflow documentation, ALWAYS read:**
 ```
-State Machine: INACTIVE → PENDING → FIRING → RESOLVED → INACTIVE
-
-Notification Rules:
-- PENDING → FIRING: First notification sent
-- FIRING → FIRING: Re-notify only if cooldown passed (5min for CRITICAL)
-- All other transitions: No notification
+docs/WORKFLOWS.md
 ```
 
-**Severity-based timing:**
-| Severity | Pending Duration | Cooldown | Use Case |
-|----------|------------------|----------|----------|
-| CRITICAL | 1 min | 5 min | System down |
-| HIGH | 2 min | 30 min | Degradation |
-| MEDIUM | 3 min | 2 hours | Performance |
-| LOW | 5 min | 12 hours | Warnings |
+This document contains:
+- Complete workflow registry and types
+- Step-by-step guide for adding new workflows
+- Activity patterns and internal procedures
+- Alert system details
+- Debugging guide
 
-**Key files for alerting context:**
-- Spec: `docs/specs/issue-99-alert-system-v2.md`
-- Evaluator: `apps/worker/src/jobs/alert-evaluator.ts`
-- Interfaces: `packages/api/src/lib/alerting/interfaces.ts`
-- Schemas: `packages/api/src/schemas/alerting.ts`
-- Batch endpoint: `apps/web/src/app/api/internal/alerts/trigger-batch/route.ts`
+**When adding a new workflow, UPDATE `docs/WORKFLOWS.md`** to keep it current.
+
+### Quick Reference
+
+| Workflow | Purpose | Duration |
+|----------|---------|----------|
+| `traceIngestionWorkflow` | Process trace + spans | Short-lived |
+| `scoreIngestionWorkflow` | Process score | Short-lived |
+| `alertEvaluationWorkflow` | Evaluate alerts | Long-running |
+| `githubIndexWorkflow` | Index GitHub events | Short-lived |
+
+**Key files:**
+| File | Purpose |
+|------|---------|
+| `apps/worker/src/startup/index.ts` | Workflow registry (source of truth) |
+| `apps/worker/src/workflows/*.ts` | Workflow definitions |
+| `apps/worker/src/temporal/activities/*.ts` | Activities (READ-ONLY) |
+| `docs/WORKFLOWS.md` | Full documentation |
+
+## Temporal Architecture (CRITICAL)
+
+The worker uses Temporal for durable workflow orchestration. **Temporal activities MUST use tRPC internal procedures for database mutations.**
+
+### The Golden Rule: Activities Use tRPC Internal Caller
+
+**All database mutations MUST go through tRPC internal procedures.** This ensures:
+- Single source of truth for business logic
+- Proper authorization via internal secret
+- Consistent audit trails
+- Type-safe communication
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    TEMPORAL ACTIVITY PATTERN                        │
+└─────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────┐         ┌──────────────────┐
+  │  Temporal Worker │         │   @cognobserve/api│
+  │                  │         │                  │
+  │  ┌────────────┐  │  tRPC   │  ┌────────────┐  │
+  │  │  Activity  │──┼────────▶│  │ internal.  │  │
+  │  │            │  │ direct  │  │ procedure  │  │
+  │  │ READ-ONLY  │  │  call   │  │            │  │
+  │  └────────────┘  │         │  └─────┬──────┘  │
+  │        │         │         │        │         │
+  └────────┼─────────┘         └────────┼─────────┘
+           │ Read only                  │ Mutations
+           ▼                            ▼
+  ┌──────────────────────────────────────────────┐
+  │              PostgreSQL Database              │
+  └──────────────────────────────────────────────┘
+
+ALLOWED in Activities:
+  ✅ Database READS (findUnique, findMany, count, aggregate)
+  ✅ tRPC internal procedure calls (via getInternalCaller())
+  ✅ Pure computations and validations
+
+FORBIDDEN in Activities:
+  ❌ Database WRITES (create, update, delete, upsert)
+  ❌ Direct mutations to any database table
+```
+
+### Calling Internal tRPC Procedures from Activities
+
+The worker has a tRPC caller that can directly invoke internal procedures:
+
+```typescript
+// apps/worker/src/lib/trpc-caller.ts
+import { appRouter, createCallerFactory } from "@cognobserve/api";
+import { env } from "./env";
+
+const createCaller = createCallerFactory(appRouter);
+let _caller: Caller | null = null;
+
+export function getInternalCaller(): Caller {
+  if (!_caller) {
+    _caller = createCaller({
+      session: null,
+      internalSecret: env.INTERNAL_API_SECRET,  // Auth via secret
+    });
+  }
+  return _caller;
+}
+```
+
+### Activity Implementation Pattern
+
+```typescript
+// ❌ BAD - Direct database mutation in activity
+export async function persistTrace(input: TraceWorkflowInput): Promise<string> {
+  // NEVER do this in Temporal activities!
+  const trace = await prisma.trace.create({
+    data: { id: input.id, name: input.name },
+  });
+  return trace.id;
+}
+
+// ✅ GOOD - Call tRPC internal procedure for mutations
+import { getInternalCaller } from "@/lib/trpc-caller";
+
+export async function persistTrace(input: TraceWorkflowInput): Promise<string> {
+  const caller = getInternalCaller();
+  const result = await caller.internal.ingestTrace({
+    trace: {
+      id: input.id,
+      projectId: input.projectId,
+      name: input.name,
+      timestamp: input.timestamp,
+    },
+    spans: input.spans,
+  });
+  return result.traceId;
+}
+
+// ✅ GOOD - Read-only database operations ARE allowed
+export async function getTraceDetails(traceId: string): Promise<TraceDetails | null> {
+  // Read operations are fine in activities
+  return prisma.trace.findUnique({
+    where: { id: traceId },
+    select: { id: true, name: true, projectId: true },
+  });
+}
+```
+
+### Adding New Internal Procedures
+
+When adding new mutations that activities need to call:
+
+1. **Add to `packages/api/src/routers/internal.ts`**:
+```typescript
+export const internalRouter = createRouter({
+  // Uses internalProcedure (requires INTERNAL_API_SECRET)
+  myNewMutation: internalProcedure
+    .input(z.object({ /* schema */ }))
+    .mutation(async ({ input }) => {
+      // Perform database mutation
+      return await prisma.myTable.create({ data: input });
+    }),
+});
+```
+
+2. **Call from activity**:
+```typescript
+export async function myActivity(data: MyInput): Promise<MyResult> {
+  const caller = getInternalCaller();
+  return await caller.internal.myNewMutation(data);
+}
+```
+
+### Available Internal Procedures
+
+| Procedure | Input | Purpose |
+|-----------|-------|---------|
+| `internal.ingestTrace` | `{ trace, spans }` | Persist trace + spans |
+| `internal.calculateTraceCosts` | `{ traceId }` | Calculate span costs |
+| `internal.updateCostSummaries` | `{ projectId, date }` | Update daily summaries |
+| `internal.ingestScore` | `{ id, projectId, ... }` | Persist score |
+| `internal.validateScoreConfig` | `{ configId, value }` | Validate score config |
+| `internal.transitionAlertState` | `{ alertId, conditionMet }` | Transition alert state |
+| `internal.dispatchNotification` | `{ alertId, state, value, threshold }` | Send notifications |
+
+### Additional Temporal Details
+
+For detailed information on:
+- Workflow input types and imports
+- Key Temporal files reference
+- ESM compatibility notes
+- Step-by-step workflow creation guide
+- Go ingest service integration
+
+**See `docs/WORKFLOWS.md`**
+
+## LLM Center (CRITICAL)
+
+The LLM Center (`packages/shared/src/llm/`) is the centralized abstraction for all LLM operations. **All LLM calls MUST go through the LLM Center.**
+
+**Full documentation:** [`docs/LLM_CENTER.md`](docs/LLM_CENTER.md)
+
+**IMPORTANT:** When editing any files in `packages/shared/src/llm/`:
+1. **Read** `docs/LLM_CENTER.md` first to understand the architecture
+2. **Update** `docs/LLM_CENTER.md` if you add/change functionality
+3. **Follow** the established patterns for errors, logging, and providers
+
+### Quick Reference
+
+```typescript
+// Get LLM instance
+import { getLLM } from "@/lib/llm-manager";
+const llm = getLLM();
+
+// Operations
+await llm.embed(["text"]);                    // Embeddings
+await llm.chat([{ role: "user", content }]);  // Chat
+await llm.complete(prompt, { schema });       // Structured output
+```
+
+### Key Rules
+
+| Rule | Description |
+|------|-------------|
+| **Single Entry Point** | Always use `getLLM()` - never import SDKs directly |
+| **Centralized Errors** | Use `LLMError` subclasses from `@cognobserve/shared/llm` |
+| **Centralized Logging** | Use `getLogger()` from `@cognobserve/shared/llm` |
+| **Update Docs** | Update `docs/LLM_CENTER.md` when adding features |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `docs/LLM_CENTER.md` | Full documentation (READ THIS FIRST) |
+| `packages/shared/src/llm/center.ts` | Main LLMCenter class |
+| `packages/shared/src/llm/errors.ts` | Centralized error classes |
+| `packages/shared/src/llm/utils/logger.ts` | Configurable logger |
+| `apps/worker/src/lib/llm-manager.ts` | Singleton accessor for worker |
 
 ## Code Style Rules
 
@@ -238,27 +447,38 @@ export const isValidRole = (role: string): role is ProjectRole => {
 import { WORKSPACE_ADMIN_ROLES } from "@cognobserve/api/schemas";
 ```
 
-### Zod for Runtime Validation (CRITICAL)
-**ALWAYS use Zod to validate unknown data at runtime.** This includes API responses, JSON parsing, external data, and anything typed as `unknown`. Never use type assertions (`as`) to bypass TypeScript - validate first.
+### Zod for Runtime Validation (CRITICAL - MANDATORY)
+**ALL unknown data MUST be validated through Zod. No exceptions.**
+
+This is a strict enforcement rule. Type assertions (`as`) are FORBIDDEN for unknown data. Every piece of external data entering the system must pass through Zod validation before use.
+
+**The Rule:**
+```
+Unknown Data → Zod Schema → safeParse() → Use validated data
+```
+
+**What counts as unknown data:**
+- `fetch()` responses (external APIs, internal APIs)
+- `response.json()` results
+- `JSON.parse()` output
+- WebSocket messages
+- URL query parameters
+- Environment variables (at runtime)
+- Any data crossing trust boundaries
 
 ```typescript
-// ❌ BAD - Type assertion (lies to TypeScript, no runtime safety)
+// ❌ FORBIDDEN - Type assertion bypasses runtime safety
 const response = await fetch("/api/data");
 const data = (await response.json()) as { users: User[] };
-// If API returns different shape, code silently breaks at runtime
+// NEVER do this - silent runtime failures
 
-// ❌ BAD - Manual type checking (verbose, error-prone, hard to maintain)
+// ❌ FORBIDDEN - Manual type checking
 const json: unknown = await response.json();
-if (
-  json !== null &&
-  typeof json === "object" &&
-  "users" in json &&
-  Array.isArray(json.users)
-) {
-  // Still not fully type-safe, easy to miss edge cases
+if (typeof json === "object" && json !== null && "users" in json) {
+  // Verbose, error-prone, incomplete
 }
 
-// ✅ GOOD - Zod validation (runtime safety + type inference)
+// ✅ REQUIRED - Zod validation (the ONLY acceptable pattern)
 import { z } from "zod";
 
 const ResponseSchema = z.object({
@@ -272,31 +492,32 @@ const ResponseSchema = z.object({
 const json: unknown = await response.json();
 const parsed = ResponseSchema.safeParse(json);
 
-if (parsed.success) {
-  // parsed.data is fully typed as { users: { id: string; name: string; email: string }[] }
-  console.log(parsed.data.users);
-} else {
-  // parsed.error contains detailed validation errors
-  console.error("Invalid response:", parsed.error.issues);
+if (!parsed.success) {
+  console.error("Validation failed:", parsed.error.flatten());
+  return null; // or throw, or return fallback
 }
+
+// NOW it's safe to use - fully typed
+const data = parsed.data;
 ```
 
-**When to use Zod validation:**
-| Scenario | Use Zod? | Example |
-|----------|----------|---------|
-| API response from external service | ✅ Yes | `fetch()` responses |
-| API response from internal service | ✅ Yes | Worker → Web API calls |
-| JSON.parse() result | ✅ Yes | Parsing stored JSON |
-| WebSocket messages | ✅ Yes | Real-time data |
-| URL query params | ✅ Yes | `searchParams.get()` |
-| Form data (tRPC input) | ✅ Already handled | tRPC validates with schema |
-| Database query results | ❌ No | Prisma types are trustworthy |
-| Internal function params | ❌ No | TypeScript handles this |
+**Validation requirements by scenario:**
+| Scenario | Zod Required? | Notes |
+|----------|---------------|-------|
+| External API response | ✅ MANDATORY | Always validate `fetch()` responses |
+| Internal API response | ✅ MANDATORY | Worker → Web, service → service |
+| `JSON.parse()` result | ✅ MANDATORY | Stored JSON, config files |
+| WebSocket messages | ✅ MANDATORY | Real-time data from server |
+| URL query params | ✅ MANDATORY | User-controlled input |
+| GitHub/Webhook payloads | ✅ MANDATORY | Third-party data |
+| Form data (tRPC) | ✅ Auto-handled | tRPC validates with input schema |
+| Database results | ❌ Not needed | Prisma types are trustworthy |
+| Internal function params | ❌ Not needed | TypeScript compile-time safety |
 
-**Zod patterns:**
+**Standard Zod patterns:**
 
 ```typescript
-// Define schema once, reuse everywhere
+// 1. Define schema with type inference
 const UserSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
@@ -304,14 +525,14 @@ const UserSchema = z.object({
 });
 type User = z.infer<typeof UserSchema>;
 
-// For API responses, define response schemas
+// 2. Define API response schemas
 const ApiResponseSchema = z.object({
   success: z.boolean(),
   data: UserSchema.optional(),
   error: z.string().optional(),
 });
 
-// Parse with safeParse (doesn't throw)
+// 3. ALWAYS use safeParse (preferred - doesn't throw)
 const result = ApiResponseSchema.safeParse(json);
 if (!result.success) {
   console.error(result.error.flatten());
@@ -319,7 +540,7 @@ if (!result.success) {
 }
 return result.data;
 
-// Or parse (throws ZodError on failure)
+// 4. Use parse() only when failure should throw
 try {
   const data = ApiResponseSchema.parse(json);
 } catch (e) {
@@ -327,6 +548,28 @@ try {
     // Handle validation error
   }
 }
+```
+
+**Real-world example (GitHub API):**
+```typescript
+// Define schema for external API
+const GitHubContentResponseSchema = z.object({
+  size: z.number(),
+  content: z.string(),
+  encoding: z.string(),
+});
+
+// Fetch and validate
+const response = await fetch(url);
+const json: unknown = await response.json();
+const parsed = GitHubContentResponseSchema.safeParse(json);
+
+if (!parsed.success) {
+  console.warn("Invalid GitHub response:", parsed.error.flatten());
+  return null;
+}
+
+const data = parsed.data; // Safe to use
 ```
 
 ## Frontend Engineering Best Practices
@@ -732,7 +975,27 @@ import { type IngestRequest } from "@cognobserve/proto";
 | `@cognobserve/api/schemas` | Zod schemas & derived types (client-safe) | `ProjectRoleSchema`, `AlertTypeSchema` |
 | `@cognobserve/api` | tRPC routers & server utilities | `appRouter`, `createContext` |
 | `@cognobserve/proto` | Protobuf-generated types | `IngestRequest`, `TokenUsage` |
-| `@cognobserve/shared` | Cross-app utilities | `formatDuration`, `parseError` |
+| `@cognobserve/shared` | Cross-app utilities & constants | `ACTIVITY_RETRY`, `APP_NAME`, `chunkCodeFiles` |
+| `@cognobserve/shared/llm` | LLM Center (OpenAI wrapper) | `createLLMCenter`, `getLLM` |
+| `@cognobserve/shared/cache` | Redis cache (embeddings) | `getEmbeddingCache`, `closeRedis` |
+
+**⚠️ CRITICAL: Temporal Workflow Imports**
+
+Temporal workflows are sandboxed and cannot use non-deterministic modules (OpenAI, Redis, fs, net, etc.).
+
+```typescript
+// ❌ BAD - Pulls OpenAI into workflow bundle (breaks determinism)
+import { createLLMCenter } from "@cognobserve/shared";  // Main index re-exports LLM
+
+// ✅ GOOD - Import only constants from main package
+import { ACTIVITY_RETRY } from "@cognobserve/shared";
+
+// ✅ GOOD - Import LLM/Cache in ACTIVITIES only (not workflows)
+import { getLLM } from "@cognobserve/shared/llm";           // Activities only
+import { getEmbeddingCache } from "@cognobserve/shared/cache"; // Activities only
+```
+
+The main `@cognobserve/shared` index only exports deterministic utilities (constants, pure functions). LLM and Cache are only available via sub-path imports to prevent accidental inclusion in workflow bundles.
 
 ### Frontend Architecture
 
@@ -1319,6 +1582,37 @@ const handleCopy = async (text: string) => {
 4. **Use consistent naming**: `{domain}Toast` for success, `{domain}Error` for errors
 5. **Export from the file** so it can be imported elsewhere
 
+## API Responses (CRITICAL)
+
+**NEVER use `NextResponse.json()` directly.** Always use centralized response utilities.
+
+**Full documentation:** [`docs/api-responses.md`](docs/api-responses.md)
+
+### Quick Reference
+
+```typescript
+import { apiError, apiSuccess, apiServerError } from "@/lib/api-responses";
+
+// Success
+return apiSuccess.ok({ data: result });
+return apiSuccess.created(newUser);
+
+// Errors
+return apiError.unauthorized();
+return apiError.notFound("User");
+return apiServerError.internal();
+```
+
+### Files
+- `apps/web/src/lib/api-responses.ts` - REST API responses
+- `apps/web/src/lib/webhook-responses.ts` - Webhook responses
+
+### Adding New API Responses
+When adding new response methods:
+1. Add to the appropriate object in `api-responses.ts` or `webhook-responses.ts`
+2. **Update [`docs/api-responses.md`](docs/api-responses.md)** to document the new method
+3. Follow existing patterns (use `json()` helper, include error codes)
+
 ## Quick Reference for Claude
 
 ### Key Locations
@@ -1333,10 +1627,12 @@ const handleCopy = async (text: string) => {
 | **Types** | Import from `@cognobserve/db`, `@cognobserve/api/schemas`, `@cognobserve/proto` | Duplicate types, import from `@prisma/client` |
 | **Unknown Data** | Use Zod `safeParse()` for API responses, JSON parsing | Type assertions (`as`), manual type checking |
 | **Toasts** | Use `@/lib/errors` and `@/lib/success` | Import `toast` from "sonner" directly |
+| **API Responses** | Use `@/lib/api-responses` and `@/lib/webhook-responses` | Use `NextResponse.json()` directly |
 | **UI** | Use shadcn/ui from `@/components/ui/` | Write custom CSS for standard elements |
 | **Env vars** | Use `env` from `@/lib/env` | Use `process.env` directly |
 | **Frontend** | < 150 lines, logic in hooks, domain folders | Fat components, inline business logic |
 | **Backend** | Thin routers + service files | Business logic in routers |
+| **Temporal** | Activities use `getInternalCaller()` for mutations | Direct DB writes in activities |
 | **Competitors** | Use "industry standard" or "similar platforms" | Name specific competitors |
 
 ### No Competitor Names (STRICT)

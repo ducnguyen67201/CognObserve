@@ -6,7 +6,7 @@
 
 set -e
 
-REPO="ducnguyen67201/CognObserve"
+REPO="cognobserve/cognobserve"
 
 # Check if filename argument provided
 if [ -z "$1" ]; then

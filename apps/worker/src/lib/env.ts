@@ -1,10 +1,6 @@
-// Load .env from project root (Next.js does this automatically, worker needs manual load)
-import { config } from "dotenv";
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "../../../../.env") });
+// Environment variables are injected by Doppler at runtime.
+// Run commands with: doppler run -- <command>
+// See: docs/specs/issue-104-doppler-secret-management.md
 
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
@@ -22,11 +18,7 @@ export const env = createEnv({
     // Database
     DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
 
-    // Redis
-    REDIS_URL: z.string().default("redis://localhost:6379"),
-
-    // Web API (for internal API calls)
-    WEB_API_URL: z.string().url(),
+    // Internal API (for tRPC caller)
     INTERNAL_API_SECRET: z.string().min(32),
 
     // SMTP Configuration (for Gmail adapter)
@@ -35,6 +27,27 @@ export const env = createEnv({
     SMTP_USER: z.string().optional(),
     SMTP_PASS: z.string().optional(),
     SMTP_FROM: z.string().email().optional(),
+
+    // Temporal Configuration (required)
+    TEMPORAL_ADDRESS: z.string().default("localhost:7233"),
+    TEMPORAL_NAMESPACE: z.string().default("default"),
+    TEMPORAL_TASK_QUEUE: z.string().default("cognobserve-tasks"),
+
+    // GitHub API (optional, for higher rate limits)
+    GITHUB_TOKEN: z.string().optional(),
+
+    // GitHub App Configuration (for repository indexing)
+    // Required for fetching repository contents via installation token
+    GITHUB_APP_ID: z.string().optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+
+    // OpenAI API (for embedding generation)
+    // Optional: Worker can start without it, but embedding generation will fail
+    OPENAI_API_KEY: z.string().optional(),
+
+    // Redis (for embedding cache)
+    // Optional: Falls back to localhost:6379 if not set
+    REDIS_URL: z.string().url().optional(),
   },
 
   /**
@@ -44,14 +57,30 @@ export const env = createEnv({
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
-    REDIS_URL: process.env.REDIS_URL,
-    WEB_API_URL: process.env.WEB_API_URL,
     INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASS: process.env.SMTP_PASS,
     SMTP_FROM: process.env.SMTP_FROM,
+
+    // Temporal Configuration
+    TEMPORAL_ADDRESS: process.env.TEMPORAL_ADDRESS,
+    TEMPORAL_NAMESPACE: process.env.TEMPORAL_NAMESPACE,
+    TEMPORAL_TASK_QUEUE: process.env.TEMPORAL_TASK_QUEUE,
+
+    // GitHub API
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+
+    // GitHub App Configuration
+    GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+    GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+
+    // OpenAI API
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
+    // Redis
+    REDIS_URL: process.env.REDIS_URL,
   },
 
   /**

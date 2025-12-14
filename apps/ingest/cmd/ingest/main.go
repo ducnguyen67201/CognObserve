@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"github.com/cognobserve/ingest/internal/config"
-	"github.com/cognobserve/ingest/internal/queue"
 	"github.com/cognobserve/ingest/internal/server"
-	"github.com/joho/godotenv"
+	"github.com/cognobserve/ingest/internal/temporal"
 )
+
+// Environment variables are injected by Doppler at runtime.
+// Run with: doppler run -- go run ./cmd/ingest
+// See: docs/specs/issue-104-doppler-secret-management.md
 
 func main() {
 	// Setup structured logging
@@ -21,10 +24,6 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	// Load .env file from root directory (development only)
-	// In production, env vars are injected directly
-	_ = godotenv.Load("../../.env")
-
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -32,16 +31,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize queue producer
-	producer, err := queue.NewRedisProducer(cfg.RedisURL)
+	// Initialize Temporal client (required)
+	slog.Info("connecting to temporal...",
+		"address", cfg.TemporalAddress,
+		"namespace", cfg.TemporalNamespace,
+		"task_queue", cfg.TemporalTaskQueue,
+	)
+	temporalClient, err := temporal.New(
+		cfg.TemporalAddress,
+		cfg.TemporalNamespace,
+		cfg.TemporalTaskQueue,
+	)
 	if err != nil {
-		slog.Error("failed to connect to redis", "error", err)
+		slog.Error("failed to connect to temporal", "error", err)
 		os.Exit(1)
 	}
-	defer producer.Close()
+	defer temporalClient.Close()
+	slog.Info("temporal client connected")
 
 	// Create and start server
-	srv := server.New(cfg, producer)
+	srv := server.New(cfg, temporalClient)
+	defer srv.Close()
 
 	// Graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -55,7 +65,10 @@ func main() {
 		cancel()
 	}()
 
-	slog.Info("starting ingest service", "port", cfg.Port, "version", cfg.Version)
+	slog.Info("starting ingest service",
+		"port", cfg.Port,
+		"version", cfg.Version,
+	)
 
 	if err := srv.Run(ctx); err != nil {
 		slog.Error("server error", "error", err)

@@ -43,7 +43,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm db:generate
+        run: pnpm db:generate:ci
 
       - name: Run migrations
         run: pnpm --filter @cognobserve/db prisma migrate deploy

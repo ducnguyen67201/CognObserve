@@ -11,7 +11,8 @@
     "./schemas": "./src/schemas.ts",
     "./lib/cost": "./src/lib/cost/index.ts",
     "./lib/alerting": "./src/lib/alerting/index.ts",
-    "./lib/alerting/init": "./src/lib/alerting/init.ts"
+    "./lib/alerting/init": "./src/lib/alerting/init.ts",
+    "./lib/github": "./src/lib/github/index.ts"
   },
   "scripts": {
     "lint": "eslint src/",
@@ -23,10 +24,11 @@
   "dependencies": {
     "@cognobserve/db": "workspace:*",
     "@cognobserve/shared": "workspace:*",
+    "@temporalio/client": "^1.13.2",
     "@trpc/server": "^11.0.0",
     "nodemailer": "^6.9.16",
     "superjson": "^2.2.2",
-    "zod": "^3.24.0"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@cognobserve/config-eslint": "workspace:*",

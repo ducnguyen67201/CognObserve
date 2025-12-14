@@ -13,26 +13,28 @@ import (
 	"github.com/cognobserve/ingest/internal/config"
 	"github.com/cognobserve/ingest/internal/handler"
 	authmw "github.com/cognobserve/ingest/internal/middleware"
-	"github.com/cognobserve/ingest/internal/queue"
+	"github.com/cognobserve/ingest/internal/temporal"
 )
 
 // Server represents the HTTP server
 type Server struct {
-	cfg     *config.Config
-	handler *handler.Handler
-	router  chi.Router
-	server  *http.Server
+	cfg            *config.Config
+	handler        *handler.Handler
+	router         chi.Router
+	server         *http.Server
+	temporalClient *temporal.Client
 }
 
-// New creates a new server
-func New(cfg *config.Config, producer queue.Producer) *Server {
-	h := handler.New(producer)
+// New creates a new server with Temporal client
+func New(cfg *config.Config, temporalClient *temporal.Client) *Server {
+	h := handler.New(temporalClient)
 	r := chi.NewRouter()
 
 	s := &Server{
-		cfg:     cfg,
-		handler: h,
-		router:  r,
+		cfg:            cfg,
+		handler:        h,
+		router:         r,
+		temporalClient: temporalClient,
 	}
 
 	s.setupRoutes()
@@ -107,5 +109,12 @@ func (s *Server) Run(ctx context.Context) error {
 		return s.server.Shutdown(shutdownCtx)
 	case err := <-errCh:
 		return err
+	}
+}
+
+// Close cleans up server resources
+func (s *Server) Close() {
+	if s.temporalClient != nil {
+		s.temporalClient.Close()
 	}
 }

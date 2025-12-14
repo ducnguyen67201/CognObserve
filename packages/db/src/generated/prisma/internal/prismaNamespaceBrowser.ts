@@ -71,7 +71,13 @@ export const ModelName = {
   NotificationChannel: 'NotificationChannel',
   AlertChannelLink: 'AlertChannelLink',
   TrackedUser: 'TrackedUser',
-  TraceSession: 'TraceSession'
+  TraceSession: 'TraceSession',
+  GitHubInstallation: 'GitHubInstallation',
+  GitHubRepository: 'GitHubRepository',
+  GitCommit: 'GitCommit',
+  GitPullRequest: 'GitPullRequest',
+  CodeChunk: 'CodeChunk',
+  AlertRCA: 'AlertRCA'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -394,6 +400,103 @@ export const TraceSessionScalarFieldEnum = {
 } as const
 
 export type TraceSessionScalarFieldEnum = (typeof TraceSessionScalarFieldEnum)[keyof typeof TraceSessionScalarFieldEnum]
+
+
+export const GitHubInstallationScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  installationId: 'installationId',
+  accountLogin: 'accountLogin',
+  accountType: 'accountType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitHubInstallationScalarFieldEnum = (typeof GitHubInstallationScalarFieldEnum)[keyof typeof GitHubInstallationScalarFieldEnum]
+
+
+export const GitHubRepositoryScalarFieldEnum = {
+  id: 'id',
+  installationId: 'installationId',
+  projectId: 'projectId',
+  githubId: 'githubId',
+  owner: 'owner',
+  repo: 'repo',
+  fullName: 'fullName',
+  defaultBranch: 'defaultBranch',
+  isPrivate: 'isPrivate',
+  enabled: 'enabled',
+  indexStatus: 'indexStatus',
+  lastIndexedAt: 'lastIndexedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitHubRepositoryScalarFieldEnum = (typeof GitHubRepositoryScalarFieldEnum)[keyof typeof GitHubRepositoryScalarFieldEnum]
+
+
+export const GitCommitScalarFieldEnum = {
+  id: 'id',
+  repoId: 'repoId',
+  sha: 'sha',
+  message: 'message',
+  author: 'author',
+  authorEmail: 'authorEmail',
+  timestamp: 'timestamp',
+  createdAt: 'createdAt'
+} as const
+
+export type GitCommitScalarFieldEnum = (typeof GitCommitScalarFieldEnum)[keyof typeof GitCommitScalarFieldEnum]
+
+
+export const GitPullRequestScalarFieldEnum = {
+  id: 'id',
+  repoId: 'repoId',
+  number: 'number',
+  title: 'title',
+  body: 'body',
+  state: 'state',
+  author: 'author',
+  baseBranch: 'baseBranch',
+  headBranch: 'headBranch',
+  mergedAt: 'mergedAt',
+  closedAt: 'closedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GitPullRequestScalarFieldEnum = (typeof GitPullRequestScalarFieldEnum)[keyof typeof GitPullRequestScalarFieldEnum]
+
+
+export const CodeChunkScalarFieldEnum = {
+  id: 'id',
+  repoId: 'repoId',
+  filePath: 'filePath',
+  startLine: 'startLine',
+  endLine: 'endLine',
+  content: 'content',
+  contentHash: 'contentHash',
+  language: 'language',
+  chunkType: 'chunkType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CodeChunkScalarFieldEnum = (typeof CodeChunkScalarFieldEnum)[keyof typeof CodeChunkScalarFieldEnum]
+
+
+export const AlertRCAScalarFieldEnum = {
+  id: 'id',
+  alertId: 'alertId',
+  triggeredAt: 'triggeredAt',
+  analysisJson: 'analysisJson',
+  suspectedPRs: 'suspectedPRs',
+  suspectedCommits: 'suspectedCommits',
+  confidence: 'confidence',
+  createdAt: 'createdAt'
+} as const
+
+export type AlertRCAScalarFieldEnum = (typeof AlertRCAScalarFieldEnum)[keyof typeof AlertRCAScalarFieldEnum]
 
 
 export const SortOrder = {

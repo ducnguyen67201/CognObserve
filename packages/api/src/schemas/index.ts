@@ -11,3 +11,5 @@ export * from "./alerting";
 export * from "./channels";
 export * from "./sessions";
 export * from "./trackedUsers";
+export * from "./github";
+export * from "./rca";
