@@ -57,3 +57,6 @@ export {
   searchCodebase,
   searchProjectCodebase,
 } from "./search.activities";
+
+// RCA (Root Cause Analysis) activities
+export { analyzeTraces } from "./rca.activities";

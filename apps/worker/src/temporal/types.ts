@@ -427,3 +427,162 @@ export interface SearchProjectCodebaseInput {
   /** Optional file patterns */
   filePatterns?: string[];
 }
+
+// ============================================
+// RCA (Root Cause Analysis) Types
+// ============================================
+
+/**
+ * Alert type enum for RCA analysis
+ */
+export type RCAAlertType =
+  | "ERROR_RATE"
+  | "LATENCY_P50"
+  | "LATENCY_P95"
+  | "LATENCY_P99";
+
+/**
+ * Input for analyzeTraces activity
+ */
+export interface TraceAnalysisInput {
+  /** Project ID to analyze traces for */
+  projectId: string;
+  /** Type of alert that triggered the analysis */
+  alertType: RCAAlertType;
+  /** Current value that triggered the alert */
+  alertValue: number;
+  /** Alert threshold that was exceeded */
+  threshold: number;
+  /** Start of analysis window (ISO 8601 datetime) */
+  windowStart: string;
+  /** End of analysis window - when alert triggered (ISO 8601 datetime) */
+  windowEnd: string;
+}
+
+/**
+ * Summary statistics from trace analysis
+ */
+export interface TraceAnalysisSummary {
+  /** Total unique traces in window */
+  totalTraces: number;
+  /** Total spans analyzed */
+  totalSpans: number;
+  /** Number of spans with errors */
+  errorCount: number;
+  /** Error rate (0-1 range) */
+  errorRate: number;
+  /** 50th percentile latency in milliseconds */
+  latencyP50: number;
+  /** 95th percentile latency in milliseconds */
+  latencyP95: number;
+  /** 99th percentile latency in milliseconds */
+  latencyP99: number;
+  /** Mean latency in milliseconds */
+  meanLatency: number;
+}
+
+/**
+ * Grouped error pattern from trace analysis
+ */
+export interface ErrorPattern {
+  /** Normalized error message */
+  message: string;
+  /** Number of occurrences */
+  count: number;
+  /** Percentage of total errors (0-100) */
+  percentage: number;
+  /** Sample span IDs (up to 3) */
+  sampleSpanIds: string[];
+  /** First 500 chars of stack trace if available */
+  stackTrace?: string;
+}
+
+/**
+ * Affected endpoint statistics
+ */
+export interface AffectedEndpoint {
+  /** Span name/operation */
+  name: string;
+  /** Number of errors for this endpoint */
+  errorCount: number;
+  /** Total span count for this endpoint */
+  totalCount: number;
+  /** Error rate for this endpoint (0-1) */
+  errorRate: number;
+  /** 95th percentile latency in milliseconds */
+  latencyP95: number;
+  /** Sample trace IDs (up to 3) */
+  sampleTraceIds: string[];
+}
+
+/**
+ * Affected LLM model statistics (for AI observability)
+ */
+export interface AffectedModel {
+  /** Model identifier (e.g., "gpt-4o", "claude-3-5-sonnet") */
+  model: string;
+  /** Number of errors for this model */
+  errorCount: number;
+  /** Average latency in milliseconds */
+  avgLatency: number;
+  /** Average tokens per call */
+  avgTokens: number;
+  /** Total cost incurred */
+  totalCost: number;
+}
+
+/**
+ * Time distribution bucket (5-minute intervals)
+ */
+export interface TimeDistributionBucket {
+  /** Bucket start time (ISO 8601 datetime) */
+  bucket: string;
+  /** Number of errors in this bucket */
+  errorCount: number;
+  /** Number of spans in this bucket */
+  spanCount: number;
+  /** Average latency in this bucket (milliseconds) */
+  avgLatency: number;
+}
+
+/**
+ * Anomaly type detected during analysis
+ */
+export type AnomalyType = "latency_spike" | "error_burst" | "throughput_drop";
+
+/**
+ * Anomaly severity level
+ */
+export type AnomalySeverity = "high" | "medium" | "low";
+
+/**
+ * Detected anomaly during trace analysis
+ */
+export interface DetectedAnomaly {
+  /** Type of anomaly */
+  type: AnomalyType;
+  /** When the anomaly occurred (ISO 8601 datetime) */
+  timestamp: string;
+  /** Human-readable description */
+  description: string;
+  /** Severity level */
+  severity: AnomalySeverity;
+}
+
+/**
+ * Output from analyzeTraces activity - structured for LLM consumption
+ */
+export interface TraceAnalysisOutput {
+  /** Summary statistics */
+  summary: TraceAnalysisSummary;
+  /** Grouped error patterns (top 10) */
+  errorPatterns: ErrorPattern[];
+  /** Affected endpoints grouped by name (top 20) */
+  affectedEndpoints: AffectedEndpoint[];
+  /** Affected LLM models (top 10) */
+  affectedModels: AffectedModel[];
+  /** Time-bucketed distribution (5-min intervals) */
+  timeDistribution: TimeDistributionBucket[];
+  /** Detected anomalies (top 10) */
+  anomalies: DetectedAnomaly[];
+}
